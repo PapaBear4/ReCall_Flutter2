@@ -19,7 +19,7 @@ class AddContact extends ContactListEvent {
 }
 
 class DeleteContact extends ContactListEvent {
-  final String contactId;
+  final int contactId;
 
   const DeleteContact(this.contactId);
 

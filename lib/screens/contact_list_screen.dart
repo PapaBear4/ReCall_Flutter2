@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ReCall/blocs/contact_list/contact_list_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:ReCall/utils/last_contacted_helper.dart';
+//import 'package:ReCall/screens/contact_details_screen.dart';
 
 class ContactListScreen extends StatelessWidget {
   const ContactListScreen({super.key});
@@ -35,6 +36,12 @@ class ContactListScreen extends StatelessWidget {
                       trailing: Text(formatLastContacted(contact.lastContacted)),
                       onTap: () {
                         // Navigate to the contact details screen
+                            print('Navigating to details for contact ID: ${contact.id}'); // <-- Add this line
+                            Navigator.pushNamed(
+                              context,
+                              '/contactDetails',
+                              arguments: contact.id,
+                            );
                       },
                     ),
                     const Divider(

@@ -1,5 +1,4 @@
 import 'package:equatable/equatable.dart';
-import 'package:uuid/uuid.dart';
 
 enum ContactFrequency {
   daily,
@@ -13,24 +12,24 @@ enum ContactFrequency {
 }
 
 class Contact extends Equatable {
-  final String id;
+  final int id;
   final String firstName;
   final String lastName;
   final DateTime? birthday;
   final ContactFrequency frequency;
   final DateTime? lastContacted;
 
-  Contact({
-    String? id,
+  const Contact({
+    int? id,
     required this.firstName,
     required this.lastName,
     this.birthday,
     required this.frequency,
     this.lastContacted,
-  }) : id = id ?? const Uuid().v4();
+  }) : id = id ?? 0;
 
   Contact copyWith({
-    String? id,
+    int? id,
     String? firstName,
     String? lastName,
     DateTime? birthday,
@@ -70,7 +69,7 @@ class Contact extends Equatable {
 
   factory Contact.fromMap(Map<String, dynamic> map) {
     return Contact(
-      id: map['id'] as String,
+      id: map['id'] as int,
       firstName: map['firstName'] as String,
       lastName: map['lastName'] as String,
       birthday: map['birthday'] != null
