@@ -1,6 +1,6 @@
 String formatLastContacted(DateTime? lastContacted) {
   if (lastContacted == null) {
-    return 'Never Contacted';
+    return '';
   }
 
   final now = DateTime.now();

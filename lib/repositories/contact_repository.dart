@@ -27,7 +27,9 @@ class ContactRepository {
         Contact(
             firstName: 'John',
             lastName: 'Doe',
-            frequency: ContactFrequency.weekly),
+            frequency: ContactFrequency.weekly,
+            birthday: DateTime(1980,4,4),
+            lastContacted: DateTime(2024, 12, 20)),
         Contact(
             firstName: 'Jane',
             lastName: 'Smith',
@@ -53,7 +55,8 @@ class ContactRepository {
         Contact(
             firstName: 'Charlie',
             lastName: 'Brown',
-            frequency: ContactFrequency.quarterly),
+            frequency: ContactFrequency.quarterly,
+            lastContacted: DateTime(2024,12,31)),
         Contact(
             firstName: 'David',
             lastName: 'Miller',

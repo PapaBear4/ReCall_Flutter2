@@ -29,7 +29,7 @@ class ContactListScreen extends StatelessWidget {
                       subtitle: Text(
                           contact.birthday != null
                               ? DateFormat('MM/dd').format(contact.birthday!)
-                              : 'no bday entered',
+                              : '',
                           style: const TextStyle(fontSize: 12),
                         ),
                       trailing: Text(formatLastContacted(contact.lastContacted)),
