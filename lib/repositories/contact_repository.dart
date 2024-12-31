@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'dart:convert';
-import 'package:ReCall/models/contact.dart'; // Import the Contact model
+import 'package:recall/models/contact.dart'; // Import the Contact model
 
 class ContactRepository {
   Future<String> get _localPath async {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ReCall/blocs/contact_details/contact_details_bloc.dart';
-import 'package:ReCall/models/contact.dart';
+import 'package:recall/blocs/contact_details/contact_details_bloc.dart';
+import 'package:recall/models/contact.dart';
 import 'package:intl/intl.dart';
 
 class ContactDetailsScreen extends StatefulWidget {
