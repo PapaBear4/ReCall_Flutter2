@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:myapp/blocs/contact_list/contact_list_bloc.dart';
+import 'package:ReCall/blocs/contact_list/contact_list_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:ReCall/utils/last_contacted_helper.dart';
 
 class ContactListScreen extends StatelessWidget {
   const ContactListScreen({super.key});
@@ -24,26 +25,14 @@ class ContactListScreen extends StatelessWidget {
                 return Column(
                   children: [
                     ListTile(
-                      title: Align(
-                        alignment: Alignment.topLeft,
-                        child: Text('${contact.firstName} ${contact.lastName}'),
-                      ),
-                      subtitle: Align(
-                        alignment: Alignment.topLeft,
-                        child: Text(
+                      title: Text('${contact.firstName} ${contact.lastName}'),
+                      subtitle: Text(
                           contact.birthday != null
                               ? DateFormat('MM/dd').format(contact.birthday!)
-                              : '',
+                              : 'no bday entered',
                           style: const TextStyle(fontSize: 12),
                         ),
-                      ),
-                      trailing: contact.lastContacted != null
-                          ? Text(
-                              DateFormat('MM/dd/yyyy')
-                                  .format(contact.lastContacted!),
-                              style: const TextStyle(
-                                  fontSize: 14, color: Colors.grey))
-                          : null,
+                      trailing: Text(formatLastContacted(contact.lastContacted)),
                       onTap: () {
                         // Navigate to the contact details screen
                       },

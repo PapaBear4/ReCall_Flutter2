@@ -1,7 +1,7 @@
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'dart:convert';
-import 'package:myapp/models/contact.dart'; // Import the Contact model
+import 'package:ReCall/models/contact.dart'; // Import the Contact model
 
 class ContactRepository {
   Future<String> get _localPath async {
@@ -24,7 +24,10 @@ class ContactRepository {
       // If encountering an error, return dummy data for now.
       // In a production app, you would return an empty list or handle the error appropriately.
       return [
-        Contact(firstName: 'John', lastName: 'Doe', frequency: ContactFrequency.weekly),
+        Contact(
+            firstName: 'John',
+            lastName: 'Doe',
+            frequency: ContactFrequency.weekly),
         Contact(
             firstName: 'Jane',
             lastName: 'Smith',
@@ -37,24 +40,42 @@ class ContactRepository {
             frequency: ContactFrequency.quarterly,
             birthday: DateTime(1988, 2, 22),
             lastContacted: DateTime(2024, 1, 5)),
-        Contact(firstName: 'Alice', lastName: 'Johnson', frequency: ContactFrequency.never),
+        Contact(
+            firstName: 'Alice',
+            lastName: 'Johnson',
+            frequency: ContactFrequency.never),
         Contact(
             firstName: 'Bob',
             lastName: 'Williams',
             frequency: ContactFrequency.yearly,
             birthday: DateTime(1992, 8, 15),
             lastContacted: DateTime(2023, 11, 10)),
-        Contact(firstName: 'Charlie', lastName: 'Brown', frequency: ContactFrequency.quarterly),
-        Contact(firstName: 'David', lastName: 'Miller', frequency: ContactFrequency.monthly),
+        Contact(
+            firstName: 'Charlie',
+            lastName: 'Brown',
+            frequency: ContactFrequency.quarterly),
+        Contact(
+            firstName: 'David',
+            lastName: 'Miller',
+            frequency: ContactFrequency.monthly),
         Contact(
             firstName: 'Emily',
             lastName: 'Davis',
             frequency: ContactFrequency.never,
             birthday: DateTime(1990, 11, 3),
             lastContacted: DateTime(2023, 12, 31)),
-        Contact(firstName: 'Frank', lastName: 'Garcia', frequency: ContactFrequency.biWeekly),
-        Contact(firstName: 'Grace', lastName: 'Rodriguez', frequency: ContactFrequency.monthly),
-        Contact(firstName: 'Henry', lastName: 'Wilson', frequency: ContactFrequency.rarely),
+        Contact(
+            firstName: 'Frank',
+            lastName: 'Garcia',
+            frequency: ContactFrequency.biWeekly),
+        Contact(
+            firstName: 'Grace',
+            lastName: 'Rodriguez',
+            frequency: ContactFrequency.monthly),
+        Contact(
+            firstName: 'Henry',
+            lastName: 'Wilson',
+            frequency: ContactFrequency.rarely),
       ];
     }
   }

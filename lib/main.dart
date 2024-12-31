@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:myapp/blocs/contact_list/contact_list_bloc.dart';
-import 'package:myapp/repositories/contact_repository.dart';
-import 'package:myapp/screens/contact_list_screen.dart';
+import 'package:ReCall/blocs/contact_list/contact_list_bloc.dart';
+import 'package:ReCall/repositories/contact_repository.dart';
+import 'package:ReCall/screens/contact_list_screen.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const ReCall());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class ReCall extends StatelessWidget {
+  const ReCall({super.key});
 
   @override
   Widget build(BuildContext context) {
