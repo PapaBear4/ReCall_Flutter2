@@ -2,9 +2,12 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:recall/models/contact.dart';
 import 'package:recall/repositories/contact_repository.dart';
+import 'package:logger/logger.dart';
 
 part 'contact_details_event.dart';
 part 'contact_details_state.dart';
+
+var contactDetailLogger = Logger();
 
 class ContactDetailsBloc
     extends Bloc<ContactDetailsEvent, ContactDetailsState> {
@@ -14,7 +17,7 @@ class ContactDetailsBloc
       : _contactRepository = contactRepository,
         super(ContactDetailsInitial()) {
     on<LoadContact>((event, emit) async {
-      print(
+      contactDetailLogger.i(
           'Loading contact with ID: ${event.contactId} in ContactDetailsBloc'); // <-- Add this
       emit(ContactDetailsLoading());
       try {

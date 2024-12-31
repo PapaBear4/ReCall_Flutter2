@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:recall/utils/last_contacted_helper.dart';
-//import 'package:recall/screens/contact_details_screen.dart';
+import 'package:logger/logger.dart';
+
+var contactListScreenLogger = Logger();
 
 class ContactListScreen extends StatelessWidget {
   const ContactListScreen({super.key});
@@ -37,7 +39,7 @@ class ContactListScreen extends StatelessWidget {
                           Text(formatLastContacted(contact.lastContacted)),
                       onTap: () {
                         // Navigate to the contact details screen
-                        print(
+                        contactListScreenLogger.i(
                             'Navigating to details for contact ID: ${contact.id}'); // <-- Add this line
                         Navigator.pushNamed(
                           context,

@@ -5,13 +5,16 @@ import 'package:recall/repositories/contact_repository.dart';
 import 'package:recall/screens/contact_list_screen.dart';
 import 'package:recall/blocs/contact_details/contact_details_bloc.dart';
 import 'package:recall/screens/contact_details_screen.dart';
+import 'package:logger/logger.dart';
 
 void main() {
-  runApp(const recall());
+  runApp(const ReCall());
+  var logger = Logger();
+  logger.i("App started");
 }
 
-class recall extends StatelessWidget {
-  const recall({super.key});
+class ReCall extends StatelessWidget {
+  const ReCall({super.key});
 
   @override
   Widget build(BuildContext context) {

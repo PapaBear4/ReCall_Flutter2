@@ -1,9 +1,11 @@
 import 'dart:math';
-
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'package:recall/models/contact.dart'; // Import the Contact model
+import 'package:logger/logger.dart';
+
+var contactRepoLogger = Logger();
 
 class ContactRepository {
   Future<String> get _localPath async {
@@ -25,6 +27,7 @@ class ContactRepository {
     } catch (e) {
       // If encountering an error, return dummy data for now.
       // In a production app, you would return an empty list or handle the error appropriately.
+      contactRepoLogger.i("loading dummy contacts");
       return [
         Contact(
             id: 1,
@@ -131,15 +134,15 @@ class ContactRepository {
   }
 
   Future<Contact> getContactById(int contactId) async {
-    print(
+    contactRepoLogger.i(
         'Searching for contact with ID: $contactId in ContactRepository'); // <-- Add this
     final contacts = await loadContacts();
-    print('Loaded contacts: ${contacts.map((e) => e.id)}');
+    contactRepoLogger.i('Loaded contacts: ${contacts.map((e) => e.id)}');
 
     final contact = contacts.firstWhere(
       (contact) => contact.id == contactId,
       orElse: () {
-        print('Contact with ID $contactId not found'); // <-- Add this
+        contactRepoLogger.i('Contact with ID $contactId not found'); // <-- Add this
         throw Exception('Contact not found');
       },
     );

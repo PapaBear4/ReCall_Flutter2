@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:recall/blocs/contact_details/contact_details_bloc.dart';
 import 'package:recall/models/contact.dart';
 import 'package:intl/intl.dart';
+import 'package:logger/logger.dart';
+
+var contactDetailScreenLogger = Logger();
 
 class ContactDetailsScreen extends StatefulWidget {
   final int contactId;
@@ -30,7 +33,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final contactId = ModalRoute.of(context)!.settings.arguments as int;
-      print(
+      contactDetailScreenLogger.i(
           'Received contact ID in ContactDetailsScreen: $contactId'); // <-- Add this line
       context.read<ContactDetailsBloc>().add(LoadContact(contactId));
     });
