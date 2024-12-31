@@ -18,7 +18,7 @@ class ContactDetailsBloc
         super(ContactDetailsInitial()) {
     on<LoadContact>((event, emit) async {
       contactDetailLogger.i(
-          'Loading contact with ID: ${event.contactId} in ContactDetailsBloc'); // <-- Add this
+          "Loading contact with ID: ${event.contactId} in ContactDetailsBloc"); // <-- Add this
       emit(ContactDetailsLoading());
       try {
         final contact = await _contactRepository
@@ -32,10 +32,13 @@ class ContactDetailsBloc
     on<UpdateContactDetails>((event, emit) async {
       if (state is ContactDetailsLoaded) {
         try {
+          contactDetailLogger.i("LOG:try and update details");
           await _contactRepository.updateContact(event.updatedContact);
+          contactDetailLogger.i("LOG:update successful");
           emit(ContactDetailsLoaded(
               event.updatedContact)); // Emit the updated state
         } catch (e) {
+          contactDetailLogger.i("LOG:update failed");
           emit(ContactDetailsError(e.toString()));
         }
       }

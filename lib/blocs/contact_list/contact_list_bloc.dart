@@ -16,15 +16,15 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
       : _contactRepository = contactRepository,
         super(ContactListInitial()) {
     on<LoadContacts>((event, emit) async {
-      contactListLogger.i("Loading contacts...");
+      contactListLogger.i("LOG:Loading contacts...");
       emit(ContactListLoading());
       try {
         final contacts = await _contactRepository.loadContacts();
         emit(ContactListLoaded(contacts: contacts));
-        contactListLogger.i("Contacts loaded!");
+        contactListLogger.i("LOG:Contacts loaded!");
       } catch (e) {
         emit(ContactListError(e.toString()));
-        contactListLogger.i("Error loading contacts: $e");
+        contactListLogger.i("LOG:Error loading contacts: $e");
       }
     });
 
@@ -32,9 +32,9 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
       if (state is ContactListLoaded) {
         final currentState = state as ContactListLoaded;
         try {
-          contactListLogger.i("Attempting to add contact");
+          contactListLogger.i("LOG:Attempting to add contact");
           await _contactRepository.addContact(event.contact);
-          contactListLogger.i("Contact added");
+          contactListLogger.i("LOG:Contact added");
           final updatedContacts = await _contactRepository.loadContacts();
           emit(ContactListLoaded(
               contacts: updatedContacts,
@@ -42,7 +42,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
               ascending: currentState.ascending));
         } catch (e) {
           emit(ContactListError(e.toString()));
-          contactListLogger.i("Error adding contact: $e");
+          contactListLogger.i("LOG:Error adding contact: $e");
         }
       }
     });
@@ -54,7 +54,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           contactListLogger
               .i("Attempting to delete contact ${event.contactId}");
           await _contactRepository.deleteContact(event.contactId);
-          contactListLogger.i("Contact deleted");
+          contactListLogger.i("LOG:Contact deleted");
           final updatedContacts = await _contactRepository.loadContacts();
           emit(ContactListLoaded(
               contacts: updatedContacts,
@@ -62,7 +62,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
               ascending: currentState.ascending));
         } catch (e) {
           emit(ContactListError(e.toString()));
-          contactListLogger.i("error deleting contact");
+          contactListLogger.i("LOG:error deleting contact");
         }
       }
     });
@@ -71,9 +71,9 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
       if (state is ContactListLoaded) {
         final currentState = state as ContactListLoaded;
         try {
-          contactListLogger.i("attempting to update contact");
+          contactListLogger.i("LOG:attempting to update contact");
           await _contactRepository.updateContact(event.updatedContact);
-          contactListLogger.i("contact updated");
+          contactListLogger.i("LOG:contact updated");
           final updatedContacts = await _contactRepository.loadContacts();
           emit(ContactListLoaded(
               contacts: updatedContacts,
@@ -81,7 +81,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
               ascending: currentState.ascending));
         } catch (e) {
           emit(ContactListError(e.toString()));
-          contactListLogger.i("error updating contact");
+          contactListLogger.i("LOG:error updating contact");
         }
       }
     });

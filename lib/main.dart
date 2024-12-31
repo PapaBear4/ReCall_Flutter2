@@ -10,7 +10,7 @@ import 'package:logger/logger.dart';
 void main() {
   runApp(const ReCall());
   var logger = Logger();
-  logger.i("App started");
+  logger.i("LOG:App started");
 }
 
 class ReCall extends StatelessWidget {

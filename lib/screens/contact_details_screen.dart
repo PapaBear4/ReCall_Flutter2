@@ -21,7 +21,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
   DateTime? _selectedDate;
-  ContactFrequency? _selectedFrequency;
+  ContactFrequency? _frequency;
   // ...other controllers
 
   @override
@@ -29,12 +29,12 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     super.initState();
     _firstNameController = TextEditingController();
     _lastNameController = TextEditingController();
-    _selectedFrequency = ContactFrequency.daily;
+    _frequency = ContactFrequency.daily;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final contactId = ModalRoute.of(context)!.settings.arguments as int;
       contactDetailScreenLogger.i(
-          'Received contact ID in ContactDetailsScreen: $contactId'); // <-- Add this line
+          "Received contact ID in ContactDetailsScreen: $contactId"); // <-- Add this line
       context.read<ContactDetailsBloc>().add(LoadContact(contactId));
     });
   }
@@ -64,7 +64,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             _firstNameController.text = state.contact.firstName;
             _lastNameController.text = state.contact.lastName;
             _selectedDate = state.contact.birthday;
-            _selectedFrequency = state.contact.frequency;
+            _frequency = state.contact.frequency;
             return _buildForm(state.contact);
           } else if (state is ContactDetailsError) {
             return Center(child: Text(state.message));
@@ -72,11 +72,41 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           return Container();
         },
       ),
+      bottomNavigationBar: BottomAppBar(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: <Widget>[
+            IconButton(
+              icon: const Icon(Icons.save),
+              onPressed: () {
+                final state = context.read<ContactDetailsBloc>().state;
+                if (state is ContactDetailsLoaded) {
+                  final updatedContact = state.contact.copyWith(
+                    firstName: _firstNameController.text,
+                    lastName: _lastNameController.text,
+                    birthday: _selectedDate,
+                    frequency: _frequency,
+                  );
+                  context
+                      .read<ContactDetailsBloc>()
+                      .add(UpdateContactDetails(updatedContact));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Changes saved')),
+                  );
+                  // Navigate back to the contact list
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   Widget _buildForm(Contact contact) {
-    //print('_selectedDate in _buildForm: $_selectedDate');
+    contactDetailScreenLogger
+        .i("LOG:_selectedDate in _buildForm: $_selectedDate");
     return Form(
       key: _formKey,
       child: Padding(
@@ -125,19 +155,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             ),
 
             // Other fields...
-            ElevatedButton(
-                onPressed: () {
-                  final updatedContact = contact.copyWith(
-                    firstName: _firstNameController.text,
-                    lastName: _lastNameController.text,
-                    birthday: _selectedDate,
-                    frequency: _selectedFrequency,
-                  );
-                  context
-                      .read<ContactDetailsBloc>()
-                      .add(UpdateContactDetails(updatedContact));
-                },
-                child: const Text('Save Changes')),
           ],
         ),
       ),

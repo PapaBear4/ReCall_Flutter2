@@ -15,7 +15,7 @@ class ContactRepository {
 
   Future<File> get _localFile async {
     final path = await _localPath;
-    return File('$path/contacts.json');
+    return File("$path/contacts.json");
   }
 
   Future<List<Contact>> loadContacts() async {
@@ -27,7 +27,7 @@ class ContactRepository {
     } catch (e) {
       // If encountering an error, return dummy data for now.
       // In a production app, you would return an empty list or handle the error appropriately.
-      contactRepoLogger.i("loading dummy contacts");
+      contactRepoLogger.i("LOG:loading dummy contacts");
       return [
         Contact(
             id: 1,
@@ -103,7 +103,11 @@ class ContactRepository {
     final file = await _localFile;
     final List<Map<String, dynamic>> jsonList =
         contacts.map((contact) => contact.toMap()).toList();
-    await file.writeAsString(json.encode(jsonList));
+    try {
+      await file.writeAsString(json.encode(jsonList));
+    } catch (e) {
+      contactRepoLogger.i("LOG:error writing to storage: $e");
+    }
   }
 
   Future<void> addContact(Contact contact) async {
@@ -114,13 +118,23 @@ class ContactRepository {
     }
     final newContact = contact.copyWith(id: nextId);
     contacts.add(newContact);
-    await saveContacts(contacts);
+    try {
+      await saveContacts(contacts);
+    } catch (e) {
+      // Handle the error appropriately, e.g., log the error, show a message to the user.
+      contactRepoLogger.i("LOG:Error saving contacts: $e");
+    }
   }
 
   Future<void> deleteContact(int contactId) async {
     final contacts = await loadContacts();
     contacts.removeWhere((contact) => contact.id == contactId);
-    await saveContacts(contacts);
+    try {
+      await saveContacts(contacts);
+    } catch (e) {
+      // Handle the error appropriately, e.g., log the error, show a message to the user.
+      contactRepoLogger.i("LOG:Error saving contacts: $e");
+    }
   }
 
   Future<void> updateContact(Contact updatedContact) async {
@@ -129,20 +143,26 @@ class ContactRepository {
         contacts.indexWhere((contact) => contact.id == updatedContact.id);
     if (index != -1) {
       contacts[index] = updatedContact;
-      await saveContacts(contacts);
+      try {
+        await saveContacts(contacts);
+      } catch (e) {
+        // Handle the error appropriately, e.g., log the error, show a message to the user.
+        contactRepoLogger.i("LOG:Error saving contacts: $e");
+      }
     }
   }
 
   Future<Contact> getContactById(int contactId) async {
     contactRepoLogger.i(
-        'Searching for contact with ID: $contactId in ContactRepository'); // <-- Add this
+        "Searching for contact with ID: $contactId in ContactRepository"); // <-- Add this
     final contacts = await loadContacts();
-    contactRepoLogger.i('Loaded contacts: ${contacts.map((e) => e.id)}');
+    contactRepoLogger.i("LOG:Loaded contacts: ${contacts.map((e) => e.id)}");
 
     final contact = contacts.firstWhere(
       (contact) => contact.id == contactId,
       orElse: () {
-        contactRepoLogger.i('Contact with ID $contactId not found'); // <-- Add this
+        contactRepoLogger
+            .i("Contact with ID $contactId not found"); // <-- Add this
         throw Exception('Contact not found');
       },
     );
