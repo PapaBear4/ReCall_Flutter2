@@ -14,6 +14,7 @@ class ContactDetailsScreen extends StatefulWidget {
 }
 
 class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
+  final _formKey = GlobalKey<_ContactDetailsScreenState>();
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
   DateTime? _selectedDate;
@@ -72,67 +73,70 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   }
 
   Widget _buildForm(Contact contact) {
-    print('_selectedDate in _buildForm: $_selectedDate');
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start, // Align items to the left
-        children: <Widget>[
-          TextFormField(
-            controller: _firstNameController,
-            decoration: const InputDecoration(labelText: 'First Name'),
-            onChanged: (value) {
-              // Update contact details in the state
-            },
-          ),
-          TextFormField(
-            controller: _lastNameController,
-            decoration: const InputDecoration(labelText: 'Last Name'),
-            onChanged: (value) {
-              // Update contact details in the state
-            },
-          ),
-          const SizedBox(height: 8.0), // Add vertical space
-          const Padding(
-            padding: EdgeInsets.only(bottom: 8.0),
-            child: Text('Birthday:'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final DateTime? picked = await showDatePicker(
-                context: context,
-                initialDate: _selectedDate ?? DateTime.now(),
-                firstDate: DateTime(1900),
-                lastDate: DateTime.now(),
-              );
-              if (picked != null) {
-                setState(() {
-                  print("Date picked: $picked");
-                  _selectedDate = picked;
-                  print("final date: $_selectedDate");
-                });
-              }
-            },
-            child: Text(_selectedDate == null
-                ? 'Select Birthday'
-                : DateFormat.yMd().format(_selectedDate!)),
-          ),
-
-          // Other fields...
-          ElevatedButton(
-              onPressed: () {
-                final updatedContact = contact.copyWith(
-                  firstName: _firstNameController.text,
-                  lastName: _lastNameController.text,
-                  birthday: _selectedDate,
-                  frequency: _selectedFrequency,
-                );
-                context
-                    .read<ContactDetailsBloc>()
-                    .add(UpdateContactDetails(updatedContact));
+    //print('_selectedDate in _buildForm: $_selectedDate');
+    return Form(
+      key: _formKey,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment:
+              CrossAxisAlignment.start, // Align items to the left
+          children: <Widget>[
+            TextFormField(
+              controller: _firstNameController,
+              decoration: const InputDecoration(labelText: 'First Name'),
+              onChanged: (value) {
+                // Update contact details in the state
               },
-              child: const Text('Save Changes')),
-        ],
+            ),
+            TextFormField(
+              controller: _lastNameController,
+              decoration: const InputDecoration(labelText: 'Last Name'),
+              onChanged: (value) {
+                // Update contact details in the state
+              },
+            ),
+            const SizedBox(height: 8.0), // Add vertical space
+            const Padding(
+              padding: EdgeInsets.only(bottom: 8.0),
+              child: Text('Birthday:'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final DateTime? picked = await showDatePicker(
+                  context: context,
+                  initialDate: _selectedDate ?? DateTime.now(),
+                  firstDate: DateTime(1900),
+                  lastDate: DateTime.now(),
+                );
+
+                if (picked != null) {
+                  context
+                      .read<ContactDetailsBloc>()
+                      .add(UpdateBirthday(picked, contact.id));
+                }
+              },
+              child: Text(_selectedDate == null
+                  ? 'Select Birthday'
+                  : DateFormat.yMd().format(_selectedDate!)),
+            ),
+
+            // Other fields...
+            ElevatedButton(
+                onPressed: () {
+                  final updatedContact = contact.copyWith(
+                    firstName: _firstNameController.text,
+                    lastName: _lastNameController.text,
+                    birthday: _selectedDate,
+                    frequency: _selectedFrequency,
+                  );
+                  context
+                      .read<ContactDetailsBloc>()
+                      .add(UpdateContactDetails(updatedContact));
+                },
+                child: const Text('Save Changes')),
+          ],
+        ),
       ),
     );
   }

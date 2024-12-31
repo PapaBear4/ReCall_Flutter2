@@ -37,5 +37,14 @@ class ContactDetailsBloc
         }
       }
     });
+
+    on<UpdateBirthday>((event, emit) async {
+      if (state is ContactDetailsLoaded) {
+        final currentState = state as ContactDetailsLoaded;
+        final updatedContact =
+            currentState.contact.copyWith(birthday: event.birthday);
+        emit(ContactDetailsLoaded(updatedContact)); // Emit the updated state
+      }
+    });
   }
 }

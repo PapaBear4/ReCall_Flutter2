@@ -4,7 +4,7 @@ abstract class ContactDetailsEvent extends Equatable {
   const ContactDetailsEvent();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class LoadContact extends ContactDetailsEvent {
@@ -24,3 +24,15 @@ class UpdateContactDetails extends ContactDetailsEvent {
   @override
   List<Object> get props => [updatedContact];
 }
+
+// in contact_details_event.dart
+    class UpdateBirthday extends ContactDetailsEvent {
+      final DateTime? birthday;
+      final int contactId;
+
+      const UpdateBirthday(this.birthday, this.contactId);
+
+      @override
+      List<Object?> get props => [birthday, contactId];
+    }
+
