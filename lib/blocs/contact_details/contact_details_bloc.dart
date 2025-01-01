@@ -32,10 +32,18 @@ class ContactDetailsBloc
 
     on<UpdateContactDetails>((event, emit) async {
       if (state is ContactDetailsLoaded) {
+        emit(ContactDetailsLoading());
         try {
           contactDetailLogger.i("LOG:try and update details");
           await _contactRepository.updateContact(event.updatedContact);
           contactDetailLogger.i("LOG:update successful");
+          //reload with updated data??
+          /* I'm not sure about this.  I think I may need to have local
+          storage implemented before I do it like this.  For now I'm going 
+          to leave it emitting Loaded with event.updatedContact.
+          final updatedContact =
+              await _contactRepository.getContactById(event.updatedContact.id);
+          */
           emit(ContactDetailsLoaded(
               event.updatedContact)); // Emit the updated state
         } catch (e) {

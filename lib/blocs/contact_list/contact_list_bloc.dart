@@ -21,6 +21,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
     // Emits ContactListLoading while fetching data,
     // then ContactListLoaded with the contacts if successful,
     // or ContactListError if an error occurs.
+
     on<LoadContacts>((event, emit) async {
       contactListLogger.i("LOG:Loading contacts...");
       emit(ContactListLoading());
