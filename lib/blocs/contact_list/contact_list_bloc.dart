@@ -34,7 +34,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
         contactListLogger.i("LOG:Error loading contacts: $e");
       }
     });
-
+/*
     // Event handler for adding a new contact.
     // Updates the contact list after a successful addition
     // and emits ContactListLoaded with the updated list.
@@ -78,7 +78,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           contactListLogger.i("LOG:error deleting contact");
         }
       }
-    });
+    });*/
 
     // Event handler for updating an existing contact.
     // Updates the contact list after a successful update

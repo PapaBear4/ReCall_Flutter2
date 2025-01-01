@@ -62,7 +62,7 @@ class Contact extends Equatable {
       'firstName': firstName,
       'lastName': lastName,
       'birthday': birthday?.toIso8601String(),
-      'contactFrequency': frequency,
+      'frequency': frequency.name,
       'lastContacted': lastContacted?.toIso8601String(),
     };
   }
@@ -81,4 +81,16 @@ class Contact extends Equatable {
           : null,
     );
   }
+
+  factory Contact.fromJson(Map<String, dynamic> json) {
+  return Contact(
+    id: json['id'] as int,
+    firstName: json['firstName'] as String,
+    lastName: json['lastName'] as String,
+    birthday: json['birthday'] != null ? DateTime.parse(json['birthday']) : null,
+    frequency: ContactFrequency.values.byName(json['frequency']), // Parse enum
+    lastContacted: json['lastContacted'] != null ? DateTime.parse(json['lastContacted']) : null,
+  );
+}
+
 }
