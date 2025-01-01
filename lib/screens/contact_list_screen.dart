@@ -7,19 +7,24 @@ import 'package:logger/logger.dart';
 
 var contactListScreenLogger = Logger();
 
+// Widget representing the contact list screen.
 class ContactListScreen extends StatelessWidget {
   const ContactListScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Scaffold provides the basic structure of the screen.
     return Scaffold(
       appBar: AppBar(
         title: const Text('Contacts'),
       ),
+      // BlocBuilder listens to changes in ContactListBloc state.
       body: BlocBuilder<ContactListBloc, ContactListState>(
         builder: (context, state) {
+          // Displays a loading indicator while fetching contacts.
           if (state is ContactListLoading) {
             return const Center(child: CircularProgressIndicator());
+            // Displays a list of contacts if data is loaded successfully.
           } else if (state is ContactListLoaded) {
             return ListView.builder(
               itemCount: state.contacts.length,
@@ -27,6 +32,7 @@ class ContactListScreen extends StatelessWidget {
                 final contact = state.contacts[index];
                 return Column(
                   children: [
+                    // ListTile displays each contact's information.
                     ListTile(
                       title: Text('${contact.firstName} ${contact.lastName}'),
                       subtitle: Text(
@@ -37,7 +43,7 @@ class ContactListScreen extends StatelessWidget {
                       ),
                       trailing:
                           Text(formatLastContacted(contact.lastContacted)),
-                      onTap: () {
+                      onTap: () { 
                         // Navigate to the contact details screen
                         contactListScreenLogger.i(
                             'Navigating to details for contact ID: ${contact.id}'); // <-- Add this line
@@ -48,6 +54,7 @@ class ContactListScreen extends StatelessWidget {
                         );
                       },
                     ),
+                    // Divider separates each contact in the list.
                     const Divider(
                       height: 1,
                       thickness: 1,
@@ -60,11 +67,14 @@ class ContactListScreen extends StatelessWidget {
               },
             );
           } else if (state is ContactListError) {
+            // Displays an error message if fetching contacts fails.
             return Center(child: Text(state.message));
           }
-          return Container(); // Or a more appropriate fallback widget
+          // Fallback widget if the state is not recognized.
+          return Container(); 
         },
       ),
+      // Floating action button for adding a new contact.
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           // Navigate to the add contact screen

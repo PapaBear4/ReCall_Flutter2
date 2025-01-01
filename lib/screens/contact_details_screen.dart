@@ -52,6 +52,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       appBar: AppBar(title: const Text('Contact Details')),
       body: BlocConsumer<ContactDetailsBloc, ContactDetailsState>(
         listener: (context, state) {
+          // This listener handles events emitted by the ContactDetailsBloc
+          // and updates the UI accordingly. In this case, it shows a snackbar if there's an error.
           if (state is ContactDetailsError) {
             ScaffoldMessenger.of(context)
                 .showSnackBar(SnackBar(content: Text(state.message)));
@@ -59,16 +61,22 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         },
         builder: (context, state) {
           if (state is ContactDetailsLoading) {
+            // While the contact details are loading, show a CircularProgressIndicator.
             return const Center(child: CircularProgressIndicator());
           } else if (state is ContactDetailsLoaded) {
             _firstNameController.text = state.contact.firstName;
             _lastNameController.text = state.contact.lastName;
             _selectedDate = state.contact.birthday;
             _frequency = state.contact.frequency;
+            contactDetailScreenLogger
+                .i("LOG: into _buildForm ${state.contact}");
+            // If the contact details are loaded, build the form with the contact data.
             return _buildForm(state.contact);
           } else if (state is ContactDetailsError) {
+            // If there's an error loading the contact details, display an error message.
             return Center(child: Text(state.message));
           }
+          // Default case: Return an empty container if the state is not recognized.
           return Container();
         },
       ),
@@ -79,7 +87,10 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             IconButton(
               icon: const Icon(Icons.save),
               onPressed: () {
+                // When the save button is pressed, update the contact details in the Bloc
+                // and navigate back to the previous screen.
                 final state = context.read<ContactDetailsBloc>().state;
+                contactDetailLogger.i("LOG: current state: $state");
                 if (state is ContactDetailsLoaded) {
                   final updatedContact = state.contact.copyWith(
                     firstName: _firstNameController.text,
@@ -87,6 +98,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                     birthday: _selectedDate,
                     frequency: _frequency,
                   );
+                  contactDetailScreenLogger
+                      .i("LOG: new contact: $updatedContact");
                   context
                       .read<ContactDetailsBloc>()
                       .add(UpdateContactDetails(updatedContact));
@@ -94,7 +107,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                     const SnackBar(content: Text('Changes saved')),
                   );
                   // Navigate back to the contact list
-                  Navigator.of(context).pop();
+                  //Navigator.of(context).pop();
                 }
               },
             ),
@@ -105,6 +118,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   }
 
   Widget _buildForm(Contact contact) {
+    // Builds the form for editing contact details.
     contactDetailScreenLogger
         .i("LOG:_selectedDate in _buildForm: $_selectedDate");
     return Form(
@@ -116,6 +130,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               CrossAxisAlignment.start, // Align items to the left
           children: <Widget>[
             TextFormField(
+              // Input field for the first name
               controller: _firstNameController,
               decoration: const InputDecoration(labelText: 'First Name'),
               onChanged: (value) {
@@ -123,6 +138,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               },
             ),
             TextFormField(
+              // Input field for the last name
               controller: _lastNameController,
               decoration: const InputDecoration(labelText: 'Last Name'),
               onChanged: (value) {
@@ -135,6 +151,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               child: Text('Birthday:'),
             ),
             ElevatedButton(
+              // Button to select the birthday using a date picker
               onPressed: () async {
                 final DateTime? picked = await showDatePicker(
                   context: context,

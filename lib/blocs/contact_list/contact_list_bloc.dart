@@ -7,14 +7,20 @@ import 'package:logger/logger.dart';
 part 'contact_list_event.dart';
 part 'contact_list_state.dart';
 
+var contactListLogger = Logger();
+
+// Bloc responsible for managing the state of the contact list.
 class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
   final ContactRepository _contactRepository;
 
-  var contactListLogger = Logger();
-
+  // Constructor, injecting the contact repository.
   ContactListBloc({required ContactRepository contactRepository})
       : _contactRepository = contactRepository,
         super(ContactListInitial()) {
+    // Event handler for loading contacts.
+    // Emits ContactListLoading while fetching data,
+    // then ContactListLoaded with the contacts if successful,
+    // or ContactListError if an error occurs.
     on<LoadContacts>((event, emit) async {
       contactListLogger.i("LOG:Loading contacts...");
       emit(ContactListLoading());
@@ -28,6 +34,9 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
       }
     });
 
+    // Event handler for adding a new contact.
+    // Updates the contact list after a successful addition
+    // and emits ContactListLoaded with the updated list.
     on<AddContact>((event, emit) async {
       if (state is ContactListLoaded) {
         final currentState = state as ContactListLoaded;
@@ -47,6 +56,9 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
       }
     });
 
+    // Event handler for deleting a contact.
+    // Updates the contact list after a successful deletion
+    // and emits ContactListLoaded with the updated list.
     on<DeleteContact>((event, emit) async {
       if (state is ContactListLoaded) {
         final currentState = state as ContactListLoaded;
@@ -67,9 +79,13 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
       }
     });
 
+    // Event handler for updating an existing contact.
+    // Updates the contact list after a successful update
+    // and emits ContactListLoaded with the updated list.
     on<UpdateContact>((event, emit) async {
       if (state is ContactListLoaded) {
         final currentState = state as ContactListLoaded;
+        emit(ContactListLoading());
         try {
           contactListLogger.i("LOG:attempting to update contact");
           await _contactRepository.updateContact(event.updatedContact);
@@ -86,6 +102,8 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
       }
     });
 
+    // Event handler for sorting the contact list.
+    // Sorts the list based on the provided sort field and direction.
     on<SortContacts>((event, emit) async {
       if (state is ContactListLoaded) {
         final currentState = state as ContactListLoaded;
@@ -114,6 +132,8 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
     });
   }
 
+  // Helper function to get the value of a contact property
+  // based on the specified sort field.
   dynamic _getSortValue(Contact contact, ContactListSortField sortField) {
     switch (sortField) {
       case ContactListSortField.lastName:
