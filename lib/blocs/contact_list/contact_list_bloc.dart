@@ -17,12 +17,11 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
   ContactListBloc({required ContactRepository contactRepository})
       : _contactRepository = contactRepository,
         super(ContactListInitial()) {
+
     // Event handler for loading contacts.
     // Emits ContactListLoading while fetching data,
     // then ContactListLoaded with the contacts if successful,
     // or ContactListError if an error occurs.
-
-
     on<LoadContacts>((event, emit) async {
       emit(ContactListLoading());
       try {

@@ -9,6 +9,8 @@ abstract class ContactListState extends Equatable {
 
 class ContactListInitial extends ContactListState {}
 
+class ContactListEmpty extends ContactListState {}
+
 class ContactListLoading extends ContactListState {}
 
 class ContactListLoaded extends ContactListState {

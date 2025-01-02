@@ -45,7 +45,7 @@ class ContactRepository {
         }
       } else {
         // 3. Initialize with dummy data if the file doesn't exist
-        contactRepoLogger.i("No file found.  Initializing with dummy data...");
+        contactRepoLogger.i("LOG: No file found.  Initializing with dummy data...");
         // Add some dummy contacts to _contacts
         _contacts.addAll(InMemoryContactRepository.createDummyContacts());
 
@@ -53,7 +53,7 @@ class ContactRepository {
         await saveContacts(_contacts);
       }
     } catch (e) {
-      contactRepoLogger.e("Error initializing storage: $e");
+      contactRepoLogger.e("LOG: Error initializing storage: $e");
       // Fallback to in-memory data
       contactRepoLogger
           .i("Initializing with dummy data due to initialization error...");
@@ -69,7 +69,7 @@ class ContactRepository {
       final String jsonString = jsonEncode(contacts);
       await file.writeAsString(jsonString);
     } catch (e) {
-      contactRepoLogger.e("Error saving contacts: $e");
+      contactRepoLogger.e("LOG: Error saving contacts: $e");
     }
   }
 

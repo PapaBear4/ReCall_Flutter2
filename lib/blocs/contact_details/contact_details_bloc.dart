@@ -18,7 +18,7 @@ class ContactDetailsBloc
         super(ContactDetailsInitial()) {
     on<LoadContact>((event, emit) async {
       contactDetailLogger.i(
-          "Loading contact with ID: ${event.contactId} in ContactDetailsBloc"); // <-- Add this
+          "LOG: Loading contact with ID: ${event.contactId} in ContactDetailsBloc"); // <-- Add this
       emit(ContactDetailsLoading());
       try {
         final contact = await _contactRepository
