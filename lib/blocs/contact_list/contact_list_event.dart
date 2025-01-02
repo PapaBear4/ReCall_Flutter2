@@ -9,6 +9,7 @@ abstract class ContactListEvent extends Equatable {
   List<Object> get props => [];
 }
 
+
 // Event to load the initial list of contacts.
 class LoadContacts extends ContactListEvent {}
 
@@ -58,5 +59,9 @@ class SortContacts extends ContactListEvent {
 }
 
 // Enum representing the different fields that can be used for sorting.
-enum ContactListSortField { lastName, birthday, contactFrequency, lastContacted }
-
+enum ContactListSortField {
+  lastName,
+  birthday,
+  contactFrequency,
+  lastContacted
+}

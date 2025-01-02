@@ -45,7 +45,7 @@ class ContactRepository {
         }
       } else {
         // 3. Initialize with dummy data if the file doesn't exist
-        contactRepoLogger.i("Initializing with dummy data...");
+        contactRepoLogger.i("No file found.  Initializing with dummy data...");
         // Add some dummy contacts to _contacts
         _contacts.addAll(InMemoryContactRepository.createDummyContacts());
 
