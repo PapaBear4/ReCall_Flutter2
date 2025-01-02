@@ -35,41 +35,25 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
         emit(ContactListError(e.toString()));
       }
     });
-/*
-    // Event handler for adding a new contact.
-    // Updates the contact list after a successful addition
-    // and emits ContactListLoaded with the updated list.
-    on<AddContact>((event, emit) async {
-      if (state is ContactListLoaded) {
-        final currentState = state as ContactListLoaded;
-        try {
-          contactListLogger.i("LOG:Attempting to add contact");
-          await _contactRepository.addContact(event.contact);
-          contactListLogger.i("LOG:Contact added");
-          final updatedContacts = await _contactRepository.loadContacts();
-          emit(ContactListLoaded(
-              contacts: updatedContacts,
-              sortField: currentState.sortField,
-              ascending: currentState.ascending));
-        } catch (e) {
-          emit(ContactListError(e.toString()));
-          contactListLogger.i("LOG:Error adding contact: $e");
-        }
-      }
-    });
+
 
     // Event handler for deleting a contact.
     // Updates the contact list after a successful deletion
     // and emits ContactListLoaded with the updated list.
     on<DeleteContact>((event, emit) async {
+      contactListLogger.i("LOG: delete initiated, event = $event");
       if (state is ContactListLoaded) {
         final currentState = state as ContactListLoaded;
+        contactListLogger.i("LOG: current state saved");
+        emit(ContactListLoading());
+        contactListLogger.i("LOG: state is now Loading");
         try {
           contactListLogger
-              .i("Attempting to delete contact ${event.contactId}");
+              .i("LOG: Attempting to delete contact ${event.contactId}");
           await _contactRepository.deleteContact(event.contactId);
           contactListLogger.i("LOG:Contact deleted");
           final updatedContacts = await _contactRepository.loadContacts();
+          contactListLogger.i("LOG updatedContacts: $updatedContacts");
           emit(ContactListLoaded(
               contacts: updatedContacts,
               sortField: currentState.sortField,
@@ -79,7 +63,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           contactListLogger.i("LOG:error deleting contact");
         }
       }
-    });*/
+    });
 
     // Event handler for updating an existing contact.
     // Updates the contact list after a successful update
@@ -104,9 +88,8 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
 
     // contact_list_bloc.dart
     on<ContactUpdated>((event, emit) async {
-        add(LoadContacts()); // Call LoadContacts again to refresh the data
+      add(LoadContacts()); // Call LoadContacts again to refresh the data
     });
-
 
     // Event handler for sorting the contact list.
     // Sorts the list based on the provided sort field and direction.
@@ -153,3 +136,27 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
     }
   }
 }
+
+/*
+    // Event handler for adding a new contact.
+    // Updates the contact list after a successful addition
+    // and emits ContactListLoaded with the updated list.
+    on<AddContact>((event, emit) async {
+      if (state is ContactListLoaded) {
+        final currentState = state as ContactListLoaded;
+        try {
+          contactListLogger.i("LOG:Attempting to add contact");
+          await _contactRepository.addContact(event.contact);
+          contactListLogger.i("LOG:Contact added");
+          final updatedContacts = await _contactRepository.loadContacts();
+          emit(ContactListLoaded(
+              contacts: updatedContacts,
+              sortField: currentState.sortField,
+              ascending: currentState.ascending));
+        } catch (e) {
+          emit(ContactListError(e.toString()));
+          contactListLogger.i("LOG:Error adding contact: $e");
+        }
+      }
+    });
+*/

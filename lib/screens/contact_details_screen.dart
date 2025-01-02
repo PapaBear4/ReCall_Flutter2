@@ -36,14 +36,14 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     _firstNameController = TextEditingController(text: 'First name');
     _lastNameController = TextEditingController(text: 'Last name');
     _birthday = null;
+    _localContact = null;
     //_frequency = ContactFrequency.daily;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final contactId = ModalRoute.of(context)!.settings.arguments as int;
-      contactDetailScreenLogger.i(
-          "LOG: Received contact ID in ContactDetailsScreen: $contactId"); // <-- Add this line
+      //contactDetailScreenLogger          .i("LOG: Received request for ID: $contactId"); // <-- Add this line
       context.read<ContactDetailsBloc>().add(LoadContact(contactId));
-      contactDetailScreenLogger.i("LOG: ContactDetailsBloc is loaded");
+      //contactDetailScreenLogger.i("LOG: Loaded: ");
     });
   }
 
@@ -113,14 +113,15 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             return const Center(child: CircularProgressIndicator());
           } else if (state is ContactDetailsLoaded) {
             // If the state is ContactDetailsLoaded, populate the form with contact data.
-            _localContact ??= state.contact; // Initialize localContact if null
-
+            _localContact = state.contact; // Initialize localContact if null
+            //contactListLogger.i("LOG: state is $state.contact");
+            //contactListLogger.i("LOG: loaded: $_localContact");
             _firstNameController.text = _localContact!.firstName;
             _lastNameController.text = _localContact!.lastName;
             _birthday = _localContact!.birthday;
             //_frequency = state.contact.frequency;
-            contactDetailScreenLogger
-                .i("LOG: into _buildForm ${state.contact}");
+            //contactDetailScreenLogger
+            //    .i("LOG: into _buildForm ${state.contact}");
             // If the contact details are loaded, build the form with the contact data.
             return _buildForm(state.contact);
           } else if (state is ContactDetailsError) {
@@ -134,8 +135,9 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       ),
       bottomNavigationBar: BottomAppBar(
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: <Widget>[
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const SizedBox(width: 0), // Empty space on the left
             IconButton(
               icon: const Icon(Icons.save),
               onPressed: () {
@@ -147,11 +149,11 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                     .i("LOG: current state: $currentState");
                 if (currentState is ContactDetailsLoaded) {
                   final updatedContact = _localContact!.copyWith(
-                    //firstName: _firstNameController.text,
-                    //lastName: _lastNameController.text,
-                    //birthday: _birthday,
-                    ////frequency: _frequency,
-                  );
+                      //firstName: _firstNameController.text,
+                      //lastName: _lastNameController.text,
+                      //birthday: _birthday,
+                      ////frequency: _frequency,
+                      );
                   contactDetailScreenLogger
                       .i("LOG: new contact: $updatedContact");
                   context
@@ -166,6 +168,40 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                 }
               },
             ),
+            IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text('Confirm Deletion'),
+                        content: const Text(
+                            'Are you sure you want to delete this contact?'),
+                        actions: <Widget>[
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop(); // Close the dialog
+                            },
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              contactDetailScreenLogger.i(
+                                  "LOG: Delete button pressed for ${_localContact!.id}");
+                              context
+                                  .read<ContactListBloc>()
+                                  .add(DeleteContact(_localContact!.id));
+                              Navigator.of(context).pop(); // Close the dialog
+                              Navigator.of(context).pop(); // Navigate back
+                            },
+                            child: const Text('Delete'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                }),
           ],
         ),
       ),
@@ -175,7 +211,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   Widget _buildForm(Contact contact) {
     // This function builds the form for editing contact details.
     // Builds the form for editing contact details.
-    contactDetailScreenLogger.i("LOG:_selectedDate in _buildForm: $_birthday");
+    //contactDetailScreenLogger.i("LOG:_selectedDate in _buildForm: $_birthday");
     return Form(
       key: _formKey,
       child: Padding(
@@ -190,8 +226,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               decoration: const InputDecoration(labelText: 'First Name'),
               onChanged: (value) {
                 // Update contact details in the state
-                _localContact =
-                    _localContact!.copyWith(firstName: _firstNameController.text);
+                _localContact = _localContact!
+                    .copyWith(firstName: _firstNameController.text);
                 _hasUnsavedChanges = true;
               },
             ),

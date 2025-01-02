@@ -60,7 +60,7 @@ class ContactListScreen extends StatelessWidget {
                         onTap: () {
                           // Navigate to the contact details screen
                           contactListScreenLogger.i(
-                              'LOG: Navigating to details for contact ID: ${contact.id}'); // <-- Add this line
+                              'LOG: Navigating to details for ID: ${contact.id}'); // <-- Add this line
                           Navigator.pushNamed(
                             context,
                             '/contactDetails',
