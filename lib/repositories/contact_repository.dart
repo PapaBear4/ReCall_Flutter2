@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'dart:convert';
@@ -16,7 +17,7 @@ class ContactRepository {
 
   /// Updates an existing contact in the repository.
   ///
-  /// Finds the contact with the matching ID and replaces it with the 
+  /// Finds the contact with the matching ID and replaces it with the
   /// `updatedContact` object.
   Future<void> updateContact(Contact updatedContact) async {
     final index =
@@ -28,7 +29,7 @@ class ContactRepository {
 
   /// Retrieves a contact from the repository by its ID.
   ///
-  /// Searches the contact list for a contact with the given `contactId` and 
+  /// Searches the contact list for a contact with the given `contactId` and
   /// returns it. Throws an exception if no contact is found with that ID.
   Future<Contact> getContactById(int contactId) async {
     return _contacts.firstWhere((contact) => contact.id == contactId);
@@ -74,7 +75,7 @@ class ContactRepository {
 
   /// Saves the current list of contacts to persistent storage.
   ///
-  /// Encodes the contacts as JSON and writes them to a file in the 
+  /// Encodes the contacts as JSON and writes them to a file in the
   /// application's documents directory.
   Future<void> saveContacts(List<Contact> contacts) async {
     //Save contacts to a file
@@ -90,7 +91,7 @@ class ContactRepository {
 
   /// Deletes a contact from the repository by its ID.
   ///
-  /// Removes the contact with the matching `contactId` from the list and 
+  /// Removes the contact with the matching `contactId` from the list and
   /// updates the persistent storage.
   Future<void> deleteContact(int contactId) async {
     contactRepoLogger.i("LOG: ID for deltion: $contactId");
@@ -103,26 +104,28 @@ class ContactRepository {
       contactRepoLogger.i("LOG:Error saving contacts: $e");
     }
   }
-}
 
+  /// Adds a new contact to the repository.
+  ///
+  /// Generates a unique ID for the new contact, adds it to the list, and
+  /// updates the persistent storage.
+  Future<void> addContact(Contact contact) async {
+    // Generate a unique ID for the new contact
+    int nextId = 0;
+    if (_contacts.isNotEmpty) {
+      nextId = _contacts.map((c) => c.id).reduce(max) + 1;
+    }
+    final newContact = contact.copyWith(id: nextId);
 
-/*
-Future<void> addContact(Contact contact) async {
-  final contacts = await loadContacts();
-  int nextId = 1;
-  if (contacts.isNotEmpty) {
-    nextId = contacts.map((c) => c.id).reduce(max) + 1;
-  }
-  final newContact = contact.copyWith(id: nextId);
-  contacts.add(newContact);
-  try {
-    await saveContacts(contacts);
-  } catch (e) {
-    // Handle the error appropriately, e.g., log the error, show a message to the user.
-    contactRepoLogger.i("LOG:Error saving contacts: $e");
+    // Add the new contact to the list and save
+    _contacts.add(newContact);
+    try {
+      await saveContacts(_contacts);
+    } catch (e) {
+      contactRepoLogger.e("LOG: Error saving contacts: $e");
+    }
   }
 }
-*/
 
 class InMemoryContactRepository {
   static List<Contact> createDummyContacts() {
