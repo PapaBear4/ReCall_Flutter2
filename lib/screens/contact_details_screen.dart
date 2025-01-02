@@ -25,6 +25,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   late TextEditingController _lastNameController;
   late DateTime? _birthday;
   //ContactFrequency? _frequency;
+  Contact? _localContact; // Local variable to hold temporary state
   bool _hasUnsavedChanges = false;
   // ...other controllers
 
@@ -112,9 +113,11 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             return const Center(child: CircularProgressIndicator());
           } else if (state is ContactDetailsLoaded) {
             // If the state is ContactDetailsLoaded, populate the form with contact data.
-            _firstNameController.text = state.contact.firstName;
-            _lastNameController.text = state.contact.lastName;
-            _birthday = state.contact.birthday;
+            _localContact ??= state.contact; // Initialize localContact if null
+
+            _firstNameController.text = _localContact!.firstName;
+            _lastNameController.text = _localContact!.lastName;
+            _birthday = _localContact!.birthday;
             //_frequency = state.contact.frequency;
             contactDetailScreenLogger
                 .i("LOG: into _buildForm ${state.contact}");
@@ -143,11 +146,11 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                 contactDetailScreenLogger
                     .i("LOG: current state: $currentState");
                 if (currentState is ContactDetailsLoaded) {
-                  final updatedContact = currentState.contact.copyWith(
-                    firstName: _firstNameController.text,
-                    lastName: _lastNameController.text,
-                    birthday: _birthday,
-                    //frequency: _frequency,
+                  final updatedContact = _localContact!.copyWith(
+                    //firstName: _firstNameController.text,
+                    //lastName: _lastNameController.text,
+                    //birthday: _birthday,
+                    ////frequency: _frequency,
                   );
                   contactDetailScreenLogger
                       .i("LOG: new contact: $updatedContact");
@@ -187,6 +190,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               decoration: const InputDecoration(labelText: 'First Name'),
               onChanged: (value) {
                 // Update contact details in the state
+                _localContact =
+                    _localContact!.copyWith(firstName: _firstNameController.text);
                 _hasUnsavedChanges = true;
               },
             ),
@@ -195,6 +200,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               controller: _lastNameController,
               decoration: const InputDecoration(labelText: 'Last Name'),
               onChanged: (value) {
+                _localContact =
+                    _localContact!.copyWith(lastName: _lastNameController.text);
                 _hasUnsavedChanges = true;
                 // Update contact details in the state
               },
@@ -215,9 +222,11 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                 );
 
                 if (picked != null) {
-                  context
-                      .read<ContactDetailsBloc>()
-                      .add(UpdateBirthday(picked, contact.id));
+                  setState(() {
+                    _localContact = _localContact!.copyWith(birthday: picked);
+                    _birthday = picked;
+                  });
+                  //context.read<ContactDetailsBloc>().add(UpdateBirthday(picked, contact.id));
                   _hasUnsavedChanges = true;
                 }
               },
