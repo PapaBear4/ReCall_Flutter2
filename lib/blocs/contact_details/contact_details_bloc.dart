@@ -1,6 +1,5 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
 import 'package:recall/models/contact.dart';
 import 'package:recall/repositories/contact_repository.dart';
 import 'package:logger/logger.dart';
@@ -9,17 +8,21 @@ part 'contact_details_event.dart';
 part 'contact_details_state.dart';
 
 var contactDetailLogger = Logger();
-
+// Bloc responsible for managing the state of Contact Details screen
 class ContactDetailsBloc
     extends Bloc<ContactDetailsEvent, ContactDetailsState> {
+  // Repository for interacting with contact data
   final ContactRepository _contactRepository;
 
+  // Constructor initializes the bloc with the contact repository and initial state
   ContactDetailsBloc({required ContactRepository contactRepository})
       : _contactRepository = contactRepository,
         super(ContactDetailsInitial()) {
+          
+    // Event handler for loading contact details
     on<LoadContact>((event, emit) async {
       contactDetailLogger.i(
-          "Loading contact with ID: ${event.contactId} in ContactDetailsBloc"); // <-- Add this
+          "LOG: Loading contact with ID: ${event.contactId} in ContactDetailsBloc"); // <-- Add this
       emit(ContactDetailsLoading());
       try {
         final contact = await _contactRepository
@@ -30,6 +33,7 @@ class ContactDetailsBloc
       }
     });
 
+    // Event handler for updating contact details
     on<UpdateContactDetails>((event, emit) async {
       if (state is ContactDetailsLoaded) {
         emit(ContactDetailsLoading());
@@ -37,13 +41,6 @@ class ContactDetailsBloc
           contactDetailLogger.i("LOG:try and update details");
           await _contactRepository.updateContact(event.updatedContact);
           contactDetailLogger.i("LOG:update successful");
-          //reload with updated data??
-          /* I'm not sure about this.  I think I may need to have local
-          storage implemented before I do it like this.  For now I'm going 
-          to leave it emitting Loaded with event.updatedContact.
-          final updatedContact =
-              await _contactRepository.getContactById(event.updatedContact.id);
-          */
           emit(ContactDetailsLoaded(
               event.updatedContact)); // Emit the updated state
         } catch (e) {
@@ -53,6 +50,7 @@ class ContactDetailsBloc
       }
     });
 
+    // Event handler for updating birthday specifically
     on<UpdateBirthday>((event, emit) async {
       if (state is ContactDetailsLoaded) {
         final currentState = state as ContactDetailsLoaded;

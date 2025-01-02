@@ -45,6 +45,9 @@ class UpdateContact extends ContactListEvent {
   List<Object> get props => [updatedContact];
 }
 
+// Event for when a single contact gets updated
+class ContactUpdated extends ContactListEvent {}
+
 // Event to sort the contact list by a specific field.
 class SortContacts extends ContactListEvent {
   final ContactListSortField sortField;
@@ -58,5 +61,9 @@ class SortContacts extends ContactListEvent {
 }
 
 // Enum representing the different fields that can be used for sorting.
-enum ContactListSortField { lastName, birthday, contactFrequency, lastContacted }
-
+enum ContactListSortField {
+  lastName,
+  birthday,
+  contactFrequency,
+  lastContacted
+}
