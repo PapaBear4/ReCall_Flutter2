@@ -73,8 +73,24 @@ class ContactRepository {
     }
   }
 
-  // other methods (deleteContact, getContactById, loadContacts, etc.)
+    Future<void> deleteContact(int contactId) async {
+    // 1. Load existing contacts from storage.
+    final contacts = await loadContacts();
+    // 2. Remove the contact with the matching ID.
+    contacts.removeWhere((contact) => contact.id == contactId);
+    try {
+      await saveContacts(contacts);
+    } catch (e) {
+      // Handle the error appropriately, e.g., log the error, show a message to the user.
+      contactRepoLogger.i("LOG:Error saving contacts: $e");
+    }
+  }
+
 }
+
+
+  // other methods (deleteContact, getContactById, loadContacts, etc.)
+
 
 /*
 Future<void> addContact(Contact contact) async {
@@ -92,23 +108,8 @@ Future<void> addContact(Contact contact) async {
     contactRepoLogger.i("LOG:Error saving contacts: $e");
   }
 }
-
-  Future<void> deleteContact(int contactId) async {
-    // 1. Load existing contacts from storage.
-    final contacts = await loadContacts();
-    // 2. Remove the contact with the matching ID.
-    contacts.removeWhere((contact) => contact.id == contactId);
-    try {
-      await saveContacts(contacts);
-    } catch (e) {
-      // Handle the error appropriately, e.g., log the error, show a message to the user.
-      contactRepoLogger.i("LOG:Error saving contacts: $e");
-    }
-  }
-
-
-}
 */
+
 
 class InMemoryContactRepository {
   static List<Contact> createDummyContacts() {

@@ -21,8 +21,8 @@ class ContactDetailsBloc
           
     // Event handler for loading contact details
     on<LoadContact>((event, emit) async {
-      contactDetailLogger.i(
-          "LOG: Loading contact with ID: ${event.contactId} in ContactDetailsBloc"); // <-- Add this
+      //contactDetailLogger.i(
+      //    "LOG: Loading contact with ID: ${event.contactId} in ContactDetailsBloc"); // <-- Add this
       emit(ContactDetailsLoading());
       try {
         final contact = await _contactRepository
@@ -38,13 +38,13 @@ class ContactDetailsBloc
       if (state is ContactDetailsLoaded) {
         emit(ContactDetailsLoading());
         try {
-          contactDetailLogger.i("LOG:try and update details");
+          //contactDetailLogger.i("LOG:try and update details");
           await _contactRepository.updateContact(event.updatedContact);
-          contactDetailLogger.i("LOG:update successful");
+          //contactDetailLogger.i("LOG:update successful");
           emit(ContactDetailsLoaded(
               event.updatedContact)); // Emit the updated state
         } catch (e) {
-          contactDetailLogger.i("LOG:update failed");
+          contactDetailLogger.e("LOG:update failed");
           emit(ContactDetailsError(e.toString()));
         }
       }
