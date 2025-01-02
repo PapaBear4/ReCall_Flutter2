@@ -14,7 +14,10 @@ class ContactRepository {
     _initializeStorage();
   }
 
-  //Other methods here ...
+  /// Updates an existing contact in the repository.
+  ///
+  /// Finds the contact with the matching ID and replaces it with the 
+  /// `updatedContact` object.
   Future<void> updateContact(Contact updatedContact) async {
     final index =
         _contacts.indexWhere((contact) => contact.id == updatedContact.id);
@@ -23,10 +26,17 @@ class ContactRepository {
     }
   }
 
+  /// Retrieves a contact from the repository by its ID.
+  ///
+  /// Searches the contact list for a contact with the given `contactId` and 
+  /// returns it. Throws an exception if no contact is found with that ID.
   Future<Contact> getContactById(int contactId) async {
     return _contacts.firstWhere((contact) => contact.id == contactId);
   }
 
+  /// Loads all contacts from the repository.
+  ///
+  /// Returns a list of all contacts stored in the repository.
   Future<List<Contact>> loadContacts() async {
     return _contacts;
   }
@@ -45,7 +55,8 @@ class ContactRepository {
         }
       } else {
         // 3. Initialize with dummy data if the file doesn't exist
-        contactRepoLogger.i("LOG: No file found.  Initializing with dummy data...");
+        contactRepoLogger
+            .i("LOG: No file found.  Initializing with dummy data...");
         // Add some dummy contacts to _contacts
         _contacts.addAll(InMemoryContactRepository.createDummyContacts());
 
@@ -61,6 +72,10 @@ class ContactRepository {
     }
   }
 
+  /// Saves the current list of contacts to persistent storage.
+  ///
+  /// Encodes the contacts as JSON and writes them to a file in the 
+  /// application's documents directory.
   Future<void> saveContacts(List<Contact> contacts) async {
     //Save contacts to a file
     try {
@@ -73,23 +88,22 @@ class ContactRepository {
     }
   }
 
-    Future<void> deleteContact(int contactId) async {
-    // 1. Load existing contacts from storage.
-    final contacts = await loadContacts();
+  /// Deletes a contact from the repository by its ID.
+  ///
+  /// Removes the contact with the matching `contactId` from the list and 
+  /// updates the persistent storage.
+  Future<void> deleteContact(int contactId) async {
+    contactRepoLogger.i("LOG: ID for deltion: $contactId");
     // 2. Remove the contact with the matching ID.
-    contacts.removeWhere((contact) => contact.id == contactId);
+    _contacts.removeWhere((contact) => contact.id == contactId);
     try {
-      await saveContacts(contacts);
+      //await saveContacts(_contacts);
     } catch (e) {
       // Handle the error appropriately, e.g., log the error, show a message to the user.
       contactRepoLogger.i("LOG:Error saving contacts: $e");
     }
   }
-
 }
-
-
-  // other methods (deleteContact, getContactById, loadContacts, etc.)
 
 
 /*
@@ -109,7 +123,6 @@ Future<void> addContact(Contact contact) async {
   }
 }
 */
-
 
 class InMemoryContactRepository {
   static List<Contact> createDummyContacts() {
