@@ -9,7 +9,6 @@ abstract class ContactListEvent extends Equatable {
   List<Object> get props => [];
 }
 
-
 // Event to load the initial list of contacts.
 class LoadContacts extends ContactListEvent {}
 
@@ -45,6 +44,9 @@ class UpdateContact extends ContactListEvent {
   // The updatedContact object is used for equality comparison.
   List<Object> get props => [updatedContact];
 }
+
+// Event for when a single contact gets updated
+class ContactUpdated extends ContactListEvent {}
 
 // Event to sort the contact list by a specific field.
 class SortContacts extends ContactListEvent {

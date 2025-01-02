@@ -102,6 +102,12 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
       }
     });
 
+    // contact_list_bloc.dart
+    on<ContactUpdated>((event, emit) async {
+        add(LoadContacts()); // Call LoadContacts again to refresh the data
+    });
+
+
     // Event handler for sorting the contact list.
     // Sorts the list based on the provided sort field and direction.
     on<SortContacts>((event, emit) async {

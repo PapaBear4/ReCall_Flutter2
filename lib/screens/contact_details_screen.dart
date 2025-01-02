@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:recall/blocs/contact_details/contact_details_bloc.dart';
+import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
 import 'package:recall/models/contact.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
@@ -24,6 +25,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   late TextEditingController _lastNameController;
   late DateTime? _birthday;
   //ContactFrequency? _frequency;
+  bool _hasUnsavedChanges = false;
   // ...other controllers
 
   @override
@@ -56,7 +58,41 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   // Builds the UI of the ContactDetailsScreen.
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Contact Details')),
+      appBar: AppBar(
+        title: const Text('Contact Details'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            // If there are unsaved changes, show a confirmation dialog
+            if (_hasUnsavedChanges) {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Discard Changes?'),
+                  content: const Text(
+                      'You have unsaved changes. Are you sure you want to discard them?'),
+                  actions: <Widget>[
+                    TextButton(
+                      onPressed: () =>
+                          Navigator.of(context).pop(), // Close the dialog
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(); // Close the dialog
+                        Navigator.of(context).pop(); // Navigate back
+                      },
+                      child: const Text('Discard'),
+                    ),
+                  ],
+                ),
+              );
+            } else {
+              Navigator.of(context).pop();
+            }
+          },
+        ),
+      ),
       body: BlocConsumer<ContactDetailsBloc, ContactDetailsState>(
         // BlocConsumer listens for state changes and rebuilds the UI or performs actions accordingly.
         listener: (context, state) {
@@ -104,7 +140,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                 // When the save button is pressed, update the contact details in the Bloc
                 // and navigate back to the previous screen.
                 final currentState = context.read<ContactDetailsBloc>().state;
-                contactDetailScreenLogger.i("LOG: current state: $currentState");
+                contactDetailScreenLogger
+                    .i("LOG: current state: $currentState");
                 if (currentState is ContactDetailsLoaded) {
                   final updatedContact = currentState.contact.copyWith(
                     firstName: _firstNameController.text,
@@ -121,7 +158,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                     const SnackBar(content: Text('Changes saved')),
                   );
                   // Navigate back to the contact list
-                  //Navigator.of(context).pop();
+                  context.read<ContactListBloc>().add(ContactUpdated());
+                  Navigator.of(context).pop();
                 }
               },
             ),
@@ -149,6 +187,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               decoration: const InputDecoration(labelText: 'First Name'),
               onChanged: (value) {
                 // Update contact details in the state
+                _hasUnsavedChanges = true;
               },
             ),
             TextFormField(
@@ -156,6 +195,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               controller: _lastNameController,
               decoration: const InputDecoration(labelText: 'Last Name'),
               onChanged: (value) {
+                _hasUnsavedChanges = true;
                 // Update contact details in the state
               },
             ),
@@ -178,6 +218,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   context
                       .read<ContactDetailsBloc>()
                       .add(UpdateBirthday(picked, contact.id));
+                  _hasUnsavedChanges = true;
                 }
               },
               child: Text(_birthday == null
