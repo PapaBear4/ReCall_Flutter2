@@ -8,7 +8,6 @@ import 'package:logger/logger.dart';
 
 var contactDetailScreenLogger = Logger();
 
-// Widget representing the screen for viewing and editing contact details.
 class ContactDetailsScreen extends StatefulWidget {
   final int contactId;
 
@@ -18,9 +17,8 @@ class ContactDetailsScreen extends StatefulWidget {
   State<ContactDetailsScreen> createState() => _ContactDetailsScreenState();
 }
 
-// State class for managing the ContactDetailsScreen widget.
 class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
-  final _formKey = GlobalKey<_ContactDetailsScreenState>();
+  final _formKey = GlobalKey<FormState>();
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
   late Contact _localContact;
@@ -28,10 +26,13 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   // ...other controllers
 
   @override
-  // Initializes the state of the widget, setting up controllers and loading initial contact data.
+  // Initialize state, controllers, and load contact data
   void initState() {
     super.initState();
-    //initialize local variable for the screen with default values
+
+    _firstNameController = TextEditingController();
+    _lastNameController = TextEditingController();
+
     _localContact = Contact(
       id: 0,
       firstName: '',
@@ -40,21 +41,29 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       frequency: ContactFrequency.never,
       lastContacted: null,
     );
-    //initialize name controllers with default values
-    _firstNameController = TextEditingController(text: _localContact.firstName);
-    _lastNameController = TextEditingController(text: _localContact.lastName);
 
-    //callback to load contacts into context
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final contactId = ModalRoute.of(context)!.settings.arguments as int;
-      //contactDetailScreenLogger          .i("LOG: Received request for ID: $contactId");
       context.read<ContactDetailsBloc>().add(LoadContact(contactId));
-      //contactDetailScreenLogger.i("LOG: Loaded: ");
     });
   }
 
   @override
-  // Disposes of controllers when the widget is removed from the tree.
+  // Update UI when dependencies change, especially when contact details are loaded
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final state = context.watch<ContactDetailsBloc>().state;
+    if (state is ContactDetailsLoaded) {
+      _localContact = state.contact;
+      _firstNameController.text = _localContact.firstName;
+      _lastNameController.text = _localContact.lastName;
+      _hasUnsavedChanges = false;
+    }
+  }
+
+  @override
+  // Dispose of controllers to prevent memory leaks
   void dispose() {
     _firstNameController.dispose();
     _lastNameController.dispose();
@@ -62,7 +71,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   }
 
   @override
-  // Builds the UI of the ContactDetailsScreen.
+  // Build the contact details screen UI
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -70,7 +79,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            // If there are unsaved changes, show a confirmation dialog
             if (_hasUnsavedChanges) {
               showDialog(
                 context: context,
@@ -81,13 +89,12 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   actions: <Widget>[
                     TextButton(
                       onPressed: () =>
-                          Navigator.of(context).pop(), // Close the dialog
+                          Navigator.of(context).pop(),
                       child: const Text('Cancel'),
                     ),
                     TextButton(
                       onPressed: () {
-                        Navigator.of(context).pop(); // Close the dialog
-                        Navigator.of(context).pop(); // Navigate back
+                        Navigator.of(context).pop(); 
                       },
                       child: const Text('Discard'),
                     ),
@@ -101,42 +108,21 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         ),
       ),
       body: BlocConsumer<ContactDetailsBloc, ContactDetailsState>(
-        // BlocConsumer listens for state changes and rebuilds the UI or performs actions accordingly.
         listener: (context, state) {
-          // This listener is called whenever the state of the ContactDetailsBloc changes.
-          // This listener handles events emitted by the ContactDetailsBloc
-          // and updates the UI accordingly. In this case, it shows a snackbar if there's an error.
           if (state is ContactDetailsError) {
             ScaffoldMessenger.of(context)
-                .showSnackBar(SnackBar(content: Text(state.message)));
+                .showSnackBar(SnackBar(content: Text(state.message)));          
           }
         },
         builder: (context, state) {
-          // This builder function is responsible for building the UI based on the current state.
           if (state is ContactDetailsLoading) {
-            // If the state is ContactDetailsLoading, show a CircularProgressIndicator.
-            // While the contact details are loading, show a CircularProgressIndicator.
             return const Center(child: CircularProgressIndicator());
           } else if (state is ContactDetailsLoaded) {
-            // If the state is ContactDetailsLoaded, populate the form with contact data.
-            // even if the passed contactId is zero the underlying methods should have
-            // returned an empty contact that can be updated here.
-            _localContact = state.contact; // Initialize localContact if null
-            //contactListLogger.i("LOG: state is $state.contact");
-            //contactListLogger.i("LOG: loaded: $_localContact");
-            _firstNameController.text = _localContact.firstName;
-            _lastNameController.text = _localContact.lastName;
-            //_frequency = state.contact.frequency;
-            //contactDetailScreenLogger
-            //    .i("LOG: into _buildForm ${state.contact}");
-            // If the contact details are loaded, build the form with the contact data.
-            return _buildForm(_localContact);
+            return _buildForm();
           } else if (state is ContactDetailsError) {
-            // If the state is ContactDetailsError, display an error message.
-            // If there's an error loading the contact details, display an error message.
+            
             return Center(child: Text(state.message));
           }
-          // Default case: Return an empty container if the state is not recognized.
           return Container();
         },
       ),
@@ -144,13 +130,10 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const SizedBox(width: 0), // Empty space on the left
+            const SizedBox(width: 0),
             IconButton(
               icon: const Icon(Icons.save),
               onPressed: () {
-                // Save Button: When pressed, updates the contact with the new values.
-                // When the save button is pressed, update the contact details in the Bloc
-                // and navigate back to the previous screen.
                 final currentState = context.read<ContactDetailsBloc>().state;
                 contactDetailScreenLogger
                     .i("LOG: current state: $currentState");
@@ -164,15 +147,10 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Changes saved')),
                   );
-                  // Navigate back to the contact list
-                  if (_localContact.id == 0) {
-                    // if ID is zero that means it's a new contact and
-                    // AddContact needs to be called
-                    context
-                        .read<ContactListBloc>()
-                        .add(AddContact(updatedContact));
+                  if (_localContact.id == 0) {                    
+                    context.read<ContactListBloc>()
+                        .add(AddContact(updatedContact));                    
                   } else {
-                    // if it's anything other than zero update the contact
                     context.read<ContactListBloc>().add(ContactUpdated());
                   }
                   Navigator.of(context).pop();
@@ -192,8 +170,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                         actions: <Widget>[
                           TextButton(
                             onPressed: () {
-                              Navigator.of(context).pop(); // Close the dialog
-                            },
+                              Navigator.of(context).pop();  // Close the dialog
+                            },                            
                             child: const Text('Cancel'),
                           ),
                           TextButton(
@@ -202,7 +180,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                                   "LOG: Delete button pressed for ${_localContact.id}");
                               context
                                   .read<ContactListBloc>()
-                                  .add(DeleteContact(_localContact.id));
+                                  .add(DeleteContact(_localContact.id));                                
                               Navigator.of(context).pop(); // Close the dialog
                               Navigator.of(context).pop(); // Navigate back
                             },
@@ -219,66 +197,76 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     );
   }
 
-  Widget _buildForm(Contact contact) {
-    // This function builds the form for editing contact details.
-    // Builds the form for editing contact details.
-    //contactDetailScreenLogger.i("LOG:_selectedDate in _buildForm: $_birthday");
+  // Build the form for editing contact details
+  Widget _buildForm() {
     return Form(
       key: _formKey,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment:
-              CrossAxisAlignment.start, // Align items to the left
+              CrossAxisAlignment.start,
           children: <Widget>[
             TextFormField(
-              // Input field for the first name
               controller: _firstNameController,
               decoration: const InputDecoration(labelText: 'First Name'),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter a first name';
+                }
+                return null;
+              },
               onChanged: (value) {
-                // Update contact details in the state
+                _firstNameController.text = value;
+                contactDetailScreenLogger
+                    .i("LOG: OLD value ${_localContact.firstName}");                
                 setState(() {
-                  _localContact = _localContact.copyWith(
-                      firstName: _firstNameController.value.toString());
+                  _localContact = _localContact.copyWith(firstName: value);
                 });
+                contactDetailScreenLogger
+                    .i("LOG: new value ${_localContact.firstName}");
                 _hasUnsavedChanges = true;
               },
             ),
-            TextFormField(
-              // Input field for the last name
+            TextFormField(              
               controller: _lastNameController,
               decoration: const InputDecoration(labelText: 'Last Name'),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter a last name';
+                }
+                return null;
+              },
               onChanged: (value) {
-                _localContact =
-                    _localContact.copyWith(lastName: _lastNameController.text);
+                _lastNameController.text = value;
+                _localContact = _localContact.copyWith(lastName: value);
                 _hasUnsavedChanges = true;
-                // Update contact details in the state
               },
             ),
-            const SizedBox(height: 8.0), // Add vertical space
+            const SizedBox(height: 8.0),
             const Padding(
               padding: EdgeInsets.only(bottom: 8.0),
               child: Text('Birthday:'),
             ),
-            ElevatedButton(
-              // Button to select the birthday using a date picker
+            ElevatedButton(              
               onPressed: () async {
+                contactDetailScreenLogger
+                    .i("LOG: pre launch value ${_localContact.firstName}");
+
                 final DateTime? picked = await showDatePicker(
                   context: context,
                   initialDate: _localContact.birthday ?? DateTime.now(),
                   firstDate: DateTime(1900),
                   lastDate: DateTime.now(),
                 );
+                contactDetailScreenLogger
+                    .i("LOG: post launch value ${_localContact.firstName}");
 
                 if (picked != null && picked != _localContact.birthday) {
                   setState(() {
                     _localContact = _localContact.copyWith(birthday: picked);
-                    //_localContact.birthday = picked;
-                    context
-                        .read<ContactDetailsBloc>()
-                        .add(UpdateBirthday(picked, contact.id));
-                    _hasUnsavedChanges = true;
                   });
+                  _hasUnsavedChanges = true;
                 }
               },
               child: Text(_localContact.birthday == null
