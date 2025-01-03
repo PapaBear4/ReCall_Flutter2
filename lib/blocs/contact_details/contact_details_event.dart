@@ -16,13 +16,22 @@ class LoadContact extends ContactDetailsEvent {
   List<Object> get props => [contactId];
 }
 
+class SaveContactDetails extends ContactDetailsEvent {
+  final Contact updatedContact;
+
+  const SaveContactDetails(this.updatedContact);
+
+  @override
+  List<Object> get props => [updatedContact];
+}
+
 class UpdateContactDetails extends ContactDetailsEvent {
   final Contact updatedContact;
 
   const UpdateContactDetails(this.updatedContact);
 
   @override
-  List<Object> get props => [updatedContact];
+    List<Object> get props => [updatedContact];
 }
 
 // in contact_details_event.dart

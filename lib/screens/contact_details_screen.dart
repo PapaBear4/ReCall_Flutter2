@@ -57,20 +57,20 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       _localContact = state.contact;
       _firstNameController.text = _localContact.firstName;
       _lastNameController.text = _localContact.lastName;
-        if (_localContact.birthday != null) {
-          // Assuming you have a method to update your birthday picker
-          _updateBirthdayPicker(_localContact.birthday!); 
+      if (_localContact.birthday != null) {
+        // Assuming you have a method to update your birthday picker
+        _updateBirthdayPicker(_localContact.birthday!);
       }
     }
   }
 
   void _updateBirthdayPicker(DateTime date) {
-      // This is a placeholder. You'll need to implement the logic 
-      // to update the state of your birthday picker based on the 
-      // provided date.
-      // Example:
-      // _birthdayPickerController.text = DateFormat.yMd().format(date);
-      // _selectedBirthday = date;
+    // This is a placeholder. You'll need to implement the logic
+    // to update the state of your birthday picker based on the
+    // provided date.
+    // Example:
+    // _birthdayPickerController.text = DateFormat.yMd().format(date);
+    // _selectedBirthday = date;
   }
 
   @override
@@ -90,6 +90,9 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
+            context
+                .read<ContactDetailsBloc>()
+                .add(UpdateContactDetails(_localContact));
             if (_hasUnsavedChanges) {
               showDialog(
                 context: context,
@@ -99,13 +102,13 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                       'You have unsaved changes. Are you sure you want to discard them?'),
                   actions: <Widget>[
                     TextButton(
-                      onPressed: () =>
-                          Navigator.of(context).pop(),
+                      onPressed: () => Navigator.of(context).pop(),
                       child: const Text('Cancel'),
                     ),
                     TextButton(
                       onPressed: () {
-                        Navigator.of(context).pop(); 
+                        Navigator.of(context).pop(); //close dialog
+                        Navigator.of(context).pop(); //return to list
                       },
                       child: const Text('Discard'),
                     ),
@@ -122,7 +125,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         listener: (context, state) {
           if (state is ContactDetailsError) {
             ScaffoldMessenger.of(context)
-                .showSnackBar(SnackBar(content: Text(state.message)));          
+                .showSnackBar(SnackBar(content: Text(state.message)));
           }
         },
         builder: (context, state) {
@@ -131,7 +134,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           } else if (state is ContactDetailsLoaded) {
             return _buildForm();
           } else if (state is ContactDetailsError) {
-            
             return Center(child: Text(state.message));
           }
           return Container();
@@ -145,7 +147,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             IconButton(
               icon: const Icon(Icons.save),
               onPressed: () {
-
                 final currentState = context.read<ContactDetailsBloc>().state;
                 contactDetailScreenLogger
                     .i("LOG: current state: $currentState");
@@ -155,13 +156,14 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                       .i("LOG: new contact: $updatedContact");
                   context
                       .read<ContactDetailsBloc>()
-                      .add(UpdateContactDetails(updatedContact));
+                      .add(SaveContactDetails(updatedContact));
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Changes saved')),
                   );
-                  if (_localContact.id == 0) {                    
-                    context.read<ContactListBloc>()
-                        .add(AddContact(updatedContact));                    
+                  if (_localContact.id == 0) {
+                    context
+                        .read<ContactListBloc>()
+                        .add(AddContact(updatedContact));
                   } else {
                     context.read<ContactListBloc>().add(ContactUpdated());
                   }
@@ -182,8 +184,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                         actions: <Widget>[
                           TextButton(
                             onPressed: () {
-                              Navigator.of(context).pop();  // Close the dialog
-                            },                            
+                              Navigator.of(context).pop(); // Close the dialog
+                            },
                             child: const Text('Cancel'),
                           ),
                           TextButton(
@@ -192,7 +194,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                                   "LOG: Delete button pressed for ${_localContact.id}");
                               context
                                   .read<ContactListBloc>()
-                                  .add(DeleteContact(_localContact.id));                                
+                                  .add(DeleteContact(_localContact.id));
                               Navigator.of(context).pop(); // Close the dialog
                               Navigator.of(context).pop(); // Navigate back
                             },
@@ -216,8 +218,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             TextFormField(
               controller: _firstNameController,
@@ -229,17 +230,13 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                 return null;
               },
               onChanged: (value) {
-                contactDetailScreenLogger
-                    .i("LOG: OLD value ${_localContact.firstName}");                
                 setState(() {
                   _localContact = _localContact.copyWith(firstName: value);
                 });
-                contactDetailScreenLogger
-                    .i("LOG: new value ${_localContact.firstName}");
                 _hasUnsavedChanges = true;
               },
             ),
-            TextFormField(              
+            TextFormField(
               controller: _lastNameController,
               decoration: const InputDecoration(labelText: 'Last Name'),
               validator: (value) {
@@ -249,7 +246,9 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                 return null;
               },
               onChanged: (value) {
-                _localContact = _localContact.copyWith(lastName: value);
+                setState(() {
+                  _localContact = _localContact.copyWith(lastName: value);
+                });
                 _hasUnsavedChanges = true;
               },
             ),
@@ -258,10 +257,12 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               padding: EdgeInsets.only(bottom: 8.0),
               child: Text('Birthday:'),
             ),
-            ElevatedButton(              
+            ElevatedButton(
               onPressed: () async {
-                contactDetailScreenLogger
-                    .i("LOG: pre launch value ${_localContact.firstName}");
+                //update bloc first
+                context
+                    .read<ContactDetailsBloc>()
+                    .add(UpdateContactDetails(_localContact));
 
                 final DateTime? picked = await showDatePicker(
                   context: context,
@@ -269,13 +270,15 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   firstDate: DateTime(1900),
                   lastDate: DateTime.now(),
                 );
-                contactDetailScreenLogger
-                    .i("LOG: post launch value ${_localContact.firstName}");
-
+                if (!mounted) return;
                 if (picked != null && picked != _localContact.birthday) {
                   setState(() {
                     _localContact = _localContact.copyWith(birthday: picked);
                   });
+                  context
+                      .read<ContactDetailsBloc>()
+                      .add(UpdateContactDetails(_localContact));
+
                   _hasUnsavedChanges = true;
                 }
               },

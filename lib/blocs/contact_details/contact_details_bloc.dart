@@ -19,7 +19,6 @@ class ContactDetailsBloc
   ContactDetailsBloc({required ContactRepository contactRepository})
       : _contactRepository = contactRepository,
         super(ContactDetailsInitial()) {
-          
     // Event handler for loading contact details
     on<LoadContact>((event, emit) async {
       emit(ContactDetailsLoading());
@@ -32,11 +31,8 @@ class ContactDetailsBloc
       }
     });
 
-    // Event handler for updating contact details
-    //  this might be where I need to make a change.  Or maybe another function
-    // for change contact details that updates the bloc, but doesn't call any
-    // repo methods.
-    on<UpdateContactDetails>((event, emit) async {
+    // Event handler for saving contact details to memory
+    on<SaveContactDetails>((event, emit) async {
       if (state is ContactDetailsLoaded) {
         emit(ContactDetailsLoading());
         try {
@@ -49,6 +45,13 @@ class ContactDetailsBloc
           contactDetailLogger.e("LOG:update failed");
           emit(ContactDetailsError(e.toString()));
         }
+      }
+    });
+
+    on<UpdateContactDetails>((event, emit) async {
+      if (state is ContactDetailsLoaded) {
+        emit(ContactDetailsLoading());
+        emit(ContactDetailsLoaded(event.updatedContact));
       }
     });
 
