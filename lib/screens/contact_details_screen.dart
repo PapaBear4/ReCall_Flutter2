@@ -23,9 +23,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   final _formKey = GlobalKey<_ContactDetailsScreenState>();
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
-  late DateTime? _birthday;
-  //ContactFrequency? _frequency;
-  Contact? _localContact; // Local variable to hold temporary state
+  late Contact _localContact;
   bool _hasUnsavedChanges = false;
   // ...other controllers
 
@@ -33,15 +31,23 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   // Initializes the state of the widget, setting up controllers and loading initial contact data.
   void initState() {
     super.initState();
-    _firstNameController = TextEditingController(text: 'First name');
-    _lastNameController = TextEditingController(text: 'Last name');
-    _birthday = null;
-    _localContact = null;
-    //_frequency = ContactFrequency.daily;
+    //initialize local variable for the screen with default values
+    _localContact = Contact(
+      id: 0,
+      firstName: '',
+      lastName: '',
+      birthday: null,
+      frequency: ContactFrequency.never,
+      lastContacted: null,
+    );
+    //initialize name controllers with default values
+    _firstNameController = TextEditingController(text: _localContact.firstName);
+    _lastNameController = TextEditingController(text: _localContact.lastName);
 
+    //callback to load contacts into context
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final contactId = ModalRoute.of(context)!.settings.arguments as int;
-      //contactDetailScreenLogger          .i("LOG: Received request for ID: $contactId"); // <-- Add this line
+      //contactDetailScreenLogger          .i("LOG: Received request for ID: $contactId");
       context.read<ContactDetailsBloc>().add(LoadContact(contactId));
       //contactDetailScreenLogger.i("LOG: Loaded: ");
     });
@@ -113,17 +119,18 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             return const Center(child: CircularProgressIndicator());
           } else if (state is ContactDetailsLoaded) {
             // If the state is ContactDetailsLoaded, populate the form with contact data.
+            // even if the passed contactId is zero the underlying methods should have
+            // returned an empty contact that can be updated here.
             _localContact = state.contact; // Initialize localContact if null
             //contactListLogger.i("LOG: state is $state.contact");
             //contactListLogger.i("LOG: loaded: $_localContact");
-            _firstNameController.text = _localContact!.firstName;
-            _lastNameController.text = _localContact!.lastName;
-            _birthday = _localContact!.birthday;
+            _firstNameController.text = _localContact.firstName;
+            _lastNameController.text = _localContact.lastName;
             //_frequency = state.contact.frequency;
             //contactDetailScreenLogger
             //    .i("LOG: into _buildForm ${state.contact}");
             // If the contact details are loaded, build the form with the contact data.
-            return _buildForm(state.contact);
+            return _buildForm(_localContact);
           } else if (state is ContactDetailsError) {
             // If the state is ContactDetailsError, display an error message.
             // If there's an error loading the contact details, display an error message.
@@ -148,12 +155,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                 contactDetailScreenLogger
                     .i("LOG: current state: $currentState");
                 if (currentState is ContactDetailsLoaded) {
-                  final updatedContact = _localContact!.copyWith(
-                      //firstName: _firstNameController.text,
-                      //lastName: _lastNameController.text,
-                      //birthday: _birthday,
-                      ////frequency: _frequency,
-                      );
+                  final updatedContact = _localContact;
                   contactDetailScreenLogger
                       .i("LOG: new contact: $updatedContact");
                   context
@@ -163,7 +165,16 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                     const SnackBar(content: Text('Changes saved')),
                   );
                   // Navigate back to the contact list
-                  context.read<ContactListBloc>().add(ContactUpdated());
+                  if (_localContact.id == 0) {
+                    // if ID is zero that means it's a new contact and
+                    // AddContact needs to be called
+                    context
+                        .read<ContactListBloc>()
+                        .add(AddContact(updatedContact));
+                  } else {
+                    // if it's anything other than zero update the contact
+                    context.read<ContactListBloc>().add(ContactUpdated());
+                  }
                   Navigator.of(context).pop();
                 }
               },
@@ -188,10 +199,10 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                           TextButton(
                             onPressed: () {
                               contactDetailScreenLogger.i(
-                                  "LOG: Delete button pressed for ${_localContact!.id}");
+                                  "LOG: Delete button pressed for ${_localContact.id}");
                               context
                                   .read<ContactListBloc>()
-                                  .add(DeleteContact(_localContact!.id));
+                                  .add(DeleteContact(_localContact.id));
                               Navigator.of(context).pop(); // Close the dialog
                               Navigator.of(context).pop(); // Navigate back
                             },
@@ -226,8 +237,10 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               decoration: const InputDecoration(labelText: 'First Name'),
               onChanged: (value) {
                 // Update contact details in the state
-                _localContact = _localContact!
-                    .copyWith(firstName: _firstNameController.text);
+                setState(() {
+                  _localContact = _localContact.copyWith(
+                      firstName: _firstNameController.value.toString());
+                });
                 _hasUnsavedChanges = true;
               },
             ),
@@ -237,7 +250,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               decoration: const InputDecoration(labelText: 'Last Name'),
               onChanged: (value) {
                 _localContact =
-                    _localContact!.copyWith(lastName: _lastNameController.text);
+                    _localContact.copyWith(lastName: _lastNameController.text);
                 _hasUnsavedChanges = true;
                 // Update contact details in the state
               },
@@ -252,23 +265,25 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               onPressed: () async {
                 final DateTime? picked = await showDatePicker(
                   context: context,
-                  initialDate: _birthday ?? DateTime.now(),
+                  initialDate: _localContact.birthday ?? DateTime.now(),
                   firstDate: DateTime(1900),
                   lastDate: DateTime.now(),
                 );
 
-                if (picked != null) {
+                if (picked != null && picked != _localContact.birthday) {
                   setState(() {
-                    _localContact = _localContact!.copyWith(birthday: picked);
-                    _birthday = picked;
+                    _localContact = _localContact.copyWith(birthday: picked);
+                    //_localContact.birthday = picked;
+                    context
+                        .read<ContactDetailsBloc>()
+                        .add(UpdateBirthday(picked, contact.id));
+                    _hasUnsavedChanges = true;
                   });
-                  //context.read<ContactDetailsBloc>().add(UpdateBirthday(picked, contact.id));
-                  _hasUnsavedChanges = true;
                 }
               },
-              child: Text(_birthday == null
+              child: Text(_localContact.birthday == null
                   ? 'Select Birthday'
-                  : DateFormat.yMd().format(_birthday!)),
+                  : DateFormat.yMd().format(_localContact.birthday!)),
             ),
 
             // Other fields...

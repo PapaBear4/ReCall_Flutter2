@@ -8,6 +8,7 @@ part 'contact_details_event.dart';
 part 'contact_details_state.dart';
 
 var contactDetailLogger = Logger();
+
 // Bloc responsible for managing the state of Contact Details screen
 class ContactDetailsBloc
     extends Bloc<ContactDetailsEvent, ContactDetailsState> {
@@ -54,6 +55,7 @@ class ContactDetailsBloc
     on<UpdateBirthday>((event, emit) async {
       if (state is ContactDetailsLoaded) {
         final currentState = state as ContactDetailsLoaded;
+        emit(ContactDetailsLoading());
         final updatedContact =
             currentState.contact.copyWith(birthday: event.birthday);
         emit(ContactDetailsLoaded(updatedContact)); // Emit the updated state

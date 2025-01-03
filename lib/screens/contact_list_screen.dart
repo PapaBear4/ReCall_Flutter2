@@ -93,6 +93,8 @@ class ContactListScreen extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           // Navigate to the add contact screen
+          Navigator.pushNamed(context, '/contactDetails',
+              arguments: 0); // Pass 0 to signal new contact
         },
         child: const Icon(Icons.add),
       ),

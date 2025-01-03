@@ -32,7 +32,19 @@ class ContactRepository {
   /// Searches the contact list for a contact with the given `contactId` and
   /// returns it. Throws an exception if no contact is found with that ID.
   Future<Contact> getContactById(int contactId) async {
-    return _contacts.firstWhere((contact) => contact.id == contactId);
+    try {
+      return _contacts.firstWhere((contact) => contact.id == contactId);
+    } catch (e) {
+      // If no contact is found, return null
+      return Contact(
+        id: 0,
+        firstName:'',
+        lastName:'',
+        birthday: null,
+        frequency: ContactFrequency.never,
+        lastContacted: null,
+      ) ; 
+    }
   }
 
   /// Loads all contacts from the repository.

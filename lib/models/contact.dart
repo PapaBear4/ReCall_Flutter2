@@ -20,13 +20,13 @@ class Contact extends Equatable {
   final DateTime? lastContacted;
 
   const Contact({
-    int? id,
+    required this.id,
     required this.firstName,
     required this.lastName,
     this.birthday,
     required this.frequency,
     this.lastContacted,
-  }) : id = id ?? 0;
+  });
 
   Contact copyWith({
     int? id,
