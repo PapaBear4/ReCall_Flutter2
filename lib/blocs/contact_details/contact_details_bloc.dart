@@ -22,8 +22,6 @@ class ContactDetailsBloc
           
     // Event handler for loading contact details
     on<LoadContact>((event, emit) async {
-      //contactDetailLogger.i(
-      //    "LOG: Loading contact with ID: ${event.contactId} in ContactDetailsBloc"); // <-- Add this
       emit(ContactDetailsLoading());
       try {
         final contact = await _contactRepository
@@ -35,6 +33,9 @@ class ContactDetailsBloc
     });
 
     // Event handler for updating contact details
+    //  this might be where I need to make a change.  Or maybe another function
+    // for change contact details that updates the bloc, but doesn't call any
+    // repo methods.
     on<UpdateContactDetails>((event, emit) async {
       if (state is ContactDetailsLoaded) {
         emit(ContactDetailsLoading());

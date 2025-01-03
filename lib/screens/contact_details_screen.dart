@@ -29,10 +29,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   // Initialize state, controllers, and load contact data
   void initState() {
     super.initState();
-
     _firstNameController = TextEditingController();
     _lastNameController = TextEditingController();
-
     _localContact = Contact(
       id: 0,
       firstName: '',
@@ -42,6 +40,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       lastContacted: null,
     );
 
+    //Once everything is loaded up, go back to get the contactId
+    //and load the data into the bloc
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final contactId = ModalRoute.of(context)!.settings.arguments as int;
       context.read<ContactDetailsBloc>().add(LoadContact(contactId));
@@ -52,14 +52,25 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   // Update UI when dependencies change, especially when contact details are loaded
   void didChangeDependencies() {
     super.didChangeDependencies();
-
     final state = context.watch<ContactDetailsBloc>().state;
     if (state is ContactDetailsLoaded) {
       _localContact = state.contact;
       _firstNameController.text = _localContact.firstName;
       _lastNameController.text = _localContact.lastName;
-      _hasUnsavedChanges = false;
+        if (_localContact.birthday != null) {
+          // Assuming you have a method to update your birthday picker
+          _updateBirthdayPicker(_localContact.birthday!); 
+      }
     }
+  }
+
+  void _updateBirthdayPicker(DateTime date) {
+      // This is a placeholder. You'll need to implement the logic 
+      // to update the state of your birthday picker based on the 
+      // provided date.
+      // Example:
+      // _birthdayPickerController.text = DateFormat.yMd().format(date);
+      // _selectedBirthday = date;
   }
 
   @override
@@ -134,6 +145,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             IconButton(
               icon: const Icon(Icons.save),
               onPressed: () {
+
                 final currentState = context.read<ContactDetailsBloc>().state;
                 contactDetailScreenLogger
                     .i("LOG: current state: $currentState");
@@ -217,7 +229,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                 return null;
               },
               onChanged: (value) {
-                _firstNameController.text = value;
                 contactDetailScreenLogger
                     .i("LOG: OLD value ${_localContact.firstName}");                
                 setState(() {
@@ -238,7 +249,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                 return null;
               },
               onChanged: (value) {
-                _lastNameController.text = value;
                 _localContact = _localContact.copyWith(lastName: value);
                 _hasUnsavedChanges = true;
               },
