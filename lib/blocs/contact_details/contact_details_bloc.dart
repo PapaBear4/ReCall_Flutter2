@@ -8,6 +8,7 @@ part 'contact_details_event.dart';
 part 'contact_details_state.dart';
 
 var contactDetailLogger = Logger();
+
 // Bloc responsible for managing the state of Contact Details screen
 class ContactDetailsBloc
     extends Bloc<ContactDetailsEvent, ContactDetailsState> {
@@ -18,11 +19,8 @@ class ContactDetailsBloc
   ContactDetailsBloc({required ContactRepository contactRepository})
       : _contactRepository = contactRepository,
         super(ContactDetailsInitial()) {
-          
     // Event handler for loading contact details
     on<LoadContact>((event, emit) async {
-      //contactDetailLogger.i(
-      //    "LOG: Loading contact with ID: ${event.contactId} in ContactDetailsBloc"); // <-- Add this
       emit(ContactDetailsLoading());
       try {
         final contact = await _contactRepository
@@ -33,8 +31,8 @@ class ContactDetailsBloc
       }
     });
 
-    // Event handler for updating contact details
-    on<UpdateContactDetails>((event, emit) async {
+    // Event handler for saving contact details to memory
+    on<SaveContactDetails>((event, emit) async {
       if (state is ContactDetailsLoaded) {
         emit(ContactDetailsLoading());
         try {
@@ -50,10 +48,18 @@ class ContactDetailsBloc
       }
     });
 
+    on<UpdateContactDetails>((event, emit) async {
+      if (state is ContactDetailsLoaded) {
+        emit(ContactDetailsLoading());
+        emit(ContactDetailsLoaded(event.updatedContact));
+      }
+    });
+
     // Event handler for updating birthday specifically
     on<UpdateBirthday>((event, emit) async {
       if (state is ContactDetailsLoaded) {
         final currentState = state as ContactDetailsLoaded;
+        emit(ContactDetailsLoading());
         final updatedContact =
             currentState.contact.copyWith(birthday: event.birthday);
         emit(ContactDetailsLoaded(updatedContact)); // Emit the updated state
