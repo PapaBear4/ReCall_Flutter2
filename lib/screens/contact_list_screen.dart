@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:recall/utils/last_contacted_helper.dart';
 import 'package:recall/models/contact.dart';
 import 'package:logger/logger.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 
 var contactListScreenLogger = Logger();
 
@@ -48,42 +49,74 @@ class ContactListScreen extends StatelessWidget {
                   return Column(
                     children: [
                       // ListTile displays each contact's information.
-                      ListTile(
-                        title: Text('${contact.firstName} ${contact.lastName}'),
-                        subtitle: Text(
-                          contact.birthday != null
-                              ? DateFormat('MM/dd').format(contact.birthday!)
-                              : '',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                        trailing: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.end,
+                      Slidable(
+                        key: UniqueKey(),
+                        endActionPane:
+                            ActionPane(motion: const DrawerMotion(), children: [
+                          SlidableAction(
+                            onPressed: (context) {
+                              context.read<ContactListBloc>().add(
+                                  UpdateLastContacted(
+                                      contactId: contact.id));
+                            },
+                            backgroundColor: Colors.blue,
+                            foregroundColor: Colors.white,
+                            icon: Icons.check,
+                            label: 'Tap to mark Contacted',
+                          ),
+                        ]),
+                        startActionPane: ActionPane(
+                          motion: const DrawerMotion(),
                           children: [
-                            Text(
-                              formatLastContacted(contact.lastContacted),
-                              style: isOverdue(
-                                      contact.frequency, contact.lastContacted)
-                                  ? const TextStyle(color: Colors.red)
-                                  : null,
+                            SlidableAction(
+                              onPressed: (context) {
+                                context.read<ContactListBloc>().add(
+                                    UpdateLastContacted(
+                                        contactId: contact.id));
+                              },
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                              icon: Icons.check,
+                              label: 'Tap to mark Contacted',
                             ),
-                            Text(
-                                contact.frequency != ContactFrequency.never
-                                    ? contact.frequency.name
-                                    : 'Frequency not set',
-                                style: const TextStyle(fontSize: 12)),
                           ],
                         ),
-                        onTap: () {
-                          // Navigate to the contact details screen
-                          contactListScreenLogger.i(
-                              'LOG: Navigating to details for ID: ${contact.id}'); // <-- Add this line
-                          Navigator.pushNamed(
-                            context,
-                            '/contactDetails',
-                            arguments: contact.id,
-                          );
-                        },
+                        child: ListTile(
+                          title:
+                              Text('${contact.firstName} ${contact.lastName}'),
+                          subtitle: Text(
+                            contact.birthday != null
+                                ? DateFormat('MM/dd').format(contact.birthday!)
+                                : '',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          trailing: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                formatLastContacted(contact.lastContacted),
+                                style: isOverdue(contact.frequency,
+                                        contact.lastContacted)
+                                    ? const TextStyle(color: Colors.red)
+                                    : null,
+                              ),
+                              Text(
+                                  contact.frequency != ContactFrequency.never
+                                      ? contact.frequency.name
+                                      : 'Frequency not set',
+                                  style: const TextStyle(fontSize: 12)),
+                            ],
+                          ),
+                          onTap: () {
+                            // Navigate to the contact details screen
+                            Navigator.pushNamed(
+                              context,
+                              '/contactDetails',
+                              arguments: contact.id,
+                            );
+                          },
+                        ),
                       ),
                       // Divider separates each contact in the list.
                       const Divider(

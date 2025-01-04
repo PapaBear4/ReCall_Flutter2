@@ -49,7 +49,9 @@ class ContactRepository {
 
   /// Loads all contacts from the repository.
   ///
-  /// Returns a list of all contacts stored in the repository.
+  /// Returns a list of all contacts stored in memory.
+  // They were put there in the repository initialization.
+  // in the future this may need adjusted to account for local storage
   Future<List<Contact>> loadContacts() async {
     return _contacts;
   }
@@ -116,6 +118,18 @@ class ContactRepository {
       contactRepoLogger.i("LOG:Error saving contacts: $e");
     }
   }
+
+    Future<void> updateLastContacted(int contactId) async {
+    try {
+      final index = _contacts.indexWhere((contact) => contact.id == contactId);
+        if(index != -1){
+          _contacts[index] = _contacts[index].copyWith(lastContacted: DateTime.now());
+        }
+    } catch (e) {
+      // Handle the error appropriately, e.g., log the error, show a message to the user.
+    }
+  }
+
 
   /// Adds a new contact to the repository.
   ///

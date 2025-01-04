@@ -39,26 +39,18 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
     // Updates the contact list after a successful deletion
     // and emits ContactListLoaded with the updated list.
     on<DeleteContact>((event, emit) async {
-      contactListLogger.i("LOG: delete initiated, event = $event");
       if (state is ContactListLoaded) {
         final currentState = state as ContactListLoaded;
-        contactListLogger.i("LOG: current state saved");
         emit(ContactListLoading());
-        contactListLogger.i("LOG: state is now Loading");
         try {
-          contactListLogger
-              .i("LOG: Attempting to delete contact ${event.contactId}");
           await _contactRepository.deleteContact(event.contactId);
-          contactListLogger.i("LOG:Contact deleted");
           final updatedContacts = await _contactRepository.loadContacts();
-          contactListLogger.i("LOG updatedContacts: $updatedContacts");
           emit(ContactListLoaded(
               contacts: updatedContacts,
               sortField: currentState.sortField,
               ascending: currentState.ascending));
         } catch (e) {
           emit(ContactListError(e.toString()));
-          contactListLogger.i("LOG:error deleting contact");
         }
       }
     });
@@ -140,6 +132,22 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
             ascending: event.ascending));
       }
     });
+
+    on<UpdateLastContacted>((event, emit) async {
+      if (state is ContactListLoaded) {
+        final currentState = state as ContactListLoaded;
+        emit(ContactListLoading());
+        try {
+          await _contactRepository.updateLastContacted(event.contactId);
+          final updatedContacts = await _contactRepository.loadContacts();
+          emit(ContactListLoaded(
+              contacts: updatedContacts,
+              sortField: currentState.sortField,
+              ascending: currentState.ascending));
+        } catch (e) {
+          emit(ContactListError(e.toString()));
+        }
+      }    });
   }
 
   // Helper function to get the value of a contact property
