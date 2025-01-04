@@ -147,27 +147,31 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             IconButton(
               icon: const Icon(Icons.save),
               onPressed: () {
-                final currentState = context.read<ContactDetailsBloc>().state;
-                contactDetailScreenLogger
-                    .i("LOG: current state: $currentState");
-                if (currentState is ContactDetailsLoaded) {
-                  final updatedContact = _localContact;
+                if (_formKey.currentState!.validate()) {
+                  final currentState = context.read<ContactDetailsBloc>().state;
                   contactDetailScreenLogger
-                      .i("LOG: new contact: $updatedContact");
-                  context
-                      .read<ContactDetailsBloc>()
-                      .add(SaveContactDetails(updatedContact));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Changes saved')),
-                  );
-                  if (_localContact.id == 0) {
-                    context
-                        .read<ContactListBloc>()
-                        .add(AddContact(updatedContact));
-                  } else {
-                    context.read<ContactListBloc>().add(ContactUpdated());
+                      .i("LOG: current state: $currentState");
+                  if (currentState is ContactDetailsLoaded) {
+                    // IF Id = 0, add the new contact
+                    if (_localContact.id == 0) {
+                      context
+                          .read<ContactListBloc>()
+                          .add(AddContact(_localContact));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('New contact saved')),
+                      );
+                    } else {
+                      //otherwise update the current contact
+                      context
+                          .read<ContactDetailsBloc>()
+                          .add(SaveContactDetails(_localContact));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Changes saved')),
+                      );
+                      context.read<ContactListBloc>().add(ContactUpdated());
+                    }
+                    Navigator.of(context).pop();
                   }
-                  Navigator.of(context).pop();
                 }
               },
             ),
@@ -259,7 +263,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
-                //update bloc first
+                //update bloc before launching dialog
                 context
                     .read<ContactDetailsBloc>()
                     .add(UpdateContactDetails(_localContact));
