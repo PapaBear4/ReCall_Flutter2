@@ -57,20 +57,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       _localContact = state.contact;
       _firstNameController.text = _localContact.firstName;
       _lastNameController.text = _localContact.lastName;
-      if (_localContact.birthday != null) {
-        // Assuming you have a method to update your birthday picker
-        _updateBirthdayPicker(_localContact.birthday!);
-      }
     }
-  }
-
-  void _updateBirthdayPicker(DateTime date) {
-    // This is a placeholder. You'll need to implement the logic
-    // to update the state of your birthday picker based on the
-    // provided date.
-    // Example:
-    // _birthdayPickerController.text = DateFormat.yMd().format(date);
-    // _selectedBirthday = date;
   }
 
   @override
@@ -149,8 +136,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               onPressed: () {
                 if (_formKey.currentState!.validate()) {
                   final currentState = context.read<ContactDetailsBloc>().state;
-                  contactDetailScreenLogger
-                      .i("LOG: current state: $currentState");
                   if (currentState is ContactDetailsLoaded) {
                     // IF Id = 0, add the new contact
                     if (_localContact.id == 0) {
@@ -194,8 +179,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                           ),
                           TextButton(
                             onPressed: () {
-                              contactDetailScreenLogger.i(
-                                  "LOG: Delete button pressed for ${_localContact.id}");
                               context
                                   .read<ContactListBloc>()
                                   .add(DeleteContact(_localContact.id));
@@ -234,10 +217,15 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                 return null;
               },
               onChanged: (value) {
+                _hasUnsavedChanges = true;
                 setState(() {
                   _localContact = _localContact.copyWith(firstName: value);
                 });
-                _hasUnsavedChanges = true;
+              },
+              onFieldSubmitted: (value) {
+                context
+                    .read<ContactDetailsBloc>()
+                    .add(UpdateContactDetails(_localContact));
               },
             ),
             TextFormField(
@@ -256,6 +244,41 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                 _hasUnsavedChanges = true;
               },
             ),
+            // Dropdown for Contact Frequency
+            const SizedBox(height: 16.0),
+            const Text('Contact Frequency:'),
+            DropdownButtonFormField<ContactFrequency>(
+              value: _localContact.frequency,
+              onTap: () {
+                context
+                    .read<ContactDetailsBloc>()
+                    .add(UpdateContactDetails(_localContact));
+              },
+              onChanged: (ContactFrequency? newValue) {
+                if (newValue != null) {
+                  setState(() {
+                    _localContact = _localContact.copyWith(frequency: newValue);
+                  });
+                  //update bloc again with selection
+                  context
+                      .read<ContactDetailsBloc>()
+                      .add(UpdateContactDetails(_localContact));
+                  _hasUnsavedChanges = true;
+                }
+              },
+              items: ContactFrequency.values.map((frequency) {
+                return DropdownMenuItem<ContactFrequency>(
+                  value: frequency,
+                  child: Text(frequency.name),
+                );
+              }).toList(),
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                contentPadding:
+                    EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+              ),
+            ),
+
             const SizedBox(height: 8.0),
             const Padding(
               padding: EdgeInsets.only(bottom: 8.0),
