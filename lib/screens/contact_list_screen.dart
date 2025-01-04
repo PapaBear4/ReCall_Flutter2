@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:recall/utils/last_contacted_helper.dart';
+import 'package:recall/models/contact.dart';
 import 'package:logger/logger.dart';
 
 var contactListScreenLogger = Logger();
@@ -55,8 +56,24 @@ class ContactListScreen extends StatelessWidget {
                               : '',
                           style: const TextStyle(fontSize: 12),
                         ),
-                        trailing:
-                            Text(formatLastContacted(contact.lastContacted)),
+                        trailing: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              formatLastContacted(contact.lastContacted),
+                              style: isOverdue(
+                                      contact.frequency, contact.lastContacted)
+                                  ? const TextStyle(color: Colors.red)
+                                  : null,
+                            ),
+                            Text(
+                                contact.frequency != ContactFrequency.never
+                                    ? contact.frequency.name
+                                    : 'Frequency not set',
+                                style: const TextStyle(fontSize: 12)),
+                          ],
+                        ),
                         onTap: () {
                           // Navigate to the contact details screen
                           contactListScreenLogger.i(

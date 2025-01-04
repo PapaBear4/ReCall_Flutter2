@@ -1,3 +1,5 @@
+import 'package:recall/models/contact.dart';
+
 String formatLastContacted(DateTime? lastContacted) {
   if (lastContacted == null) {
     return '';
@@ -5,8 +7,8 @@ String formatLastContacted(DateTime? lastContacted) {
 
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
-  final lastContactedDate = DateTime(lastContacted.year, lastContacted.month, lastContacted.day);
-
+  final lastContactedDate =
+      DateTime(lastContacted.year, lastContacted.month, lastContacted.day);
 
   if (lastContactedDate == today) {
     return 'Today';
@@ -23,5 +25,34 @@ String formatLastContacted(DateTime? lastContacted) {
   } else {
     final months = difference.inDays ~/ 30;
     return '$months month${months == 1 ? '' : 's'} ago';
+  }
+}
+
+bool isOverdue(ContactFrequency frequency, DateTime? lastContacted) {
+  if (frequency == ContactFrequency.never || lastContacted == null) {
+    return false;
+  }
+
+  final now = DateTime.now();
+  final duration = now.difference(lastContacted);
+
+  switch (frequency) {
+    case ContactFrequency.daily:
+      return duration.inDays >= 1;
+    case ContactFrequency.weekly:
+      return duration.inDays >= 7;
+    case ContactFrequency.biWeekly:
+      return duration.inDays >= 14;
+    case ContactFrequency.monthly:
+      return duration.inDays >= 30;
+    case ContactFrequency.quarterly:
+      return duration.inDays >= 90;
+    case ContactFrequency.yearly:
+      return duration.inDays >= 365;
+    case ContactFrequency.rarely:
+      return duration.inDays >= 750;
+
+    default:
+      return false;
   }
 }
