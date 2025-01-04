@@ -60,6 +60,14 @@ class SortContacts extends ContactListEvent {
   List<Object> get props => [sortField, ascending];
 }
 
+//Event to update lastContacted
+class UpdateLastContacted extends ContactListEvent {
+  final int contactId;
+
+  const UpdateLastContacted(
+      {required this.contactId});
+}
+
 // Enum representing the different fields that can be used for sorting.
 enum ContactListSortField {
   lastName,
