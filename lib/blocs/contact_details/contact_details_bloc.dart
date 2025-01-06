@@ -1,11 +1,12 @@
 import 'package:bloc/bloc.dart';
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:recall/models/contact.dart';
 import 'package:recall/repositories/contact_repository.dart';
 import 'package:logger/logger.dart';
 
 part 'contact_details_event.dart';
 part 'contact_details_state.dart';
+part 'contact_details_bloc.freezed.dart';
 
 var contactDetailLogger = Logger();
 
@@ -18,28 +19,29 @@ class ContactDetailsBloc
   // Constructor initializes the bloc with the contact repository and initial state
   ContactDetailsBloc({required ContactRepository contactRepository})
       : _contactRepository = contactRepository,
-        super(ContactDetailsInitial()) {
+        super(const ContactDetailsState.initial()) {
+
     // Event handler for loading contact details
     on<LoadContact>((event, emit) async {
-      emit(ContactDetailsLoading());
+      emit(ContactDetailsState.loading());
       try {
         final contact = await _contactRepository
             .getContactById(event.contactId); //call getContactById
-        emit(ContactDetailsLoaded(contact));
+        emit(ContactDetailsState.loaded(contact));
       } catch (e) {
-        emit(ContactDetailsError(e.toString()));
+        emit(ContactDetailsState.error(e.toString()));
       }
     });
 
     // Event handler for saving contact details to memory
     on<SaveContactDetails>((event, emit) async {
       if (state is ContactDetailsLoaded) {
-        emit(ContactDetailsLoading());
+        emit(ContactDetailsState.loading());
         try {
           //contactDetailLogger.i("LOG:try and update details");
           await _contactRepository.updateContact(event.updatedContact);
           //contactDetailLogger.i("LOG:update successful");
-          emit(ContactDetailsLoaded(
+          emit(ContactDetailsState.loaded(
               event.updatedContact)); // Emit the updated state
         } catch (e) {
           contactDetailLogger.e("LOG:update failed");
@@ -50,8 +52,8 @@ class ContactDetailsBloc
 
     on<UpdateContactDetails>((event, emit) async {
       if (state is ContactDetailsLoaded) {
-        emit(ContactDetailsLoading());
-        emit(ContactDetailsLoaded(event.updatedContact));
+        emit(ContactDetailsState.loading());
+        emit(ContactDetailsState.loaded(event.updatedContact));
       }
     });
 
@@ -59,10 +61,10 @@ class ContactDetailsBloc
     on<UpdateBirthday>((event, emit) async {
       if (state is ContactDetailsLoaded) {
         final currentState = state as ContactDetailsLoaded;
-        emit(ContactDetailsLoading());
+        emit(ContactDetailsState.loading());
         final updatedContact =
             currentState.contact.copyWith(birthday: event.birthday);
-        emit(ContactDetailsLoaded(updatedContact)); // Emit the updated state
+        emit(ContactDetailsState.loaded(updatedContact)); // Emit the updated state
       }
     });
   }
