@@ -181,7 +181,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                             onPressed: () {
                               context
                                   .read<ContactListBloc>()
-                                  .add(DeleteContact(_localContact.id));
+                                  .add(DeleteContact(_localContact.id!));
                               Navigator.of(context).pop(); // Close the dialog
                               Navigator.of(context).pop(); // Navigate back
                             },

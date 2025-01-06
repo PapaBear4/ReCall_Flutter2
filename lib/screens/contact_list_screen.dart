@@ -57,7 +57,7 @@ class ContactListScreen extends StatelessWidget {
                             onPressed: (context) {
                               context.read<ContactListBloc>().add(
                                   UpdateLastContacted(
-                                      contactId: contact.id));
+                                      contactId: contact.id!));
                             },
                             backgroundColor: Colors.blue,
                             foregroundColor: Colors.white,
@@ -72,7 +72,7 @@ class ContactListScreen extends StatelessWidget {
                               onPressed: (context) {
                                 context.read<ContactListBloc>().add(
                                     UpdateLastContacted(
-                                        contactId: contact.id));
+                                        contactId: contact.id!));
                               },
                               backgroundColor: Colors.blue,
                               foregroundColor: Colors.white,
