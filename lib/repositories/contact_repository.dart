@@ -8,7 +8,6 @@ var contactRepoLogger = Logger();
 class ContactRepository {
   final Store _store;
   late final Box<Contact> _contactBox;
-  final List<Contact> _contacts = []; // Private list to store contacts
 
   // Initialize the repository
   ContactRepository(this._store) {
@@ -31,11 +30,7 @@ class ContactRepository {
   /// Finds the contact with the matching ID and replaces it with the
   /// `updatedContact` object.
   Future<void> updateContact(Contact updatedContact) async {
-    final index =
-        _contacts.indexWhere((contact) => contact.id == updatedContact.id);
-    if (index != -1) {
-      _contacts[index] = updatedContact;
-    }
+    _contactBox.put(updatedContact);
   }
 
   /// Retrieves a contact from the repository by its ID.
@@ -43,19 +38,8 @@ class ContactRepository {
   /// Searches the contact list for a contact with the given `contactId` and
   /// returns it. Throws an exception if no contact is found with that ID.
   Future<Contact> getContactById(int contactId) async {
-    try {
-      return _contacts.firstWhere((contact) => contact.id == contactId);
-    } catch (e) {
-      // If no contact is found, return null
-      return Contact(
-        id: 0,
-        firstName: '',
-        lastName: '',
-        birthday: null,
-        frequency: ContactFrequency.never.value,
-        lastContacted: null,
-      );
-    }
+    return _contactBox.get(contactId) ??
+        Contact(id: 0, firstName: '', lastName: '', birthday: null, frequency: ContactFrequency.never.value, lastContacted: null);
   }
 
   /// Loads all contacts from the repository.

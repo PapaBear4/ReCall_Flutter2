@@ -33,7 +33,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     _firstNameController = TextEditingController();
     _lastNameController = TextEditingController();
     _localContact = Contact(
-      id: 0,
       firstName: '',
       lastName: '',
       birthday: null,
@@ -139,14 +138,14 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   final currentState = context.read<ContactDetailsBloc>().state;
                   if (currentState is ContactDetailsLoaded) {
                     // IF Id = 0, add the new contact
-                    if (_localContact.id == 0) {
-                      context
-                          .read<ContactListBloc>()
-                          .add(AddContact(_localContact));
+                    if (currentState.contact.id == 0) {
+                      context.read<ContactListBloc>().add(AddContact(
+                          _localContact.copyWith(
+                              lastContacted: DateTime.now()))); // Set initial lastContacted to now
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('New contact saved')),
                       );
-                    } else {
+                    } else { 
                       //otherwise update the current contact
                       context
                           .read<ContactDetailsBloc>()

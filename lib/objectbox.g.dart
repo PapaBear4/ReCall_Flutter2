@@ -139,14 +139,14 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final lastNameOffset = fbb.writeString(object.lastName);
           final frequencyOffset = fbb.writeString(object.frequency);
           fbb.startTable(8);
-          fbb.addInt64(0, object.id);
+          fbb.addInt64(0, object.id ?? 0);
           fbb.addOffset(1, firstNameOffset);
           fbb.addOffset(2, lastNameOffset);
           fbb.addInt64(3, object.birthday?.millisecondsSinceEpoch);
           fbb.addInt64(4, object.lastContacted?.millisecondsSinceEpoch);
           fbb.addOffset(6, frequencyOffset);
           fbb.finish(fbb.endTable());
-          return object.id;
+          return object.id ?? 0;
         },
         objectFromFB: (obx.Store store, ByteData fbData) {
           final buffer = fb.BufferContext(fbData);
@@ -156,7 +156,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final lastContactedValue =
               const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 12);
           final idParam =
-              const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 4);
           final firstNameParam = const fb.StringReader(asciiOptimization: true)
               .vTableGet(buffer, rootOffset, 6, '');
           final lastNameParam = const fb.StringReader(asciiOptimization: true)

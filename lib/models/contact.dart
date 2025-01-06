@@ -11,7 +11,7 @@ class Contact with _$Contact {
 
   @Entity(realClass: Contact)
   factory Contact({
-    @Id(assignable: true) @Default(0) int id,
+    @Id(assignable: true) int? id,
     required String firstName,
     required String lastName,
     @Default(ContactFrequency.defaultValue)
