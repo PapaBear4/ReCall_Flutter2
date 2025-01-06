@@ -1,4 +1,3 @@
-import 'package:recall/models/contact.dart';
 import 'package:recall/models/contact_frequency.dart';
 
 String formatLastContacted(DateTime? lastContacted) {
