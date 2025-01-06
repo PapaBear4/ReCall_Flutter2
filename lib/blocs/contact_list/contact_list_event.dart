@@ -2,6 +2,7 @@ part of 'contact_list_bloc.dart';
 
 // Abstract base class for all ContactList events.
 // Events are used to trigger state changes in the ContactListBloc.
+//TODO: replace with freezed
 abstract class ContactListEvent extends Equatable {
   const ContactListEvent();
 

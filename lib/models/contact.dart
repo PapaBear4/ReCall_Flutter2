@@ -1,3 +1,4 @@
+//TODO: replace with freezed
 import 'package:equatable/equatable.dart';
 
 enum ContactFrequency {
@@ -11,6 +12,7 @@ enum ContactFrequency {
   never,
 }
 
+//TODO: replaced with freeze
 class Contact extends Equatable {
   final int id;
   final String firstName;

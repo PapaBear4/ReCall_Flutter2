@@ -1,5 +1,6 @@
 part of 'contact_list_bloc.dart';
 
+//TODO: replace with freezed
 abstract class ContactListState extends Equatable {
   const ContactListState();
 

@@ -147,7 +147,8 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
         } catch (e) {
           emit(ContactListError(e.toString()));
         }
-      }    });
+      }
+    });
   }
 
   // Helper function to get the value of a contact property
