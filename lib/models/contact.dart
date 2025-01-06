@@ -5,29 +5,36 @@ part 'contact.freezed.dart';
 part 'contact.g.dart';
 
 enum ContactFrequency {
+  @Property(type: PropertyType.int)
   daily,
+  @Property(type: PropertyType.int)
   weekly,
+  @Property(type: PropertyType.int)
   biWeekly,
+  @Property(type: PropertyType.int)
   monthly,
+  @Property(type: PropertyType.int)
   quarterly,
+  @Property(type: PropertyType.int)
   yearly,
+  @Property(type: PropertyType.int)
   rarely,
+  @Property(type: PropertyType.int)
   never,
 }
 
-@Entity()
-@unfreezed
+@freezed
 class Contact with _$Contact {
   const Contact._();
 
-  const factory Contact({
-    int id,
-    required final String firstName,
-    required final String lastName,
-    final DateTime? birthday,
-    required final ContactFrequency frequency,
-    final DateTime? lastContacted,
-    @Id() int contactId,
+  @Entity(realClass: Contact)
+  factory Contact({
+    @Id(assignable: true) required int? id,
+    required String firstName,
+    required String lastName,
+    required ContactFrequency frequency,
+    DateTime? birthday,
+    DateTime? lastContacted,
   }) = _Contact;
 
   factory Contact.fromJson(Map<String, dynamic> json) =>

@@ -14,7 +14,7 @@ late final Store store; // Declare the store
 
 Future<Store> openStore() async {
   final docsDir = await getApplicationDocumentsDirectory();
-  return Store(getObjectBoxModel(), directory: docsDir.path + '/objectbox');
+  return Store(getObjectBoxModel(), directory: '${docsDir.path}/objectbox');
 }
 
 void main() async {
@@ -22,7 +22,9 @@ void main() async {
 
   store = await openStore(); // Initialize the store
 
-  runApp(ReCall(contactRepository: ContactRepository(store))); // Pass the store to the repository
+  runApp(ReCall(
+      contactRepository:
+          ContactRepository(store))); // Pass the store to the repository
   var logger = Logger();
   logger.i('LOG:App started');
 }
@@ -35,22 +37,38 @@ class ReCall extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepositoryProvider.value( // Use RepositoryProvider.value
+    return RepositoryProvider.value(
+      // Use RepositoryProvider.value
       value: _contactRepository, // Provide the initialized repository
       child: MultiBlocProvider(
         providers: [
           BlocProvider(
             create: (context) => ContactListBloc(
-              contactRepository: _contactRepository, // Access repository directly
+              contactRepository:
+                  _contactRepository, // Access repository directly
             )..add(const ContactListEvent.loadContacts()),
           ),
           BlocProvider(
             create: (context) => ContactDetailsBloc(
-              contactRepository: _contactRepository, // Access repository directly
+              contactRepository:
+                  _contactRepository, // Access repository directly
             ),
           ),
         ],
         child: MaterialApp(
+          // Set the title of the app.
+          title: 'Contact App',
+          // Set the theme of the app.
+          theme: ThemeData(
+            primarySwatch: Colors.blue,
+          ),
+          // Set the initial route of the app.
+          home: const ContactListScreen(),
+          // Define the routes for the app.
+          routes: {
+            '/contactDetails': (context) =>
+                const ContactDetailsScreen(contactId: 0),
+          },
           // ... (rest of your MaterialApp) ...
         ),
       ),
