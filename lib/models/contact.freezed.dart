@@ -21,7 +21,7 @@ Contact _$ContactFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$Contact {
   @Id(assignable: true)
-  int? get id => throw _privateConstructorUsedError;
+  int get id => throw _privateConstructorUsedError;
   String get firstName => throw _privateConstructorUsedError;
   String get lastName => throw _privateConstructorUsedError;
   String get frequency =>
@@ -46,7 +46,7 @@ abstract class $ContactCopyWith<$Res> {
       _$ContactCopyWithImpl<$Res, Contact>;
   @useResult
   $Res call(
-      {@Id(assignable: true) int? id,
+      {@Id(assignable: true) int id,
       String firstName,
       String lastName,
       String frequency,
@@ -69,7 +69,7 @@ class _$ContactCopyWithImpl<$Res, $Val extends Contact>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = freezed,
+    Object? id = null,
     Object? firstName = null,
     Object? lastName = null,
     Object? frequency = null,
@@ -77,10 +77,10 @@ class _$ContactCopyWithImpl<$Res, $Val extends Contact>
     Object? lastContacted = freezed,
   }) {
     return _then(_value.copyWith(
-      id: freezed == id
+      id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
-              as int?,
+              as int,
       firstName: null == firstName
           ? _value.firstName
           : firstName // ignore: cast_nullable_to_non_nullable
@@ -113,7 +113,7 @@ abstract class _$$ContactImplCopyWith<$Res> implements $ContactCopyWith<$Res> {
   @override
   @useResult
   $Res call(
-      {@Id(assignable: true) int? id,
+      {@Id(assignable: true) int id,
       String firstName,
       String lastName,
       String frequency,
@@ -134,7 +134,7 @@ class __$$ContactImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = freezed,
+    Object? id = null,
     Object? firstName = null,
     Object? lastName = null,
     Object? frequency = null,
@@ -142,10 +142,10 @@ class __$$ContactImplCopyWithImpl<$Res>
     Object? lastContacted = freezed,
   }) {
     return _then(_$ContactImpl(
-      id: freezed == id
+      id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
-              as int?,
+              as int,
       firstName: null == firstName
           ? _value.firstName
           : firstName // ignore: cast_nullable_to_non_nullable
@@ -175,7 +175,7 @@ class __$$ContactImplCopyWithImpl<$Res>
 @Entity(realClass: Contact)
 class _$ContactImpl extends _Contact {
   _$ContactImpl(
-      {@Id(assignable: true) this.id,
+      {@Id(assignable: true) this.id = 0,
       required this.firstName,
       required this.lastName,
       this.frequency = ContactFrequency.defaultValue,
@@ -187,8 +187,9 @@ class _$ContactImpl extends _Contact {
       _$$ContactImplFromJson(json);
 
   @override
+  @JsonKey()
   @Id(assignable: true)
-  final int? id;
+  final int id;
   @override
   final String firstName;
   @override
@@ -250,7 +251,7 @@ class _$ContactImpl extends _Contact {
 
 abstract class _Contact extends Contact {
   factory _Contact(
-          {@Id(assignable: true) final int? id,
+          {@Id(assignable: true) final int id,
           required final String firstName,
           required final String lastName,
           final String frequency,
@@ -263,7 +264,7 @@ abstract class _Contact extends Contact {
 
   @override
   @Id(assignable: true)
-  int? get id;
+  int get id;
   @override
   String get firstName;
   @override

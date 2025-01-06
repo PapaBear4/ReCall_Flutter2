@@ -8,7 +8,7 @@ part of 'contact.dart';
 
 _$ContactImpl _$$ContactImplFromJson(Map<String, dynamic> json) =>
     _$ContactImpl(
-      id: (json['id'] as num?)?.toInt(),
+      id: (json['id'] as num?)?.toInt() ?? 0,
       firstName: json['firstName'] as String,
       lastName: json['lastName'] as String,
       frequency: json['frequency'] as String? ?? ContactFrequency.defaultValue,

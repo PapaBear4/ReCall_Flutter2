@@ -1,9 +1,0 @@
-targets:
-  $default:
-    auto_apply_builders: true
-    builders:
-      objectbox_generator|objectbox_builder:
-        enabled: true
-        options:
-          model_path: lib/models/contact.dart # Path to your @Entity class
-          output_dir: lib # Output directory for objectbox.g.dart

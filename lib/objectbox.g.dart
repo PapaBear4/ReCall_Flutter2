@@ -12,6 +12,7 @@ import 'package:flat_buffers/flat_buffers.dart' as fb;
 import 'package:objectbox/internal.dart'
     as obx_int; // generated code can access "internal" functionality
 import 'package:objectbox/objectbox.dart' as obx;
+import 'package:objectbox_flutter_libs/objectbox_flutter_libs.dart';
 
 import 'models/contact.dart';
 
@@ -70,16 +71,17 @@ final _entities = <obx_int.ModelEntity>[
 /// For Flutter apps, also calls `loadObjectBoxLibraryAndroidCompat()` from
 /// the ObjectBox Flutter library to fix loading the native ObjectBox library
 /// on Android 6 and older.
-obx.Store openStore(
+Future<obx.Store> openStore(
     {String? directory,
     int? maxDBSizeInKB,
     int? maxDataSizeInKB,
     int? fileMode,
     int? maxReaders,
     bool queriesCaseSensitiveDefault = true,
-    String? macosApplicationGroup}) {
+    String? macosApplicationGroup}) async {
+  await loadObjectBoxLibraryAndroidCompat();
   return obx.Store(getObjectBoxModel(),
-      directory: directory,
+      directory: directory ?? (await defaultStoreDirectory()).path,
       maxDBSizeInKB: maxDBSizeInKB,
       maxDataSizeInKB: maxDataSizeInKB,
       fileMode: fileMode,
@@ -137,14 +139,14 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final lastNameOffset = fbb.writeString(object.lastName);
           final frequencyOffset = fbb.writeString(object.frequency);
           fbb.startTable(8);
-          fbb.addInt64(0, object.id ?? 0);
+          fbb.addInt64(0, object.id);
           fbb.addOffset(1, firstNameOffset);
           fbb.addOffset(2, lastNameOffset);
           fbb.addInt64(3, object.birthday?.millisecondsSinceEpoch);
           fbb.addInt64(4, object.lastContacted?.millisecondsSinceEpoch);
           fbb.addOffset(6, frequencyOffset);
           fbb.finish(fbb.endTable());
-          return object.id ?? 0;
+          return object.id;
         },
         objectFromFB: (obx.Store store, ByteData fbData) {
           final buffer = fb.BufferContext(fbData);
@@ -154,7 +156,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final lastContactedValue =
               const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 12);
           final idParam =
-              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 4);
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
           final firstNameParam = const fb.StringReader(asciiOptimization: true)
               .vTableGet(buffer, rootOffset, 6, '');
           final lastNameParam = const fb.StringReader(asciiOptimization: true)
