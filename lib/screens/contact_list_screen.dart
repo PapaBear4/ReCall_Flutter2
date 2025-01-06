@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:recall/utils/last_contacted_helper.dart';
-import 'package:recall/models/contact.dart';
+import 'package:recall/models/contact_frequency.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
@@ -102,8 +102,8 @@ class ContactListScreen extends StatelessWidget {
                                     : null,
                               ),
                               Text(
-                                  contact.frequency != ContactFrequency.never
-                                      ? contact.frequency.name
+                                  contact.frequency != ContactFrequency.never.value
+                                      ? contact.frequency
                                       : 'Frequency not set',
                                   style: const TextStyle(fontSize: 12)),
                             ],

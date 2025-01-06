@@ -5,6 +5,7 @@ import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
 import 'package:recall/models/contact.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
+import 'package:recall/models/contact_frequency.dart';
 
 var contactDetailScreenLogger = Logger();
 
@@ -36,7 +37,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       firstName: '',
       lastName: '',
       birthday: null,
-      frequency: ContactFrequency.never,
+      frequency: ContactFrequency.never.value,
       lastContacted: null,
     );
 
@@ -247,14 +248,14 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             // Dropdown for Contact Frequency
             const SizedBox(height: 16.0),
             const Text('Contact Frequency:'),
-            DropdownButtonFormField<ContactFrequency>(
+            DropdownButtonFormField<String>(
               value: _localContact.frequency,
               onTap: () {
                 context
                     .read<ContactDetailsBloc>()
                     .add(UpdateContactDetails(_localContact));
               },
-              onChanged: (ContactFrequency? newValue) {
+              onChanged: (String? newValue) {
                 if (newValue != null) {
                   setState(() {
                     _localContact = _localContact.copyWith(frequency: newValue);
@@ -267,8 +268,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                 }
               },
               items: ContactFrequency.values.map((frequency) {
-                return DropdownMenuItem<ContactFrequency>(
-                  value: frequency,
+                return DropdownMenuItem<String>(
+                  value: frequency.value,
                   child: Text(frequency.name),
                 );
               }).toList(),
