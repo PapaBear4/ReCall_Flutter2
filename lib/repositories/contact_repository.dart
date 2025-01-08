@@ -22,7 +22,7 @@ class ContactRepository {
           .i("LOG: No contacts found.  Initializing with dummy data...");
       //1. create a single contact
       final firstContact = Contact(
-        id: 0,
+        id: null,
         firstName: 'Delete',
         lastName: 'Me',
         frequency: ContactFrequency.never.value,
@@ -37,7 +37,7 @@ class ContactRepository {
       //final dummyContacts = InMemoryContactRepository.createDummyContacts();
       //create more dummy contacts
       final secondContact = Contact(
-        id: 0,
+        id: null,
         firstName: 'Delete',
         lastName: 'Me 2',
         frequency: ContactFrequency.never.value,
@@ -66,7 +66,7 @@ class ContactRepository {
       final secondSavedContact = secondContact.copyWith(id: secondId);
 
 
-      final contactsToPut = [secondContact, thirdContact];
+      final contactsToPut = [thirdContact, fourthContact];
       final addedIds =
           _contactBox.putMany(contactsToPut); // Add dummy contacts to ObjectBox
       contactRepoLogger.i("LOG added IDs: $addedIds");
