@@ -83,5 +83,14 @@ class ContactDetailsBloc
         )));
       }
     });
+
+    on<AddNewContact>((event, emit) async {
+      if (state is ContactDetailsLoaded) {
+        emit(ContactDetailsState.loading());
+        final newContact =
+            await _contactRepository.addContact(event.newContact);
+        emit(ContactDetailsState.loaded(newContact));
+      }
+    });
   }
 }

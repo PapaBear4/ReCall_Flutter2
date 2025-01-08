@@ -11,7 +11,7 @@ class ContactRepository {
 
   // Initialize the repository
   ContactRepository(this._store) {
-    _contactBox = _store.box<Contact>();
+                  _contactBox = _store.box<Contact>();
     _initializeData();
   }
 
@@ -20,9 +20,55 @@ class ContactRepository {
       // Check if the database is empty
       contactRepoLogger
           .i("LOG: No contacts found.  Initializing with dummy data...");
-      final dummyContacts = InMemoryContactRepository.createDummyContacts();
+      //1. create a single contact
+      final firstContact = Contact(
+        id: 0,
+        firstName: 'Delete',
+        lastName: 'Me',
+        frequency: ContactFrequency.never.value,
+        birthday: null,
+        lastContacted: null,
+      ); // first dummy contact
+      //2. add it to the box
+      final firstId = _contactBox.put(firstContact);
+      //3. update the contact
+      final firstSavedContact = firstContact.copyWith(id: firstId);
+      //get the dummy contacts
+      //final dummyContacts = InMemoryContactRepository.createDummyContacts();
+      //create more dummy contacts
+      final secondContact = Contact(
+        id: 0,
+        firstName: 'Delete',
+        lastName: 'Me 2',
+        frequency: ContactFrequency.never.value,
+        birthday: null,
+        lastContacted: null,
+      ); // second dummy contact
+      final thirdContact = Contact(
+        id: 0,
+        firstName: 'Delete',
+        lastName: 'Me 3',
+        frequency: ContactFrequency.never.value,
+        birthday: null,
+        lastContacted: null,
+      ); // third dummy contact
+      final fourthContact = Contact(
+        id: 0,
+        firstName: 'Delete',
+        lastName: 'Me 4',
+        frequency: ContactFrequency.never.value,
+        birthday: null,
+        lastContacted: null,
+      ); // fourth dummy contact
+      // add a second contact
+      final secondId = _contactBox.put(secondContact);
+      //3. update the contact
+      final secondSavedContact = secondContact.copyWith(id: secondId);
+
+
+      final contactsToPut = [secondContact, thirdContact];
       final addedIds =
-          _contactBox.putMany(dummyContacts); // Add dummy contacts to ObjectBox
+          _contactBox.putMany(contactsToPut); // Add dummy contacts to ObjectBox
       contactRepoLogger.i("LOG added IDs: $addedIds");
     }
   }
@@ -81,8 +127,9 @@ class ContactRepository {
   ///
   /// Generates a unique ID for the new contact, adds it to the list, and
   /// updates the persistent storage.
-  Future<void> addContact(Contact contact) async {
-    _contactBox.put(contact);
+  Future<Contact> addContact(Contact contact) async {
+    final newId = _contactBox.put(contact);
+    return contact.copyWith(id: newId);
   }
 }
 

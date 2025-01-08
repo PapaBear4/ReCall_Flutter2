@@ -47,8 +47,12 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     //case for when adding a new contact is something that happens before
     //viewing an existing contact.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-        final contactId = ModalRoute.of(context)!.settings.arguments as int;
+      final contactId = ModalRoute.of(context)!.settings.arguments as int;
+      if (contactId != 0) {
         context.read<ContactDetailsBloc>().add(LoadContact(contactId));
+      } else {
+        context.read<ContactDetailsBloc>().add(StartNewContact());
+      }
     });
   }
 
@@ -93,7 +97,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                       'You have unsaved changes. Are you sure you want to discard them?'),
                   actions: <Widget>[
                     TextButton(
-                      onPressed: () => Navigator.of(context).pop(), //close dialog
+                      onPressed: () =>
+                          Navigator.of(context).pop(), //close dialog
                       child: const Text('Cancel'),
                     ),
                     TextButton(
@@ -143,7 +148,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   if (currentState is ContactDetailsLoaded) {
                     // IF Id = 0, add the new contact
                     if (currentState.contact.id == 0) {
-                      context.read<ContactListBloc>().add(AddContact(
+                      context.read<ContactDetailsBloc>().add(AddNewContact(
                           _localContact.copyWith(
                               lastContacted: DateTime
                                   .now()))); // Set initial lastContacted to now
@@ -160,7 +165,11 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                       );
                       context.read<ContactListBloc>().add(ContactUpdated());
                     }
-                    Navigator.of(context).pop();
+                    //reload the list
+                    context
+                        .read<ContactListBloc>()
+                        .add(LoadContacts());
+                    Navigator.of(context).pop(); //close details screen
                   }
                 }
               },
