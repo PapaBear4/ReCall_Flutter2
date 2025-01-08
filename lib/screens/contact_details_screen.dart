@@ -33,6 +33,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     _firstNameController = TextEditingController();
     _lastNameController = TextEditingController();
     _localContact = Contact(
+      id: 0,
       firstName: '',
       lastName: '',
       birthday: null,
@@ -42,9 +43,12 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
     //Once everything is loaded up, go back to get the contactId
     //and load the data into the bloc
+    //TODO: Might need to add an IF statement in here for the contactId=null
+    //case for when adding a new contact is something that happens before
+    //viewing an existing contact.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final contactId = ModalRoute.of(context)!.settings.arguments as int;
-      context.read<ContactDetailsBloc>().add(LoadContact(contactId));
+        final contactId = ModalRoute.of(context)!.settings.arguments as int;
+        context.read<ContactDetailsBloc>().add(LoadContact(contactId));
     });
   }
 
@@ -89,7 +93,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                       'You have unsaved changes. Are you sure you want to discard them?'),
                   actions: <Widget>[
                     TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: () => Navigator.of(context).pop(), //close dialog
                       child: const Text('Cancel'),
                     ),
                     TextButton(
@@ -103,7 +107,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                 ),
               );
             } else {
-              Navigator.of(context).pop();
+              Navigator.of(context).pop(); //close dialog
             }
           },
         ),
@@ -141,11 +145,12 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                     if (currentState.contact.id == 0) {
                       context.read<ContactListBloc>().add(AddContact(
                           _localContact.copyWith(
-                              lastContacted: DateTime.now()))); // Set initial lastContacted to now
+                              lastContacted: DateTime
+                                  .now()))); // Set initial lastContacted to now
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('New contact saved')),
                       );
-                    } else { 
+                    } else {
                       //otherwise update the current contact
                       context
                           .read<ContactDetailsBloc>()

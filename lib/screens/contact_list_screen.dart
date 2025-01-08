@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:recall/blocs/contact_details/contact_details_bloc.dart';
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:recall/utils/last_contacted_helper.dart';
@@ -56,8 +57,7 @@ class ContactListScreen extends StatelessWidget {
                           SlidableAction(
                             onPressed: (context) {
                               context.read<ContactListBloc>().add(
-                                  UpdateLastContacted(
-                                      contactId: contact.id!));
+                                  UpdateLastContacted(contactId: contact.id!));
                             },
                             backgroundColor: Colors.blue,
                             foregroundColor: Colors.white,
@@ -102,7 +102,8 @@ class ContactListScreen extends StatelessWidget {
                                     : null,
                               ),
                               Text(
-                                  contact.frequency != ContactFrequency.never.value
+                                  contact.frequency !=
+                                          ContactFrequency.never.value
                                       ? contact.frequency
                                       : 'Frequency not set',
                                   style: const TextStyle(fontSize: 12)),
@@ -142,9 +143,11 @@ class ContactListScreen extends StatelessWidget {
       // Floating action button for adding a new contact.
       floatingActionButton: FloatingActionButton(
         onPressed: () {
+          //Load up a new contact in the details bloc
+          context.read<ContactDetailsBloc>().add(StartNewContact());
           // Navigate to the add contact screen
           Navigator.pushNamed(context, '/contactDetails',
-              arguments: 0); // Pass 0 to signal new contact
+              arguments: 0); // Pass null to prevent errors
         },
         child: const Icon(Icons.add),
       ),

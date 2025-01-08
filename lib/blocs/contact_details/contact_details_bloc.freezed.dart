@@ -22,6 +22,7 @@ mixin _$ContactDetailsEvent {
     required TResult Function(Contact updatedContact) saveContactDetails,
     required TResult Function(Contact updatedContact) updateContactDetails,
     required TResult Function(DateTime? birthday, int contactId) updateBirthday,
+    required TResult Function() startNewContact,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -30,6 +31,7 @@ mixin _$ContactDetailsEvent {
     TResult? Function(Contact updatedContact)? saveContactDetails,
     TResult? Function(Contact updatedContact)? updateContactDetails,
     TResult? Function(DateTime? birthday, int contactId)? updateBirthday,
+    TResult? Function()? startNewContact,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -38,6 +40,7 @@ mixin _$ContactDetailsEvent {
     TResult Function(Contact updatedContact)? saveContactDetails,
     TResult Function(Contact updatedContact)? updateContactDetails,
     TResult Function(DateTime? birthday, int contactId)? updateBirthday,
+    TResult Function()? startNewContact,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -47,6 +50,7 @@ mixin _$ContactDetailsEvent {
     required TResult Function(SaveContactDetails value) saveContactDetails,
     required TResult Function(UpdateContactDetails value) updateContactDetails,
     required TResult Function(UpdateBirthday value) updateBirthday,
+    required TResult Function(StartNewContact value) startNewContact,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -55,6 +59,7 @@ mixin _$ContactDetailsEvent {
     TResult? Function(SaveContactDetails value)? saveContactDetails,
     TResult? Function(UpdateContactDetails value)? updateContactDetails,
     TResult? Function(UpdateBirthday value)? updateBirthday,
+    TResult? Function(StartNewContact value)? startNewContact,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -63,6 +68,7 @@ mixin _$ContactDetailsEvent {
     TResult Function(SaveContactDetails value)? saveContactDetails,
     TResult Function(UpdateContactDetails value)? updateContactDetails,
     TResult Function(UpdateBirthday value)? updateBirthday,
+    TResult Function(StartNewContact value)? startNewContact,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -162,6 +168,7 @@ class _$LoadContactImpl implements LoadContact {
     required TResult Function(Contact updatedContact) saveContactDetails,
     required TResult Function(Contact updatedContact) updateContactDetails,
     required TResult Function(DateTime? birthday, int contactId) updateBirthday,
+    required TResult Function() startNewContact,
   }) {
     return loadContact(contactId);
   }
@@ -173,6 +180,7 @@ class _$LoadContactImpl implements LoadContact {
     TResult? Function(Contact updatedContact)? saveContactDetails,
     TResult? Function(Contact updatedContact)? updateContactDetails,
     TResult? Function(DateTime? birthday, int contactId)? updateBirthday,
+    TResult? Function()? startNewContact,
   }) {
     return loadContact?.call(contactId);
   }
@@ -184,6 +192,7 @@ class _$LoadContactImpl implements LoadContact {
     TResult Function(Contact updatedContact)? saveContactDetails,
     TResult Function(Contact updatedContact)? updateContactDetails,
     TResult Function(DateTime? birthday, int contactId)? updateBirthday,
+    TResult Function()? startNewContact,
     required TResult orElse(),
   }) {
     if (loadContact != null) {
@@ -199,6 +208,7 @@ class _$LoadContactImpl implements LoadContact {
     required TResult Function(SaveContactDetails value) saveContactDetails,
     required TResult Function(UpdateContactDetails value) updateContactDetails,
     required TResult Function(UpdateBirthday value) updateBirthday,
+    required TResult Function(StartNewContact value) startNewContact,
   }) {
     return loadContact(this);
   }
@@ -210,6 +220,7 @@ class _$LoadContactImpl implements LoadContact {
     TResult? Function(SaveContactDetails value)? saveContactDetails,
     TResult? Function(UpdateContactDetails value)? updateContactDetails,
     TResult? Function(UpdateBirthday value)? updateBirthday,
+    TResult? Function(StartNewContact value)? startNewContact,
   }) {
     return loadContact?.call(this);
   }
@@ -221,6 +232,7 @@ class _$LoadContactImpl implements LoadContact {
     TResult Function(SaveContactDetails value)? saveContactDetails,
     TResult Function(UpdateContactDetails value)? updateContactDetails,
     TResult Function(UpdateBirthday value)? updateBirthday,
+    TResult Function(StartNewContact value)? startNewContact,
     required TResult orElse(),
   }) {
     if (loadContact != null) {
@@ -328,6 +340,7 @@ class _$SaveContactDetailsImpl implements SaveContactDetails {
     required TResult Function(Contact updatedContact) saveContactDetails,
     required TResult Function(Contact updatedContact) updateContactDetails,
     required TResult Function(DateTime? birthday, int contactId) updateBirthday,
+    required TResult Function() startNewContact,
   }) {
     return saveContactDetails(updatedContact);
   }
@@ -339,6 +352,7 @@ class _$SaveContactDetailsImpl implements SaveContactDetails {
     TResult? Function(Contact updatedContact)? saveContactDetails,
     TResult? Function(Contact updatedContact)? updateContactDetails,
     TResult? Function(DateTime? birthday, int contactId)? updateBirthday,
+    TResult? Function()? startNewContact,
   }) {
     return saveContactDetails?.call(updatedContact);
   }
@@ -350,6 +364,7 @@ class _$SaveContactDetailsImpl implements SaveContactDetails {
     TResult Function(Contact updatedContact)? saveContactDetails,
     TResult Function(Contact updatedContact)? updateContactDetails,
     TResult Function(DateTime? birthday, int contactId)? updateBirthday,
+    TResult Function()? startNewContact,
     required TResult orElse(),
   }) {
     if (saveContactDetails != null) {
@@ -365,6 +380,7 @@ class _$SaveContactDetailsImpl implements SaveContactDetails {
     required TResult Function(SaveContactDetails value) saveContactDetails,
     required TResult Function(UpdateContactDetails value) updateContactDetails,
     required TResult Function(UpdateBirthday value) updateBirthday,
+    required TResult Function(StartNewContact value) startNewContact,
   }) {
     return saveContactDetails(this);
   }
@@ -376,6 +392,7 @@ class _$SaveContactDetailsImpl implements SaveContactDetails {
     TResult? Function(SaveContactDetails value)? saveContactDetails,
     TResult? Function(UpdateContactDetails value)? updateContactDetails,
     TResult? Function(UpdateBirthday value)? updateBirthday,
+    TResult? Function(StartNewContact value)? startNewContact,
   }) {
     return saveContactDetails?.call(this);
   }
@@ -387,6 +404,7 @@ class _$SaveContactDetailsImpl implements SaveContactDetails {
     TResult Function(SaveContactDetails value)? saveContactDetails,
     TResult Function(UpdateContactDetails value)? updateContactDetails,
     TResult Function(UpdateBirthday value)? updateBirthday,
+    TResult Function(StartNewContact value)? startNewContact,
     required TResult orElse(),
   }) {
     if (saveContactDetails != null) {
@@ -496,6 +514,7 @@ class _$UpdateContactDetailsImpl implements UpdateContactDetails {
     required TResult Function(Contact updatedContact) saveContactDetails,
     required TResult Function(Contact updatedContact) updateContactDetails,
     required TResult Function(DateTime? birthday, int contactId) updateBirthday,
+    required TResult Function() startNewContact,
   }) {
     return updateContactDetails(updatedContact);
   }
@@ -507,6 +526,7 @@ class _$UpdateContactDetailsImpl implements UpdateContactDetails {
     TResult? Function(Contact updatedContact)? saveContactDetails,
     TResult? Function(Contact updatedContact)? updateContactDetails,
     TResult? Function(DateTime? birthday, int contactId)? updateBirthday,
+    TResult? Function()? startNewContact,
   }) {
     return updateContactDetails?.call(updatedContact);
   }
@@ -518,6 +538,7 @@ class _$UpdateContactDetailsImpl implements UpdateContactDetails {
     TResult Function(Contact updatedContact)? saveContactDetails,
     TResult Function(Contact updatedContact)? updateContactDetails,
     TResult Function(DateTime? birthday, int contactId)? updateBirthday,
+    TResult Function()? startNewContact,
     required TResult orElse(),
   }) {
     if (updateContactDetails != null) {
@@ -533,6 +554,7 @@ class _$UpdateContactDetailsImpl implements UpdateContactDetails {
     required TResult Function(SaveContactDetails value) saveContactDetails,
     required TResult Function(UpdateContactDetails value) updateContactDetails,
     required TResult Function(UpdateBirthday value) updateBirthday,
+    required TResult Function(StartNewContact value) startNewContact,
   }) {
     return updateContactDetails(this);
   }
@@ -544,6 +566,7 @@ class _$UpdateContactDetailsImpl implements UpdateContactDetails {
     TResult? Function(SaveContactDetails value)? saveContactDetails,
     TResult? Function(UpdateContactDetails value)? updateContactDetails,
     TResult? Function(UpdateBirthday value)? updateBirthday,
+    TResult? Function(StartNewContact value)? startNewContact,
   }) {
     return updateContactDetails?.call(this);
   }
@@ -555,6 +578,7 @@ class _$UpdateContactDetailsImpl implements UpdateContactDetails {
     TResult Function(SaveContactDetails value)? saveContactDetails,
     TResult Function(UpdateContactDetails value)? updateContactDetails,
     TResult Function(UpdateBirthday value)? updateBirthday,
+    TResult Function(StartNewContact value)? startNewContact,
     required TResult orElse(),
   }) {
     if (updateContactDetails != null) {
@@ -660,6 +684,7 @@ class _$UpdateBirthdayImpl implements UpdateBirthday {
     required TResult Function(Contact updatedContact) saveContactDetails,
     required TResult Function(Contact updatedContact) updateContactDetails,
     required TResult Function(DateTime? birthday, int contactId) updateBirthday,
+    required TResult Function() startNewContact,
   }) {
     return updateBirthday(birthday, contactId);
   }
@@ -671,6 +696,7 @@ class _$UpdateBirthdayImpl implements UpdateBirthday {
     TResult? Function(Contact updatedContact)? saveContactDetails,
     TResult? Function(Contact updatedContact)? updateContactDetails,
     TResult? Function(DateTime? birthday, int contactId)? updateBirthday,
+    TResult? Function()? startNewContact,
   }) {
     return updateBirthday?.call(birthday, contactId);
   }
@@ -682,6 +708,7 @@ class _$UpdateBirthdayImpl implements UpdateBirthday {
     TResult Function(Contact updatedContact)? saveContactDetails,
     TResult Function(Contact updatedContact)? updateContactDetails,
     TResult Function(DateTime? birthday, int contactId)? updateBirthday,
+    TResult Function()? startNewContact,
     required TResult orElse(),
   }) {
     if (updateBirthday != null) {
@@ -697,6 +724,7 @@ class _$UpdateBirthdayImpl implements UpdateBirthday {
     required TResult Function(SaveContactDetails value) saveContactDetails,
     required TResult Function(UpdateContactDetails value) updateContactDetails,
     required TResult Function(UpdateBirthday value) updateBirthday,
+    required TResult Function(StartNewContact value) startNewContact,
   }) {
     return updateBirthday(this);
   }
@@ -708,6 +736,7 @@ class _$UpdateBirthdayImpl implements UpdateBirthday {
     TResult? Function(SaveContactDetails value)? saveContactDetails,
     TResult? Function(UpdateContactDetails value)? updateContactDetails,
     TResult? Function(UpdateBirthday value)? updateBirthday,
+    TResult? Function(StartNewContact value)? startNewContact,
   }) {
     return updateBirthday?.call(this);
   }
@@ -719,6 +748,7 @@ class _$UpdateBirthdayImpl implements UpdateBirthday {
     TResult Function(SaveContactDetails value)? saveContactDetails,
     TResult Function(UpdateContactDetails value)? updateContactDetails,
     TResult Function(UpdateBirthday value)? updateBirthday,
+    TResult Function(StartNewContact value)? startNewContact,
     required TResult orElse(),
   }) {
     if (updateBirthday != null) {
@@ -741,6 +771,129 @@ abstract class UpdateBirthday implements ContactDetailsEvent {
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$UpdateBirthdayImplCopyWith<_$UpdateBirthdayImpl> get copyWith =>
       throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$StartNewContactImplCopyWith<$Res> {
+  factory _$$StartNewContactImplCopyWith(_$StartNewContactImpl value,
+          $Res Function(_$StartNewContactImpl) then) =
+      __$$StartNewContactImplCopyWithImpl<$Res>;
+}
+
+/// @nodoc
+class __$$StartNewContactImplCopyWithImpl<$Res>
+    extends _$ContactDetailsEventCopyWithImpl<$Res, _$StartNewContactImpl>
+    implements _$$StartNewContactImplCopyWith<$Res> {
+  __$$StartNewContactImplCopyWithImpl(
+      _$StartNewContactImpl _value, $Res Function(_$StartNewContactImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of ContactDetailsEvent
+  /// with the given fields replaced by the non-null parameter values.
+}
+
+/// @nodoc
+
+class _$StartNewContactImpl implements StartNewContact {
+  const _$StartNewContactImpl();
+
+  @override
+  String toString() {
+    return 'ContactDetailsEvent.startNewContact()';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType && other is _$StartNewContactImpl);
+  }
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(int contactId) loadContact,
+    required TResult Function(Contact updatedContact) saveContactDetails,
+    required TResult Function(Contact updatedContact) updateContactDetails,
+    required TResult Function(DateTime? birthday, int contactId) updateBirthday,
+    required TResult Function() startNewContact,
+  }) {
+    return startNewContact();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(int contactId)? loadContact,
+    TResult? Function(Contact updatedContact)? saveContactDetails,
+    TResult? Function(Contact updatedContact)? updateContactDetails,
+    TResult? Function(DateTime? birthday, int contactId)? updateBirthday,
+    TResult? Function()? startNewContact,
+  }) {
+    return startNewContact?.call();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(int contactId)? loadContact,
+    TResult Function(Contact updatedContact)? saveContactDetails,
+    TResult Function(Contact updatedContact)? updateContactDetails,
+    TResult Function(DateTime? birthday, int contactId)? updateBirthday,
+    TResult Function()? startNewContact,
+    required TResult orElse(),
+  }) {
+    if (startNewContact != null) {
+      return startNewContact();
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(LoadContact value) loadContact,
+    required TResult Function(SaveContactDetails value) saveContactDetails,
+    required TResult Function(UpdateContactDetails value) updateContactDetails,
+    required TResult Function(UpdateBirthday value) updateBirthday,
+    required TResult Function(StartNewContact value) startNewContact,
+  }) {
+    return startNewContact(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(LoadContact value)? loadContact,
+    TResult? Function(SaveContactDetails value)? saveContactDetails,
+    TResult? Function(UpdateContactDetails value)? updateContactDetails,
+    TResult? Function(UpdateBirthday value)? updateBirthday,
+    TResult? Function(StartNewContact value)? startNewContact,
+  }) {
+    return startNewContact?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(LoadContact value)? loadContact,
+    TResult Function(SaveContactDetails value)? saveContactDetails,
+    TResult Function(UpdateContactDetails value)? updateContactDetails,
+    TResult Function(UpdateBirthday value)? updateBirthday,
+    TResult Function(StartNewContact value)? startNewContact,
+    required TResult orElse(),
+  }) {
+    if (startNewContact != null) {
+      return startNewContact(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class StartNewContact implements ContactDetailsEvent {
+  const factory StartNewContact() = _$StartNewContactImpl;
 }
 
 /// @nodoc

@@ -21,7 +21,9 @@ class ContactRepository {
       contactRepoLogger
           .i("LOG: No contacts found.  Initializing with dummy data...");
       final dummyContacts = InMemoryContactRepository.createDummyContacts();
-      _contactBox.putMany(dummyContacts); // Add dummy contacts to ObjectBox
+      final addedIds =
+          _contactBox.putMany(dummyContacts); // Add dummy contacts to ObjectBox
+      contactRepoLogger.i("LOG added IDs: $addedIds");
     }
   }
 
@@ -39,7 +41,14 @@ class ContactRepository {
   /// returns it. Throws an exception if no contact is found with that ID.
   Future<Contact> getContactById(int contactId) async {
     return _contactBox.get(contactId) ??
-        Contact(id: 0, firstName: '', lastName: '', birthday: null, frequency: ContactFrequency.never.value, lastContacted: null);
+        Contact(
+          id: 0,
+          firstName: '',
+          lastName: '',
+          frequency: ContactFrequency.never.value,
+          birthday: null,
+          lastContacted: null,
+        ); // Return null if not found
   }
 
   /// Loads all contacts from the repository.
@@ -82,7 +91,7 @@ class InMemoryContactRepository {
     return [
       // Superheroes
       Contact(
-        id: 1,
+        id: 0,
         firstName: 'Clark',
         lastName: 'Kent',
         frequency: (ContactFrequency.daily.value),
@@ -90,7 +99,7 @@ class InMemoryContactRepository {
         lastContacted: DateTime(2024, 12, 20),
       ),
       Contact(
-        id: 2,
+        id: 0,
         firstName: 'Bruce',
         lastName: 'Wayne',
         frequency: (ContactFrequency.weekly.value),
@@ -98,7 +107,7 @@ class InMemoryContactRepository {
         lastContacted: DateTime(2024, 12, 15),
       ),
       Contact(
-        id: 3,
+        id: 0,
         firstName: 'Diana',
         lastName: 'Prince',
         frequency: (ContactFrequency.monthly.value),
@@ -106,7 +115,7 @@ class InMemoryContactRepository {
         lastContacted: DateTime(2024, 12, 1),
       ),
       Contact(
-        id: 4,
+        id: 0,
         firstName: 'Peter',
         lastName: 'Parker',
         frequency: (ContactFrequency.biWeekly.value),
@@ -114,7 +123,7 @@ class InMemoryContactRepository {
         lastContacted: DateTime(2024, 11, 25),
       ),
       Contact(
-        id: 5,
+        id: 0,
         firstName: 'Tony',
         lastName: 'Stark',
         frequency: (ContactFrequency.rarely.value),
@@ -124,7 +133,7 @@ class InMemoryContactRepository {
 
       // Famous people
       Contact(
-        id: 6,
+        id: 0,
         firstName: 'Albert',
         lastName: 'Einstein',
         frequency: (ContactFrequency.yearly.value),
@@ -132,7 +141,7 @@ class InMemoryContactRepository {
         lastContacted: DateTime(2024, 9, 1),
       ),
       Contact(
-        id: 7,
+        id: 0,
         firstName: 'Marie',
         lastName: 'Curie',
         frequency: (ContactFrequency.quarterly.value),
@@ -140,7 +149,7 @@ class InMemoryContactRepository {
         lastContacted: DateTime(2024, 8, 15),
       ),
       Contact(
-        id: 8,
+        id: 0,
         firstName: 'Leonardo',
         lastName: 'da Vinci',
         frequency: (ContactFrequency.never.value),
@@ -148,7 +157,7 @@ class InMemoryContactRepository {
         lastContacted: DateTime(2024, 7, 1),
       ),
       Contact(
-        id: 9,
+        id: 0,
         firstName: 'William',
         lastName: 'Shakespeare',
         frequency: (ContactFrequency.monthly.value),
@@ -156,7 +165,7 @@ class InMemoryContactRepository {
         lastContacted: DateTime(2024, 6, 15),
       ),
       Contact(
-        id: 10,
+        id: 0,
         firstName: 'Nelson',
         lastName: 'Mandela',
         frequency: (ContactFrequency.weekly.value),
@@ -164,7 +173,7 @@ class InMemoryContactRepository {
         lastContacted: DateTime(2024, 5, 20),
       ),
       Contact(
-        id: 11,
+        id: 0,
         firstName: 'Oprah',
         lastName: 'Winfrey',
         frequency: (ContactFrequency.daily.value),
@@ -172,7 +181,7 @@ class InMemoryContactRepository {
         lastContacted: DateTime(2024, 4, 10),
       ),
       Contact(
-        id: 12,
+        id: 0,
         firstName: 'Stephen',
         lastName: 'Hawking',
         frequency: (ContactFrequency.biWeekly.value),
@@ -180,7 +189,7 @@ class InMemoryContactRepository {
         lastContacted: DateTime(2024, 3, 25),
       ),
       Contact(
-        id: 13,
+        id: 0,
         firstName: 'Malala',
         lastName: 'Yousafzai',
         frequency: (ContactFrequency.rarely.value),
@@ -188,7 +197,7 @@ class InMemoryContactRepository {
         lastContacted: DateTime(2024, 2, 15),
       ),
       Contact(
-        id: 14,
+        id: 0,
         firstName: 'Elon',
         lastName: 'Musk',
         frequency: (ContactFrequency.never.value),
@@ -196,7 +205,7 @@ class InMemoryContactRepository {
         lastContacted: DateTime(2024, 1, 5),
       ),
       Contact(
-        id: 15,
+        id: 0,
         firstName: 'Beyoncé',
         lastName: 'Knowles',
         frequency: (ContactFrequency.yearly.value),
@@ -204,7 +213,7 @@ class InMemoryContactRepository {
         lastContacted: DateTime(2023, 12, 20),
       ),
       Contact(
-        id: 16,
+        id: 0,
         firstName: 'Michelle',
         lastName: 'Obama',
         frequency: (ContactFrequency.quarterly.value),
@@ -212,7 +221,7 @@ class InMemoryContactRepository {
         lastContacted: DateTime(2023, 11, 10),
       ),
       Contact(
-        id: 17,
+        id: 0,
         firstName: 'Bill',
         lastName: 'Gates',
         frequency: (ContactFrequency.monthly.value),
@@ -220,7 +229,7 @@ class InMemoryContactRepository {
         lastContacted: DateTime(2023, 10, 1),
       ),
       Contact(
-        id: 18,
+        id: 0,
         firstName: 'Steve',
         lastName: 'Jobs',
         frequency: (ContactFrequency.never.value),
@@ -228,7 +237,7 @@ class InMemoryContactRepository {
         lastContacted: DateTime(2023, 9, 15),
       ),
       Contact(
-        id: 19,
+        id: 0,
         firstName: 'J.K.',
         lastName: 'Rowling',
         frequency: (ContactFrequency.weekly.value),
@@ -236,7 +245,7 @@ class InMemoryContactRepository {
         lastContacted: DateTime(2023, 8, 25),
       ),
       Contact(
-        id: 20,
+        id: 0,
         firstName: 'Taylor',
         lastName: 'Swift',
         frequency: (ContactFrequency.daily.value),

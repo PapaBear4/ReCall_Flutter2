@@ -3,6 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:recall/models/contact.dart';
 import 'package:recall/repositories/contact_repository.dart';
 import 'package:logger/logger.dart';
+import 'package:recall/models/contact_frequency.dart';
 
 part 'contact_details_event.dart';
 part 'contact_details_state.dart';
@@ -20,13 +21,14 @@ class ContactDetailsBloc
   ContactDetailsBloc({required ContactRepository contactRepository})
       : _contactRepository = contactRepository,
         super(const ContactDetailsState.initial()) {
-
     // Event handler for loading contact details
     on<LoadContact>((event, emit) async {
       emit(ContactDetailsState.loading());
+      contactDetailLogger.i("LOG: Before calling getContactById");
       try {
         final contact = await _contactRepository
-            .getContactById(event.contactId); //call getContactById
+            .getContactById(event.contactId); // call getContactById
+        contactDetailLogger.i("LOG: After calling getContactById");
         emit(ContactDetailsState.loaded(contact));
       } catch (e) {
         emit(ContactDetailsState.error(e.toString()));
@@ -44,7 +46,6 @@ class ContactDetailsBloc
           emit(ContactDetailsState.loaded(
               event.updatedContact)); // Emit the updated state
         } catch (e) {
-          contactDetailLogger.e("LOG:update failed");
           emit(ContactDetailsError(e.toString()));
         }
       }
@@ -64,7 +65,22 @@ class ContactDetailsBloc
         emit(ContactDetailsState.loading());
         final updatedContact =
             currentState.contact.copyWith(birthday: event.birthday);
-        emit(ContactDetailsState.loaded(updatedContact)); // Emit the updated state
+        emit(ContactDetailsState.loaded(
+            updatedContact)); // Emit the updated state
+      }
+    });
+
+    on<StartNewContact>((event, emit) async {
+      if (state is ContactDetailsLoaded) {
+        emit(ContactDetailsState.loading());
+        emit(ContactDetailsState.loaded(Contact(
+          id: 0,
+          firstName: '',
+          lastName: '',
+          birthday: null,
+          frequency: ContactFrequency.never.value,
+          lastContacted: null,
+        )));
       }
     });
   }

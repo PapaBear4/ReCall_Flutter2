@@ -74,9 +74,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
         final currentState = state as ContactListLoaded;
         emit(const ContactListState.loading());
         try {
-          contactListLogger.i("LOG:Attempting to add contact");
           await _contactRepository.addContact(event.contact);
-          contactListLogger.i("LOG:Contact added");
           final updatedContacts = await _contactRepository.loadContacts();
           emit(ContactListState.loaded(
               contacts: updatedContacts,
@@ -84,7 +82,6 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
               ascending: currentState.ascending));
         } catch (e) {
           emit(ContactListState.error(e.toString()));
-          contactListLogger.i("LOG:Error adding contact: $e");
         }
       }
     });
