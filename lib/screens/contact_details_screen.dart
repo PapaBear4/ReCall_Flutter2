@@ -128,8 +128,14 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     );
   }
 
-  // Build the form for editing contact details
+  bool _initialized = false; // Build the form for editing contact details
   Widget _buildForm(Contact contact) {
+    if (!_initialized) {
+      _firstNameController.text = contact.firstName;
+      _lastNameController.text = contact.lastName;
+      _localContact = contact;
+      _initialized = true;
+    }
     return Form(
       key: _formKey,
       child: Padding(
@@ -270,6 +276,9 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); //close dialog
+                          context
+              .read<ContactDetailsBloc>()
+              .add(ContactDetailsEvent.clearContact());
                 Navigator.of(context).pop(); //return to list
               },
               child: const Text('Discard'),
@@ -300,6 +309,9 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           context
               .read<ContactDetailsBloc>()
               .add(ContactDetailsEvent.saveContact(contact: _localContact));
+          context
+              .read<ContactDetailsBloc>()
+              .add(ContactDetailsEvent.clearContact());
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Changes saved')),
           );
@@ -326,7 +338,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () { //TODO: replace with a list refresh
+              onPressed: () {
+                //TODO: replace with a list refresh
                 context
                     .read<ContactListBloc>()
                     .add(ContactListEvent.loadContacts());

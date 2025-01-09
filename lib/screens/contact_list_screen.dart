@@ -132,7 +132,8 @@ Widget _contactList(List<Contact> contacts) {
                 ],
               ),
               onTap: () {
-                // Navigate to the contact details screen
+                // Navigate to the contact details screen with the
+                // arguement being the contact ID
                 Navigator.pushNamed(
                   context,
                   '/contactDetails',

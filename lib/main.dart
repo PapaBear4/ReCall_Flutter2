@@ -10,7 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'objectbox.g.dart'; // Import the generated ObjectBox model
 
-var logger = Logger();
+final logger = Logger();
 
 late final Store? store; // Declare the store
 
@@ -43,7 +43,6 @@ class ReCall extends StatelessWidget {
 
   const ReCall({super.key, required ContactRepository contactRepository})
       : _contactRepository = contactRepository;
-
   @override
   Widget build(BuildContext context) {
     return RepositoryProvider.value(
