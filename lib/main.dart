@@ -9,6 +9,8 @@ import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 import 'objectbox.g.dart'; // Import the generated ObjectBox model
 
+var logger = Logger();
+
 late final Store store; // Declare the store
 
 Future<Store> openStore() async {
@@ -24,7 +26,6 @@ void main() async {
   runApp(ReCall(
       contactRepository:
           ContactRepository(store))); // Pass the store to the repository
-  var logger = Logger();
   logger.i('LOG:App started');
 }
 
