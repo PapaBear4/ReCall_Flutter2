@@ -89,6 +89,7 @@ class ContactDetailsBloc
           }
         },
         clearContact: (e) async {
+          contactDetailLogger.i('Log: Clearing contact details');
           emit(const ContactDetailsState.cleared());
         },
         // ... other event handlers (for updateContact, addContact, etc.)

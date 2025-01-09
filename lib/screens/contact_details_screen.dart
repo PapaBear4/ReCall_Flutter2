@@ -25,6 +25,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   late TextEditingController _lastNameController;
   late Contact _localContact;
   bool _hasUnsavedChanges = false;
+  bool _initialized = false; // Build the form for editing contact details
+
   // ...other controllers
 
   @override
@@ -49,6 +51,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     //viewing an existing contact.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final contactId = ModalRoute.of(context)!.settings.arguments as int;
+      contactDetailLogger.i("LOG received ID $contactId");
       if (contactId != 0 && contactId != null) {
         context
             .read<ContactDetailsBloc>()
@@ -56,7 +59,15 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       } else {
         context
             .read<ContactDetailsBloc>()
-            .add(const ContactDetailsEvent.clearContact());
+            .add(ContactDetailsEvent.updateContactLocally(contact: Contact(
+              id: 0,
+              firstName: '',
+              lastName: '',
+              frequency: ContactFrequency.never.value,
+              birthday: null,
+              lastContacted: null,
+              )
+              ));
       }
     });
   }
@@ -128,7 +139,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     );
   }
 
-  bool _initialized = false; // Build the form for editing contact details
   Widget _buildForm(Contact contact) {
     if (!_initialized) {
       _firstNameController.text = contact.firstName;
@@ -276,9 +286,9 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); //close dialog
-                          context
-              .read<ContactDetailsBloc>()
-              .add(ContactDetailsEvent.clearContact());
+                context
+                    .read<ContactDetailsBloc>()
+                    .add(ContactDetailsEvent.clearContact());
                 Navigator.of(context).pop(); //return to list
               },
               child: const Text('Discard'),

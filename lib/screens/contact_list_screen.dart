@@ -54,7 +54,15 @@ class ContactListScreen extends StatelessWidget {
           //Load up a new contact in the details bloc
           context
               .read<ContactDetailsBloc>()
-              .add(ContactDetailsEvent.clearContact());
+              .add(ContactDetailsEvent.updateContactLocally(
+                  contact: Contact(
+                id: 0,
+                firstName: '',
+                lastName: '',
+                frequency: ContactFrequency.never.value,
+                birthday: null,
+                lastContacted: null,
+              )));
           // Navigate to the add contact screen
           Navigator.pushNamed(context, '/contactDetails',
               arguments: 0); // Pass null to prevent errors
@@ -107,7 +115,7 @@ Widget _contactList(List<Contact> contacts) {
               ],
             ),
             child: ListTile(
-              title: Text('${contact.firstName} ${contact.lastName}'),
+              title: Text('${contact.firstName} ${contact.lastName} ${contact.id}'),
               subtitle: Text(
                 contact.birthday != null
                     ? DateFormat('MM/dd').format(contact.birthday!)
@@ -132,6 +140,9 @@ Widget _contactList(List<Contact> contacts) {
                 ],
               ),
               onTap: () {
+                // set the state of the detials bloc
+                context.read<ContactDetailsBloc>().add(
+                    ContactDetailsEvent.loadContact(contactId: contact.id!));
                 // Navigate to the contact details screen with the
                 // arguement being the contact ID
                 Navigator.pushNamed(

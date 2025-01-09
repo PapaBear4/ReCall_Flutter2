@@ -7,7 +7,6 @@ import 'package:recall/repositories/web_contact_repository.dart';
 import 'repository.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
-
 var contactRepoLogger = Logger();
 
 class ContactRepository implements Repository<Contact> {
@@ -18,13 +17,12 @@ class ContactRepository implements Repository<Contact> {
   // Initialize the repository
   ContactRepository(this._store) {
     if (!kIsWeb) {
-      try{
+      try {
         //_store = openStore();
         _contactBox = _store!.box<Contact>();
         _initializeData();
       } catch (e) {
         contactRepoLogger.i("Erro opening ObjectBox store: $e");
-
       }
     }
   }
@@ -109,8 +107,15 @@ class ContactRepository implements Repository<Contact> {
   Future<Contact> add(Contact item) async {
     //TODO: need something here to handle the id value
     if (!kIsWeb && _store != null && _contactBox != null) {
-      final newId = _contactBox.put(item);
-      return item.copyWith(id: newId);
+      try {
+        contactRepoLogger.i("LOG contact sent for save $item");
+        final newId = _contactBox.put(item);
+        contactRepoLogger.i("LOG SUCCESS id returned $newId");
+        return item.copyWith(id: newId);
+      } catch (e) {
+        contactRepoLogger.i("Error saving to store: $e");
+      }
+      return item.copyWith(firstName: 'FAILED');
     } else {
       final newContact = await _webContactRepository.add(item);
       return newContact;
