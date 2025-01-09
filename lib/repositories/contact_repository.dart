@@ -1,22 +1,36 @@
+// lib/repositories/contactrepository.dart
 import 'package:recall/models/contact.dart'; // Import the Contact model
 import 'package:logger/logger.dart';
 import 'package:objectbox/objectbox.dart';
 import 'package:recall/models/contact_frequency.dart';
+import 'package:recall/repositories/web_contact_repository.dart';
+import 'repository.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 
 var contactRepoLogger = Logger();
 
-class ContactRepository {
-  final Store _store;
-  late final Box<Contact> _contactBox;
+class ContactRepository implements Repository<Contact> {
+  late final Store? _store;
+  late final Box<Contact>? _contactBox;
+  final WebContactRepository _webContactRepository = WebContactRepository();
 
   // Initialize the repository
   ContactRepository(this._store) {
-                  _contactBox = _store.box<Contact>();
-    _initializeData();
+    if (!kIsWeb) {
+      try{
+        //_store = openStore();
+        _contactBox = _store!.box<Contact>();
+        _initializeData();
+      } catch (e) {
+        contactRepoLogger.i("Erro opening ObjectBox store: $e");
+
+      }
+    }
   }
 
   Future<void> _initializeData() async {
-    if (_contactBox.isEmpty()) {
+    if (_store != null && _contactBox != null && _contactBox.isEmpty()) {
       // Check if the database is empty
       contactRepoLogger
           .i("LOG: No contacts found.  Initializing with dummy data...");
@@ -65,7 +79,6 @@ class ContactRepository {
       //3. update the contact
       final secondSavedContact = secondContact.copyWith(id: secondId);
 
-
       final contactsToPut = [thirdContact, fourthContact];
       final addedIds =
           _contactBox.putMany(contactsToPut); // Add dummy contacts to ObjectBox
@@ -73,63 +86,53 @@ class ContactRepository {
     }
   }
 
-  /// Updates an existing contact in the repository.
-  ///
-  /// Finds the contact with the matching ID and replaces it with the
-  /// `updatedContact` object.
-  Future<void> updateContact(Contact updatedContact) async {
-    _contactBox.put(updatedContact);
-  }
-
-  /// Retrieves a contact from the repository by its ID.
-  ///
-  /// Searches the contact list for a contact with the given `contactId` and
-  /// returns it. Throws an exception if no contact is found with that ID.
-  Future<Contact> getContactById(int contactId) async {
-    return _contactBox.get(contactId) ??
-        Contact(
-          id: 0,
-          firstName: '',
-          lastName: '',
-          frequency: ContactFrequency.never.value,
-          birthday: null,
-          lastContacted: null,
-        ); // Return null if not found
-  }
-
-  /// Loads all contacts from the repository.
-  ///
-  /// Returns a list of all contacts stored in memory.
-  // They were put there in the repository initialization.
-  // in the future this may need adjusted to account for local storage
-  Future<List<Contact>> loadContacts() async {
-    return _contactBox.getAll();
-  }
-
-  /// Deletes a contact from the repository by its ID.
-  ///
-  /// Removes the contact with the matching `contactId` from the list and
-  /// updates the persistent storage.
-  Future<void> deleteContact(int contactId) async {
-    _contactBox.remove(contactId);
-  }
-
-  Future<void> updateLastContacted(int contactId) async {
-    final contact = _contactBox.get(contactId);
-    if (contact != null) {
-      final updatedContact =
-          contact.copyWith(lastContacted: DateTime.now()); // Use copyWith
-      _contactBox.put(updatedContact); // Store the updated contact
+//
+  @override
+  Future<List<Contact>> getAll() async {
+    if (!kIsWeb && _store != null && _contactBox != null) {
+      return _contactBox.getAll();
+    } else {
+      return await _webContactRepository.getAll();
     }
   }
 
-  /// Adds a new contact to the repository.
-  ///
-  /// Generates a unique ID for the new contact, adds it to the list, and
-  /// updates the persistent storage.
-  Future<Contact> addContact(Contact contact) async {
-    final newId = _contactBox.put(contact);
-    return contact.copyWith(id: newId);
+  @override
+  Future<Contact?> getById(int id) async {
+    if (!kIsWeb && _store != null && _contactBox != null) {
+      return _contactBox.get(id);
+    } else {
+      return await _webContactRepository.getById(id);
+    }
+  }
+
+  @override
+  Future<Contact> add(Contact item) async {
+    //TODO: need something here to handle the id value
+    if (!kIsWeb && _store != null && _contactBox != null) {
+      final newId = _contactBox.put(item);
+      return item.copyWith(id: newId);
+    } else {
+      final newContact = await _webContactRepository.add(item);
+      return newContact;
+    }
+  }
+
+  @override
+  Future<void> update(Contact item) async {
+    if (!kIsWeb && _store != null && _contactBox != null) {
+      _contactBox.put(item);
+    } else {
+      await _webContactRepository.update(item);
+    }
+  }
+
+  @override
+  Future<void> delete(int id) async {
+    if (!kIsWeb && _store != null && _contactBox != null) {
+      _contactBox.remove(id);
+    } else {
+      await _webContactRepository.delete(id);
+    }
   }
 }
 

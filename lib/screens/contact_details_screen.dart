@@ -1,3 +1,4 @@
+// lib/screens/contact_details_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:recall/blocs/contact_details/contact_details_bloc.dart';
@@ -10,9 +11,9 @@ import 'package:recall/models/contact_frequency.dart';
 var contactDetailScreenLogger = Logger();
 
 class ContactDetailsScreen extends StatefulWidget {
-  final int contactId;
+  final int? contactId;
 
-  const ContactDetailsScreen({super.key, required this.contactId});
+  const ContactDetailsScreen({super.key, this.contactId});
 
   @override
   State<ContactDetailsScreen> createState() => _ContactDetailsScreenState();
@@ -48,25 +49,29 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     //viewing an existing contact.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final contactId = ModalRoute.of(context)!.settings.arguments as int;
-      if (contactId != 0) {
-        context.read<ContactDetailsBloc>().add(LoadContact(contactId));
+      if (contactId != 0 && contactId != null) {
+        context
+            .read<ContactDetailsBloc>()
+            .add(ContactDetailsEvent.loadContact(contactId: contactId));
       } else {
-        context.read<ContactDetailsBloc>().add(StartNewContact());
+        context
+            .read<ContactDetailsBloc>()
+            .add(const ContactDetailsEvent.clearContact());
       }
     });
   }
-
+/*
   @override
   // Update UI when dependencies change, especially when contact details are loaded
   void didChangeDependencies() {
     super.didChangeDependencies();
     final state = context.watch<ContactDetailsBloc>().state;
-    if (state is ContactDetailsLoaded) {
+    if (state is ContactDetailsState.loaded) {
       _localContact = state.contact;
       _firstNameController.text = _localContact.firstName;
       _lastNameController.text = _localContact.lastName;
     }
-  }
+  }*/
 
   @override
   // Dispose of controllers to prevent memory leaks
@@ -83,56 +88,25 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       appBar: AppBar(
         title: const Text('Contact Details'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            context
-                .read<ContactDetailsBloc>()
-                .add(UpdateContactDetails(_localContact));
-            if (_hasUnsavedChanges) {
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Discard Changes?'),
-                  content: const Text(
-                      'You have unsaved changes. Are you sure you want to discard them?'),
-                  actions: <Widget>[
-                    TextButton(
-                      onPressed: () =>
-                          Navigator.of(context).pop(), //close dialog
-                      child: const Text('Cancel'),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop(); //close dialog
-                        Navigator.of(context).pop(); //return to list
-                      },
-                      child: const Text('Discard'),
-                    ),
-                  ],
-                ),
-              );
-            } else {
-              Navigator.of(context).pop(); //close dialog
-            }
-          },
-        ),
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => _onBackButtonPressed(context)),
       ),
       body: BlocConsumer<ContactDetailsBloc, ContactDetailsState>(
         listener: (context, state) {
-          if (state is ContactDetailsError) {
+          state.mapOrNull(error: (errorState) {
             ScaffoldMessenger.of(context)
-                .showSnackBar(SnackBar(content: Text(state.message)));
-          }
+                .showSnackBar(SnackBar(content: Text(errorState.message)));
+          });
         },
         builder: (context, state) {
-          if (state is ContactDetailsLoading) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (state is ContactDetailsLoaded) {
-            return _buildForm();
-          } else if (state is ContactDetailsError) {
-            return Center(child: Text(state.message));
-          }
-          return Container();
+          return state.map(
+            initial: (_) => const Center(child: CircularProgressIndicator()),
+            loading: (_) => const Center(child: CircularProgressIndicator()),
+            loaded: (loadedState) =>
+                _buildForm(loadedState.contact), // We'll define this later
+            cleared: (_) => const Center(child: Text('Contact Cleared')),
+            error: (errorState) => Center(child: Text(errorState.message)),
+          );
         },
       ),
       bottomNavigationBar: BottomAppBar(
@@ -142,70 +116,12 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             const SizedBox(width: 0),
             IconButton(
               icon: const Icon(Icons.save),
-              onPressed: () {
-                if (_formKey.currentState!.validate()) {
-                  final currentState = context.read<ContactDetailsBloc>().state;
-                  if (currentState is ContactDetailsLoaded) {
-                    // IF Id = 0, add the new contact
-                    if (currentState.contact.id == 0) {
-                      context.read<ContactDetailsBloc>().add(AddNewContact(
-                          _localContact.copyWith(
-                              lastContacted: DateTime
-                                  .now()))); // Set initial lastContacted to now
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('New contact saved')),
-                      );
-                    } else {
-                      //otherwise update the current contact
-                      context
-                          .read<ContactDetailsBloc>()
-                          .add(SaveContactDetails(_localContact));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Changes saved')),
-                      );
-                      context.read<ContactListBloc>().add(ContactUpdated());
-                    }
-                    //reload the list
-                    context
-                        .read<ContactListBloc>()
-                        .add(LoadContacts());
-                    Navigator.of(context).pop(); //close details screen
-                  }
-                }
-              },
+              onPressed: () => _onSaveButtonPressed(context),
             ),
             IconButton(
-                icon: const Icon(Icons.delete),
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: const Text('Confirm Deletion'),
-                        content: const Text(
-                            'Are you sure you want to delete this contact?'),
-                        actions: <Widget>[
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pop(); // Close the dialog
-                            },
-                            child: const Text('Cancel'),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              context
-                                  .read<ContactListBloc>()
-                                  .add(DeleteContact(_localContact.id!));
-                              Navigator.of(context).pop(); // Close the dialog
-                              Navigator.of(context).pop(); // Navigate back
-                            },
-                            child: const Text('Delete'),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                }),
+              icon: const Icon(Icons.delete),
+              onPressed: () => _onDeleteButtonPressed(context),
+            ),
           ],
         ),
       ),
@@ -213,7 +129,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   }
 
   // Build the form for editing contact details
-  Widget _buildForm() {
+  Widget _buildForm(Contact contact) {
     return Form(
       key: _formKey,
       child: Padding(
@@ -237,9 +153,9 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                 });
               },
               onFieldSubmitted: (value) {
-                context
-                    .read<ContactDetailsBloc>()
-                    .add(UpdateContactDetails(_localContact));
+                context.read<ContactDetailsBloc>().add(
+                    ContactDetailsEvent.updateContactLocally(
+                        contact: _localContact));
               },
             ),
             TextFormField(
@@ -264,9 +180,9 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             DropdownButtonFormField<String>(
               value: _localContact.frequency,
               onTap: () {
-                context
-                    .read<ContactDetailsBloc>()
-                    .add(UpdateContactDetails(_localContact));
+                context.read<ContactDetailsBloc>().add(
+                    ContactDetailsEvent.updateContactLocally(
+                        contact: _localContact));
               },
               onChanged: (String? newValue) {
                 if (newValue != null) {
@@ -274,9 +190,9 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                     _localContact = _localContact.copyWith(frequency: newValue);
                   });
                   //update bloc again with selection
-                  context
-                      .read<ContactDetailsBloc>()
-                      .add(UpdateContactDetails(_localContact));
+                  context.read<ContactDetailsBloc>().add(
+                      ContactDetailsEvent.updateContactLocally(
+                          contact: _localContact));
                   _hasUnsavedChanges = true;
                 }
               },
@@ -301,9 +217,9 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             ElevatedButton(
               onPressed: () async {
                 //update bloc before launching dialog
-                context
-                    .read<ContactDetailsBloc>()
-                    .add(UpdateContactDetails(_localContact));
+                context.read<ContactDetailsBloc>().add(
+                    ContactDetailsEvent.updateContactLocally(
+                        contact: _localContact));
 
                 final DateTime? picked = await showDatePicker(
                   context: context,
@@ -316,9 +232,9 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   setState(() {
                     _localContact = _localContact.copyWith(birthday: picked);
                   });
-                  context
-                      .read<ContactDetailsBloc>()
-                      .add(UpdateContactDetails(_localContact));
+                  context.read<ContactDetailsBloc>().add(
+                      ContactDetailsEvent.updateContactLocally(
+                          contact: _localContact));
 
                   _hasUnsavedChanges = true;
                 }
@@ -332,6 +248,96 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _onBackButtonPressed(BuildContext context) {
+    context
+        .read<ContactDetailsBloc>()
+        .add(ContactDetailsEvent.updateContactLocally(contact: _localContact));
+    if (_hasUnsavedChanges) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Discard Changes?'),
+          content: const Text(
+              'You have unsaved changes. Are you sure you want to discard them?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(), //close dialog
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); //close dialog
+                Navigator.of(context).pop(); //return to list
+              },
+              child: const Text('Discard'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      Navigator.of(context).pop(); //close dialog
+    }
+  }
+
+  void _onSaveButtonPressed(BuildContext context) {
+    if (_formKey.currentState!.validate()) {
+      final state = context.read<ContactDetailsBloc>().state;
+      state.mapOrNull(loaded: (loadedState) {
+        // IF Id = 0, add the new contact
+        if (loadedState.contact.id == 0) {
+          context.read<ContactDetailsBloc>().add(ContactDetailsEvent.addContact(
+              contact: _localContact.copyWith(
+                  lastContacted:
+                      DateTime.now()))); // Set initial lastContacted to now
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('New contact saved')),
+          );
+        } else {
+          //otherwise update the current contact
+          context
+              .read<ContactDetailsBloc>()
+              .add(ContactDetailsEvent.saveContact(contact: _localContact));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Changes saved')),
+          );
+        }
+        //reload the list
+        context.read<ContactListBloc>().add(ContactListEvent.loadContacts());
+        Navigator.of(context).pop(); //close details screen
+      });
+    }
+  }
+
+  void _onDeleteButtonPressed(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Deletion'),
+          content: const Text('Are you sure you want to delete this contact?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () { //TODO: replace with a list refresh
+                context
+                    .read<ContactListBloc>()
+                    .add(ContactListEvent.loadContacts());
+                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop(); // Navigate back
+              },
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

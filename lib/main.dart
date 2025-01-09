@@ -7,15 +7,24 @@ import 'package:recall/blocs/contact_details/contact_details_bloc.dart';
 import 'package:recall/screens/contact_details_screen.dart';
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'objectbox.g.dart'; // Import the generated ObjectBox model
 
 var logger = Logger();
 
-late final Store store; // Declare the store
+late final Store? store; // Declare the store
 
-Future<Store> openStore() async {
-  final docsDir = await getApplicationDocumentsDirectory();
-  return Store(getObjectBoxModel(), directory: '${docsDir.path}/objectbox');
+Future<Store?> openStore() async {
+  if (kIsWeb) {
+    return null;
+  }
+  try {
+    final docsDir = await getApplicationDocumentsDirectory();
+    return Store(getObjectBoxModel(), directory: '${docsDir.path}/objectbox');
+  } catch (e) {
+    logger.i("Error opening objectbox: $e");
+    return null;
+  }
 }
 
 void main() async {

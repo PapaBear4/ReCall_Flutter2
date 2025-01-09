@@ -1,10 +1,11 @@
+// lib/blocs/contact_details/contact_detals_state.dart
 part of 'contact_details_bloc.dart';
 
 @freezed
 class ContactDetailsState with _$ContactDetailsState {
-  const factory ContactDetailsState.initial() = ContactDetailsIntial;
-  const factory ContactDetailsState.loading() = ContactDetailsLoading;
-  const factory ContactDetailsState.loaded(Contact contact) =
-      ContactDetailsLoaded;
-  const factory ContactDetailsState.error(String message) = ContactDetailsError;
+  const factory ContactDetailsState.initial() = _Initial;
+  const factory ContactDetailsState.loading() = _Loading;
+  const factory ContactDetailsState.loaded(Contact contact) = _Loaded;
+  const factory ContactDetailsState.cleared() = _Cleared;
+  const factory ContactDetailsState.error(String message) = _Error;
 }

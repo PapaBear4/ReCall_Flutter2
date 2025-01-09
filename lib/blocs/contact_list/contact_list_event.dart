@@ -1,14 +1,14 @@
+// lib/blocs/contact_list/contact_list_event.dart
 part of 'contact_list_bloc.dart';
 
 @freezed
 class ContactListEvent with _$ContactListEvent {
-  const factory ContactListEvent.loadContacts() = LoadContacts;
-  const factory ContactListEvent.addContact(Contact contact) = AddContact;
-  const factory ContactListEvent.deleteContact(int contactId) = DeleteContact;
-  const factory ContactListEvent.updateContact(Contact updatedContact) = UpdateContact;
-  const factory ContactListEvent.contactUpdated() = ContactUpdated; 
-  const factory ContactListEvent.sortContacts(ContactListSortField sortField, bool ascending) = SortContacts;
-  const factory ContactListEvent.updateLastContacted({required int contactId}) = UpdateLastContacted;
+  const factory ContactListEvent.loadContacts() = _LoadContacts;
+  const factory ContactListEvent.deleteContactFromList(int contactId) = _DeleteContactFromList;
+  const factory ContactListEvent.updateContactFromList(Contact contact) =
+      _UpdateContactFromList;
+  const factory ContactListEvent.sortContacts(
+      ContactListSortField sortField, bool ascending) = _SortContacts;
 }
 
 enum ContactListSortField {
