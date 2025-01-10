@@ -52,7 +52,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final contactId = ModalRoute.of(context)!.settings.arguments as int;
       contactDetailLogger.i("LOG received ID $contactId");
-      if (contactId != 0 && contactId != null) {
+      if (contactId != 0) {
         context
             .read<ContactDetailsBloc>()
             .add(ContactDetailsEvent.loadContact(contactId: contactId));
