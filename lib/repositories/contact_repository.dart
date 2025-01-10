@@ -20,9 +20,9 @@ class ContactRepository implements Repository<Contact> {
       try {
         //_store = openStore();
         _contactBox = _store!.box<Contact>();
-        _initializeData();
+        //_initializeData();
       } catch (e) {
-        contactRepoLogger.i("Erro opening ObjectBox store: $e");
+        contactRepoLogger.e("Error opening ObjectBox store: $e");
       }
     }
   }
@@ -108,12 +108,12 @@ class ContactRepository implements Repository<Contact> {
     //TODO: need something here to handle the id value
     if (!kIsWeb && _store != null && _contactBox != null) {
       try {
-        contactRepoLogger.i("LOG contact sent for save $item");
+        //contactRepoLogger.i("LOG contact sent for save $item");
         final newId = _contactBox.put(item);
-        contactRepoLogger.i("LOG SUCCESS id returned $newId");
+        //contactRepoLogger.i("LOG SUCCESS id returned $newId");
         return item.copyWith(id: newId);
       } catch (e) {
-        contactRepoLogger.i("Error saving to store: $e");
+        //contactRepoLogger.i("Error saving to store: $e");
       }
       return item.copyWith(firstName: 'FAILED');
     } else {
