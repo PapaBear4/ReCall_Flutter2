@@ -59,15 +59,15 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       } else {
         context
             .read<ContactDetailsBloc>()
-            .add(ContactDetailsEvent.updateContactLocally(contact: Contact(
+            .add(ContactDetailsEvent.updateContactLocally(
+                contact: Contact(
               id: 0,
               firstName: '',
               lastName: '',
               frequency: ContactFrequency.never.value,
               birthday: null,
               lastContacted: null,
-              )
-              ));
+            )));
       }
     });
   }
@@ -307,10 +307,9 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       state.mapOrNull(loaded: (loadedState) {
         // IF Id = 0, add the new contact
         if (loadedState.contact.id == 0) {
-          context.read<ContactDetailsBloc>().add(ContactDetailsEvent.addContact(
-              contact: _localContact.copyWith(
-                  lastContacted:
-                      DateTime.now()))); // Set initial lastContacted to now
+          context
+              .read<ContactDetailsBloc>()
+              .add(ContactDetailsEvent.addContact(contact: _localContact));
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('New contact saved')),
           );
@@ -349,7 +348,11 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             ),
             TextButton(
               onPressed: () {
-                //TODO: replace with a list refresh
+                //Delete contact
+                context.read<ContactDetailsBloc>().add(
+                    ContactDetailsEvent.deleteContact(
+                        contactId: _localContact.id!));
+                //Reload list screen
                 context
                     .read<ContactListBloc>()
                     .add(ContactListEvent.loadContacts());

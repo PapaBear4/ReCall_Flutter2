@@ -173,7 +173,7 @@ class InMemoryContactRepository {
         id: 0,
         firstName: 'Peter',
         lastName: 'Parker',
-        frequency: (ContactFrequency.biWeekly.value),
+        frequency: (ContactFrequency.biweekly.value),
         birthday: DateTime(1962, 8, 10), // Spider-Man's birthday
         lastContacted: DateTime(2024, 11, 25),
       ),
@@ -239,7 +239,7 @@ class InMemoryContactRepository {
         id: 0,
         firstName: 'Stephen',
         lastName: 'Hawking',
-        frequency: (ContactFrequency.biWeekly.value),
+        frequency: (ContactFrequency.biweekly.value),
         birthday: DateTime(1942, 1, 8),
         lastContacted: DateTime(2024, 3, 25),
       ),

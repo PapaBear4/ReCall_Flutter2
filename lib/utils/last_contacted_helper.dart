@@ -41,7 +41,7 @@ bool isOverdue(String frequency, DateTime? lastContacted) {
       return duration.inDays >= 1;
     case 'weekly':
       return duration.inDays >= 7;
-    case 'biWeekly':
+    case 'biweekly':
       return duration.inDays >= 14;
     case 'monthly':
       return duration.inDays >= 30;

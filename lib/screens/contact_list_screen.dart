@@ -115,7 +115,7 @@ Widget _contactList(List<Contact> contacts) {
               ],
             ),
             child: ListTile(
-              title: Text('${contact.firstName} ${contact.lastName} ${contact.id}'),
+              title: Text('${contact.firstName} ${contact.lastName}'),
               subtitle: Text(
                 contact.birthday != null
                     ? DateFormat('MM/dd').format(contact.birthday!)
