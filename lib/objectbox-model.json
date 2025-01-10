@@ -41,9 +41,62 @@
         }
       ],
       "relations": []
+    },
+    {
+      "id": "4:2749572804835222325",
+      "lastPropertyId": "4:2806820761536295816",
+      "name": "LocalNotification",
+      "properties": [
+        {
+          "id": "1:1416556743326320138",
+          "name": "id",
+          "type": 6,
+          "flags": 129
+        },
+        {
+          "id": "2:7208200269652364215",
+          "name": "title",
+          "type": 9
+        },
+        {
+          "id": "3:533581488617311789",
+          "name": "body",
+          "type": 9
+        },
+        {
+          "id": "4:2806820761536295816",
+          "name": "payload",
+          "type": 9
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "5:7933436140937691858",
+      "lastPropertyId": "3:5889096991651133988",
+      "name": "NotificationSettings",
+      "properties": [
+        {
+          "id": "1:2658647324382796442",
+          "name": "id",
+          "type": 6,
+          "flags": 129
+        },
+        {
+          "id": "2:1934801791299021307",
+          "name": "remindersEnabled",
+          "type": 1
+        },
+        {
+          "id": "3:5889096991651133988",
+          "name": "alertsEnabled",
+          "type": 1
+        }
+      ],
+      "relations": []
     }
   ],
-  "lastEntityId": "3:1793994460556925285",
+  "lastEntityId": "5:7933436140937691858",
   "lastIndexId": "0:0",
   "lastRelationId": "0:0",
   "lastSequenceId": "0:0",

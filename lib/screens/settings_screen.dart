@@ -3,7 +3,7 @@ Notification Toggles: Provide switches or toggles for users to enable or disable
 Channel Customization: If you're using notification channels (for Android), allow users to configure the importance level, sound, vibration pattern, and other settings for each channel.
 Quiet Hours: Implement options for users to define quiet hours or "Do Not Disturb" periods during which they won't receive notifications.
 Notification Preview: Consider adding a section to preview how notifications will look and sound based on the user's current settings.
-*/
+
 
 import 'package:flutter/material.dart';
 
@@ -110,3 +110,5 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 }
+
+*/
