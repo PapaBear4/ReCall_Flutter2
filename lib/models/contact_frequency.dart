@@ -1,7 +1,7 @@
 enum ContactFrequency {
   daily('daily'),
   weekly('weekly'),
-  biWeekly('biWeekly'),
+  biweekly('biweekly'),
   monthly('monthly'),
   quarterly('quarterly'),
   yearly('yearly'),
@@ -16,7 +16,8 @@ enum ContactFrequency {
   static ContactFrequency fromString(String value) {
     return ContactFrequency.values.firstWhere(
       (element) => element.value == value,
-      orElse: () => ContactFrequency.daily, // Or throw an exception if not found
+      orElse: () =>
+          ContactFrequency.daily, // Or throw an exception if not found
     );
   }
 
