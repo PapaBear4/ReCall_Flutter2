@@ -1,154 +1,142 @@
-import 'dart:math';
-import 'package:path_provider/path_provider.dart';
-import 'dart:io';
-import 'dart:convert';
+// lib/repositories/contactrepository.dart
 import 'package:recall/models/contact.dart'; // Import the Contact model
 import 'package:logger/logger.dart';
+import 'package:objectbox/objectbox.dart';
+import 'package:recall/models/contact_frequency.dart';
+import 'package:recall/repositories/web_contact_repository.dart';
+import 'repository.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 var contactRepoLogger = Logger();
 
-class ContactRepository {
-  final List<Contact> _contacts = []; // Private list to store contacts
+class ContactRepository implements Repository<Contact> {
+  late final Store? _store;
+  late final Box<Contact>? _contactBox;
+  final WebContactRepository _webContactRepository = WebContactRepository();
 
   // Initialize the repository
-  ContactRepository() {
-    _initializeStorage();
-  }
-
-  /// Updates an existing contact in the repository.
-  ///
-  /// Finds the contact with the matching ID and replaces it with the
-  /// `updatedContact` object.
-  Future<void> updateContact(Contact updatedContact) async {
-    final index =
-        _contacts.indexWhere((contact) => contact.id == updatedContact.id);
-    if (index != -1) {
-      _contacts[index] = updatedContact;
-    }
-  }
-
-  /// Retrieves a contact from the repository by its ID.
-  ///
-  /// Searches the contact list for a contact with the given `contactId` and
-  /// returns it. Throws an exception if no contact is found with that ID.
-  Future<Contact> getContactById(int contactId) async {
-    try {
-      return _contacts.firstWhere((contact) => contact.id == contactId);
-    } catch (e) {
-      // If no contact is found, return null
-      return Contact(
-        id: 0,
-        firstName:'',
-        lastName:'',
-        birthday: null,
-        frequency: ContactFrequency.never,
-        lastContacted: null,
-      ) ; 
-    }
-  }
-
-  /// Loads all contacts from the repository.
-  ///
-  /// Returns a list of all contacts stored in memory.
-  // They were put there in the repository initialization.
-  // in the future this may need adjusted to account for local storage
-  Future<List<Contact>> loadContacts() async {
-    return _contacts;
-  }
-
-  Future<void> _initializeStorage() async {
-    try {
-      // 1. Check for persistent storage
-      final directory = await getApplicationDocumentsDirectory();
-      final file = File('${directory.path}/contacts.json');
-      if (await file.exists()) {
-        // 2. Load existing data from file
-        final String contents = await file.readAsString();
-        final List<dynamic> jsonContacts = json.decode(contents);
-        for (final jsonContact in jsonContacts) {
-          _contacts.add(Contact.fromJson(jsonContact));
-        }
-      } else {
-        // 3. Initialize with dummy data if the file doesn't exist
-        contactRepoLogger
-            .i("LOG: No file found.  Initializing with dummy data...");
-        // Add some dummy contacts to _contacts
-        _contacts.addAll(InMemoryContactRepository.createDummyContacts());
-
-        // Save the dummy data to create the file for future loads.
-        await saveContacts(_contacts);
+  ContactRepository(this._store) {
+    if (!kIsWeb) {
+      try {
+        //_store = openStore();
+        _contactBox = _store!.box<Contact>();
+        _initializeData();
+      } catch (e) {
+        contactRepoLogger.i("Erro opening ObjectBox store: $e");
       }
-    } catch (e) {
-      contactRepoLogger.e("LOG: Error initializing storage: $e");
-      // Fallback to in-memory data
+    }
+  }
+
+  Future<void> _initializeData() async {
+    if (_store != null && _contactBox != null && _contactBox.isEmpty()) {
+      // Check if the database is empty
       contactRepoLogger
-          .i("Initializing with dummy data due to initialization error...");
-      _contacts.addAll(InMemoryContactRepository.createDummyContacts());
+          .i("LOG: No contacts found.  Initializing with dummy data...");
+      //1. create a single contact
+      final firstContact = Contact(
+        id: null,
+        firstName: 'Delete',
+        lastName: 'Me',
+        frequency: ContactFrequency.never.value,
+        birthday: null,
+        lastContacted: null,
+      ); // first dummy contact
+      //2. add it to the box
+      final firstId = _contactBox.put(firstContact);
+      //3. update the contact
+      final firstSavedContact = firstContact.copyWith(id: firstId);
+      //get the dummy contacts
+      //final dummyContacts = InMemoryContactRepository.createDummyContacts();
+      //create more dummy contacts
+      final secondContact = Contact(
+        id: null,
+        firstName: 'Delete',
+        lastName: 'Me 2',
+        frequency: ContactFrequency.never.value,
+        birthday: null,
+        lastContacted: null,
+      ); // second dummy contact
+      final thirdContact = Contact(
+        id: 0,
+        firstName: 'Delete',
+        lastName: 'Me 3',
+        frequency: ContactFrequency.never.value,
+        birthday: null,
+        lastContacted: null,
+      ); // third dummy contact
+      final fourthContact = Contact(
+        id: 0,
+        firstName: 'Delete',
+        lastName: 'Me 4',
+        frequency: ContactFrequency.never.value,
+        birthday: null,
+        lastContacted: null,
+      ); // fourth dummy contact
+      // add a second contact
+      final secondId = _contactBox.put(secondContact);
+      //3. update the contact
+      final secondSavedContact = secondContact.copyWith(id: secondId);
+
+      final contactsToPut = [thirdContact, fourthContact];
+      final addedIds =
+          _contactBox.putMany(contactsToPut); // Add dummy contacts to ObjectBox
+      contactRepoLogger.i("LOG added IDs: $addedIds");
     }
   }
 
-  /// Saves the current list of contacts to persistent storage.
-  ///
-  /// Encodes the contacts as JSON and writes them to a file in the
-  /// application's documents directory.
-  Future<void> saveContacts(List<Contact> contacts) async {
-    //Save contacts to a file
-    try {
-      final directory = await getApplicationDocumentsDirectory();
-      final file = File('${directory.path}/contacts.json');
-      final String jsonString = jsonEncode(contacts);
-      await file.writeAsString(jsonString);
-    } catch (e) {
-      contactRepoLogger.e("LOG: Error saving contacts: $e");
+//
+  @override
+  Future<List<Contact>> getAll() async {
+    if (!kIsWeb && _store != null && _contactBox != null) {
+      return _contactBox.getAll();
+    } else {
+      return await _webContactRepository.getAll();
     }
   }
 
-  /// Deletes a contact from the repository by its ID.
-  ///
-  /// Removes the contact with the matching `contactId` from the list and
-  /// updates the persistent storage.
-  Future<void> deleteContact(int contactId) async {
-    contactRepoLogger.i("LOG: ID for deltion: $contactId");
-    // 2. Remove the contact with the matching ID.
-    _contacts.removeWhere((contact) => contact.id == contactId);
-    try {
-      //await saveContacts(_contacts);
-    } catch (e) {
-      // Handle the error appropriately, e.g., log the error, show a message to the user.
-      contactRepoLogger.i("LOG:Error saving contacts: $e");
+  @override
+  Future<Contact?> getById(int id) async {
+    if (!kIsWeb && _store != null && _contactBox != null) {
+      return _contactBox.get(id);
+    } else {
+      return await _webContactRepository.getById(id);
     }
   }
 
-    Future<void> updateLastContacted(int contactId) async {
-    try {
-      final index = _contacts.indexWhere((contact) => contact.id == contactId);
-        if(index != -1){
-          _contacts[index] = _contacts[index].copyWith(lastContacted: DateTime.now());
-        }
-    } catch (e) {
-      // Handle the error appropriately, e.g., log the error, show a message to the user.
+  @override
+  Future<Contact> add(Contact item) async {
+    //TODO: need something here to handle the id value
+    if (!kIsWeb && _store != null && _contactBox != null) {
+      try {
+        contactRepoLogger.i("LOG contact sent for save $item");
+        final newId = _contactBox.put(item);
+        contactRepoLogger.i("LOG SUCCESS id returned $newId");
+        return item.copyWith(id: newId);
+      } catch (e) {
+        contactRepoLogger.i("Error saving to store: $e");
+      }
+      return item.copyWith(firstName: 'FAILED');
+    } else {
+      final newContact = await _webContactRepository.add(item);
+      return newContact;
     }
   }
 
-
-  /// Adds a new contact to the repository.
-  ///
-  /// Generates a unique ID for the new contact, adds it to the list, and
-  /// updates the persistent storage.
-  Future<void> addContact(Contact contact) async {
-    // Generate a unique ID for the new contact
-    int nextId = 0;
-    if (_contacts.isNotEmpty) {
-      nextId = _contacts.map((c) => c.id).reduce(max) + 1;
+  @override
+  Future<void> update(Contact item) async {
+    if (!kIsWeb && _store != null && _contactBox != null) {
+      _contactBox.put(item);
+    } else {
+      await _webContactRepository.update(item);
     }
-    final newContact = contact.copyWith(id: nextId);
+  }
 
-    // Add the new contact to the list and save
-    _contacts.add(newContact);
-    try {
-      await saveContacts(_contacts);
-    } catch (e) {
-      contactRepoLogger.e("LOG: Error saving contacts: $e");
+  @override
+  Future<void> delete(int id) async {
+    if (!kIsWeb && _store != null && _contactBox != null) {
+      _contactBox.remove(id);
+    } else {
+      await _webContactRepository.delete(id);
     }
   }
 }
@@ -156,72 +144,169 @@ class ContactRepository {
 class InMemoryContactRepository {
   static List<Contact> createDummyContacts() {
     return [
+      // Superheroes
       Contact(
-          id: 1,
-          firstName: 'John',
-          lastName: 'Doe',
-          frequency: ContactFrequency.weekly,
-          birthday: DateTime(1980, 4, 4),
-          lastContacted: DateTime(2024, 12, 20)),
+        id: 0,
+        firstName: 'Clark',
+        lastName: 'Kent',
+        frequency: (ContactFrequency.daily.value),
+        birthday: DateTime(1938, 6, 18), // Superman's birthday
+        lastContacted: DateTime(2024, 12, 20),
+      ),
       Contact(
-          id: 2,
-          firstName: 'Jane',
-          lastName: 'Smith',
-          frequency: ContactFrequency.daily,
-          birthday: DateTime(1995, 5, 10),
-          lastContacted: DateTime(2023, 12, 20)),
+        id: 0,
+        firstName: 'Bruce',
+        lastName: 'Wayne',
+        frequency: (ContactFrequency.weekly.value),
+        birthday: DateTime(1939, 5, 27), // Batman's birthday
+        lastContacted: DateTime(2024, 12, 15),
+      ),
       Contact(
-          id: 3,
-          firstName: 'Peter',
-          lastName: 'Jones',
-          frequency: ContactFrequency.quarterly,
-          birthday: DateTime(1988, 2, 22),
-          lastContacted: DateTime(2024, 1, 5)),
+        id: 0,
+        firstName: 'Diana',
+        lastName: 'Prince',
+        frequency: (ContactFrequency.monthly.value),
+        birthday: DateTime(1941, 12, 7), // Wonder Woman's birthday
+        lastContacted: DateTime(2024, 12, 1),
+      ),
       Contact(
-          id: 4,
-          firstName: 'Alice',
-          lastName: 'Johnson',
-          frequency: ContactFrequency.never),
+        id: 0,
+        firstName: 'Peter',
+        lastName: 'Parker',
+        frequency: (ContactFrequency.biWeekly.value),
+        birthday: DateTime(1962, 8, 10), // Spider-Man's birthday
+        lastContacted: DateTime(2024, 11, 25),
+      ),
       Contact(
-          id: 5,
-          firstName: 'Bob',
-          lastName: 'Williams',
-          frequency: ContactFrequency.yearly,
-          birthday: DateTime(1992, 8, 15),
-          lastContacted: DateTime(2023, 11, 10)),
+        id: 0,
+        firstName: 'Tony',
+        lastName: 'Stark',
+        frequency: (ContactFrequency.rarely.value),
+        birthday: DateTime(1970, 5, 29), // Iron Man's birthday
+        lastContacted: DateTime(2024, 10, 15),
+      ),
+
+      // Famous people
       Contact(
-          id: 6,
-          firstName: 'Charlie',
-          lastName: 'Brown',
-          frequency: ContactFrequency.quarterly,
-          lastContacted: DateTime(2024, 12, 31)),
+        id: 0,
+        firstName: 'Albert',
+        lastName: 'Einstein',
+        frequency: (ContactFrequency.yearly.value),
+        birthday: DateTime(1879, 3, 14),
+        lastContacted: DateTime(2024, 9, 1),
+      ),
       Contact(
-          id: 7,
-          firstName: 'David',
-          lastName: 'Miller',
-          frequency: ContactFrequency.monthly),
+        id: 0,
+        firstName: 'Marie',
+        lastName: 'Curie',
+        frequency: (ContactFrequency.quarterly.value),
+        birthday: DateTime(1867, 11, 7),
+        lastContacted: DateTime(2024, 8, 15),
+      ),
       Contact(
-          id: 8,
-          firstName: 'Emily',
-          lastName: 'Davis',
-          frequency: ContactFrequency.never,
-          birthday: DateTime(1990, 11, 3),
-          lastContacted: DateTime(2023, 12, 31)),
+        id: 0,
+        firstName: 'Leonardo',
+        lastName: 'da Vinci',
+        frequency: (ContactFrequency.never.value),
+        birthday: DateTime(1452, 4, 15),
+        lastContacted: DateTime(2024, 7, 1),
+      ),
       Contact(
-          id: 9,
-          firstName: 'Frank',
-          lastName: 'Garcia',
-          frequency: ContactFrequency.biWeekly),
+        id: 0,
+        firstName: 'William',
+        lastName: 'Shakespeare',
+        frequency: (ContactFrequency.monthly.value),
+        birthday: DateTime(1564, 4, 26),
+        lastContacted: DateTime(2024, 6, 15),
+      ),
       Contact(
-          id: 10,
-          firstName: 'Grace',
-          lastName: 'Rodriguez',
-          frequency: ContactFrequency.monthly),
+        id: 0,
+        firstName: 'Nelson',
+        lastName: 'Mandela',
+        frequency: (ContactFrequency.weekly.value),
+        birthday: DateTime(1918, 7, 18),
+        lastContacted: DateTime(2024, 5, 20),
+      ),
       Contact(
-          id: 11,
-          firstName: 'Henry',
-          lastName: 'Wilson',
-          frequency: ContactFrequency.rarely),
+        id: 0,
+        firstName: 'Oprah',
+        lastName: 'Winfrey',
+        frequency: (ContactFrequency.daily.value),
+        birthday: DateTime(1954, 1, 29),
+        lastContacted: DateTime(2024, 4, 10),
+      ),
+      Contact(
+        id: 0,
+        firstName: 'Stephen',
+        lastName: 'Hawking',
+        frequency: (ContactFrequency.biWeekly.value),
+        birthday: DateTime(1942, 1, 8),
+        lastContacted: DateTime(2024, 3, 25),
+      ),
+      Contact(
+        id: 0,
+        firstName: 'Malala',
+        lastName: 'Yousafzai',
+        frequency: (ContactFrequency.rarely.value),
+        birthday: DateTime(1997, 7, 12),
+        lastContacted: DateTime(2024, 2, 15),
+      ),
+      Contact(
+        id: 0,
+        firstName: 'Elon',
+        lastName: 'Musk',
+        frequency: (ContactFrequency.never.value),
+        birthday: DateTime(1971, 6, 28),
+        lastContacted: DateTime(2024, 1, 5),
+      ),
+      Contact(
+        id: 0,
+        firstName: 'Beyoncé',
+        lastName: 'Knowles',
+        frequency: (ContactFrequency.yearly.value),
+        birthday: DateTime(1981, 9, 4),
+        lastContacted: DateTime(2023, 12, 20),
+      ),
+      Contact(
+        id: 0,
+        firstName: 'Michelle',
+        lastName: 'Obama',
+        frequency: (ContactFrequency.quarterly.value),
+        birthday: DateTime(1964, 1, 17),
+        lastContacted: DateTime(2023, 11, 10),
+      ),
+      Contact(
+        id: 0,
+        firstName: 'Bill',
+        lastName: 'Gates',
+        frequency: (ContactFrequency.monthly.value),
+        birthday: DateTime(1955, 10, 28),
+        lastContacted: DateTime(2023, 10, 1),
+      ),
+      Contact(
+        id: 0,
+        firstName: 'Steve',
+        lastName: 'Jobs',
+        frequency: (ContactFrequency.never.value),
+        birthday: DateTime(1955, 2, 24),
+        lastContacted: DateTime(2023, 9, 15),
+      ),
+      Contact(
+        id: 0,
+        firstName: 'J.K.',
+        lastName: 'Rowling',
+        frequency: (ContactFrequency.weekly.value),
+        birthday: DateTime(1965, 7, 31),
+        lastContacted: DateTime(2023, 8, 25),
+      ),
+      Contact(
+        id: 0,
+        firstName: 'Taylor',
+        lastName: 'Swift',
+        frequency: (ContactFrequency.daily.value),
+        birthday: DateTime(1989, 12, 13),
+        lastContacted: DateTime(2023, 7, 15),
+      ),
     ];
   }
 }

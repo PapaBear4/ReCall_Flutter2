@@ -6,43 +6,63 @@ import 'package:recall/screens/contact_list_screen.dart';
 import 'package:recall/blocs/contact_details/contact_details_bloc.dart';
 import 'package:recall/screens/contact_details_screen.dart';
 import 'package:logger/logger.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'objectbox.g.dart'; // Import the generated ObjectBox model
 
-void main() {
-  // Run the app and initialize the logger.
-  runApp(const ReCall());
-  var logger = Logger();
-  logger.i('LOG:App started'); // Log the app start event.
+final logger = Logger();
+
+late final Store? store; // Declare the store
+
+Future<Store?> openStore() async {
+  if (kIsWeb) {
+    return null;
+  }
+  try {
+    final docsDir = await getApplicationDocumentsDirectory();
+    return Store(getObjectBoxModel(), directory: '${docsDir.path}/objectbox');
+  } catch (e) {
+    logger.i("Error opening objectbox: $e");
+    return null;
+  }
 }
 
-// This is the root widget of the application.
-class ReCall extends StatelessWidget {
-  const ReCall({super.key});
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // Ensure Flutter is initialized
 
-  // This widget is the root of your application.
+  store = await openStore(); // Initialize the store
+
+  runApp(ReCall(
+      contactRepository:
+          ContactRepository(store))); // Pass the store to the repository
+  logger.i('LOG:App started');
+}
+
+class ReCall extends StatelessWidget {
+  final ContactRepository _contactRepository; // Add contactRepository parameter
+
+  const ReCall({super.key, required ContactRepository contactRepository})
+      : _contactRepository = contactRepository;
   @override
   Widget build(BuildContext context) {
-    // Provide the ContactRepository to all child widgets.
-    return RepositoryProvider(
-      create: (context) => ContactRepository(),
-      // Provide multiple Blocs to the app.
+    return RepositoryProvider.value(
+      // Use RepositoryProvider.value
+      value: _contactRepository, // Provide the initialized repository
       child: MultiBlocProvider(
         providers: [
-          // Provide the ContactListBloc to manage the list of contacts.
           BlocProvider(
             create: (context) => ContactListBloc(
               contactRepository:
-                  RepositoryProvider.of<ContactRepository>(context),
-            )..add(LoadContacts()),
+                  _contactRepository, // Access repository directly
+            )..add(const ContactListEvent.loadContacts()),
           ),
-          // Provide the ContactDetailsBloc to manage contact details.
           BlocProvider(
             create: (context) => ContactDetailsBloc(
               contactRepository:
-                  RepositoryProvider.of<ContactRepository>(context),
+                  _contactRepository, // Access repository directly
             ),
           ),
         ],
-        // Build the MaterialApp widget.
         child: MaterialApp(
           // Set the title of the app.
           title: 'Contact App',
@@ -57,6 +77,7 @@ class ReCall extends StatelessWidget {
             '/contactDetails': (context) =>
                 const ContactDetailsScreen(contactId: 0),
           },
+          // ... (rest of your MaterialApp) ...
         ),
       ),
     );

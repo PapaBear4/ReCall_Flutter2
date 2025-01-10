@@ -1,4 +1,4 @@
-import 'package:recall/models/contact.dart';
+import 'package:recall/models/contact_frequency.dart';
 
 String formatLastContacted(DateTime? lastContacted) {
   if (lastContacted == null) {
@@ -28,8 +28,8 @@ String formatLastContacted(DateTime? lastContacted) {
   }
 }
 
-bool isOverdue(ContactFrequency frequency, DateTime? lastContacted) {
-  if (frequency == ContactFrequency.never || lastContacted == null) {
+bool isOverdue(String frequency, DateTime? lastContacted) {
+  if (frequency == ContactFrequency.never.value || lastContacted == null) {
     return false;
   }
 
@@ -37,19 +37,19 @@ bool isOverdue(ContactFrequency frequency, DateTime? lastContacted) {
   final duration = now.difference(lastContacted);
 
   switch (frequency) {
-    case ContactFrequency.daily:
+    case 'daily':
       return duration.inDays >= 1;
-    case ContactFrequency.weekly:
+    case 'weekly':
       return duration.inDays >= 7;
-    case ContactFrequency.biWeekly:
+    case 'biWeekly':
       return duration.inDays >= 14;
-    case ContactFrequency.monthly:
+    case 'monthly':
       return duration.inDays >= 30;
-    case ContactFrequency.quarterly:
+    case 'quarterly':
       return duration.inDays >= 90;
-    case ContactFrequency.yearly:
+    case 'yearly':
       return duration.inDays >= 365;
-    case ContactFrequency.rarely:
+    case 'rarely':
       return duration.inDays >= 750;
 
     default:
