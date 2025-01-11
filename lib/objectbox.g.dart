@@ -15,6 +15,8 @@ import 'package:objectbox/objectbox.dart' as obx;
 import 'package:objectbox_flutter_libs/objectbox_flutter_libs.dart';
 
 import 'models/contact.dart';
+import 'models/notification.dart';
+import 'models/usersettings.dart';
 
 export 'package:objectbox/objectbox.dart'; // so that callers only have to import this file
 
@@ -57,6 +59,64 @@ final _entities = <obx_int.ModelEntity>[
             flags: 0)
       ],
       relations: <obx_int.ModelRelation>[],
+      backlinks: <obx_int.ModelBacklink>[]),
+  obx_int.ModelEntity(
+      id: const obx_int.IdUid(6, 3445238387805404030),
+      name: 'UserSettings',
+      lastPropertyId: const obx_int.IdUid(3, 7942218515340831358),
+      flags: 0,
+      properties: <obx_int.ModelProperty>[
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(1, 2047368366569960387),
+            name: 'id',
+            type: 6,
+            flags: 129),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(2, 7721105638518060173),
+            name: 'remindersEnabled',
+            type: 1,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(3, 7942218515340831358),
+            name: 'alertsEnabled',
+            type: 1,
+            flags: 0)
+      ],
+      relations: <obx_int.ModelRelation>[],
+      backlinks: <obx_int.ModelBacklink>[]),
+  obx_int.ModelEntity(
+      id: const obx_int.IdUid(8, 4257298478959120818),
+      name: 'Notification',
+      lastPropertyId: const obx_int.IdUid(5, 449191454545520003),
+      flags: 0,
+      properties: <obx_int.ModelProperty>[
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(1, 8833873927943227251),
+            name: 'id',
+            type: 6,
+            flags: 129),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(2, 3979434219446780961),
+            name: 'title',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(3, 8793448275874487525),
+            name: 'body',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(4, 6432866865444641207),
+            name: 'payload',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(5, 449191454545520003),
+            name: 'scheduledTime',
+            type: 10,
+            flags: 0)
+      ],
+      relations: <obx_int.ModelRelation>[],
       backlinks: <obx_int.ModelBacklink>[])
 ];
 
@@ -95,11 +155,17 @@ Future<obx.Store> openStore(
 obx_int.ModelDefinition getObjectBoxModel() {
   final model = obx_int.ModelInfo(
       entities: _entities,
-      lastEntityId: const obx_int.IdUid(3, 1793994460556925285),
+      lastEntityId: const obx_int.IdUid(8, 4257298478959120818),
       lastIndexId: const obx_int.IdUid(0, 0),
       lastRelationId: const obx_int.IdUid(0, 0),
       lastSequenceId: const obx_int.IdUid(0, 0),
-      retiredEntityUids: const [8247498634308133081, 2634096001833180392],
+      retiredEntityUids: const [
+        8247498634308133081,
+        2634096001833180392,
+        2749572804835222325,
+        7933436140937691858,
+        5183510925355051723
+      ],
       retiredIndexUids: const [],
       retiredPropertyUids: const [
         4061204890486791768,
@@ -112,7 +178,20 @@ obx_int.ModelDefinition getObjectBoxModel() {
         1221545482435965096,
         4598591865702810457,
         3675048193406020147,
-        203930266618559799
+        203930266618559799,
+        1416556743326320138,
+        7208200269652364215,
+        533581488617311789,
+        2806820761536295816,
+        3574552719774564365,
+        2658647324382796442,
+        1934801791299021307,
+        5889096991651133988,
+        7940482150474329527,
+        3118537303778595395,
+        5165757658859297415,
+        3930322113880387302,
+        1853185443928922145
       ],
       retiredRelationUids: const [],
       modelVersion: 5,
@@ -178,6 +257,97 @@ obx_int.ModelDefinition getObjectBoxModel() {
               lastContacted: lastContactedParam);
 
           return object;
+        }),
+    UserSettings: obx_int.EntityDefinition<UserSettings>(
+        model: _entities[1],
+        toOneRelations: (UserSettings object) => [],
+        toManyRelations: (UserSettings object) => {},
+        getId: (UserSettings object) => object.id,
+        setId: (UserSettings object, int id) {
+          if (object.id != id) {
+            throw ArgumentError('Field UserSettings.id is read-only '
+                '(final or getter-only) and it was declared to be self-assigned. '
+                'However, the currently inserted object (.id=${object.id}) '
+                "doesn't match the inserted ID (ID $id). "
+                'You must assign an ID before calling [box.put()].');
+          }
+        },
+        objectToFB: (UserSettings object, fb.Builder fbb) {
+          fbb.startTable(4);
+          fbb.addInt64(0, object.id ?? 0);
+          fbb.addBool(1, object.remindersEnabled);
+          fbb.addBool(2, object.alertsEnabled);
+          fbb.finish(fbb.endTable());
+          return object.id ?? 0;
+        },
+        objectFromFB: (obx.Store store, ByteData fbData) {
+          final buffer = fb.BufferContext(fbData);
+          final rootOffset = buffer.derefObject(0);
+          final idParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 4);
+          final remindersEnabledParam =
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 6, false);
+          final alertsEnabledParam =
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 8, false);
+          final object = UserSettings(
+              id: idParam,
+              remindersEnabled: remindersEnabledParam,
+              alertsEnabled: alertsEnabledParam);
+
+          return object;
+        }),
+    Notification: obx_int.EntityDefinition<Notification>(
+        model: _entities[2],
+        toOneRelations: (Notification object) => [],
+        toManyRelations: (Notification object) => {},
+        getId: (Notification object) => object.id,
+        setId: (Notification object, int id) {
+          if (object.id != id) {
+            throw ArgumentError('Field Notification.id is read-only '
+                '(final or getter-only) and it was declared to be self-assigned. '
+                'However, the currently inserted object (.id=${object.id}) '
+                "doesn't match the inserted ID (ID $id). "
+                'You must assign an ID before calling [box.put()].');
+          }
+        },
+        objectToFB: (Notification object, fb.Builder fbb) {
+          final titleOffset = fbb.writeString(object.title);
+          final bodyOffset = fbb.writeString(object.body);
+          final payloadOffset =
+              object.payload == null ? null : fbb.writeString(object.payload!);
+          fbb.startTable(6);
+          fbb.addInt64(0, object.id ?? 0);
+          fbb.addOffset(1, titleOffset);
+          fbb.addOffset(2, bodyOffset);
+          fbb.addOffset(3, payloadOffset);
+          fbb.addInt64(4, object.scheduledTime?.millisecondsSinceEpoch);
+          fbb.finish(fbb.endTable());
+          return object.id ?? 0;
+        },
+        objectFromFB: (obx.Store store, ByteData fbData) {
+          final buffer = fb.BufferContext(fbData);
+          final rootOffset = buffer.derefObject(0);
+          final scheduledTimeValue =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 12);
+          final idParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 4);
+          final titleParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 6, '');
+          final bodyParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 8, '');
+          final payloadParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 10);
+          final scheduledTimeParam = scheduledTimeValue == null
+              ? null
+              : DateTime.fromMillisecondsSinceEpoch(scheduledTimeValue);
+          final object = Notification(
+              id: idParam,
+              title: titleParam,
+              body: bodyParam,
+              payload: payloadParam,
+              scheduledTime: scheduledTimeParam);
+
+          return object;
         })
   };
 
@@ -209,4 +379,42 @@ class Contact_ {
   /// See [Contact.frequency].
   static final frequency =
       obx.QueryStringProperty<Contact>(_entities[0].properties[5]);
+}
+
+/// [UserSettings] entity fields to define ObjectBox queries.
+class UserSettings_ {
+  /// See [UserSettings.id].
+  static final id =
+      obx.QueryIntegerProperty<UserSettings>(_entities[1].properties[0]);
+
+  /// See [UserSettings.remindersEnabled].
+  static final remindersEnabled =
+      obx.QueryBooleanProperty<UserSettings>(_entities[1].properties[1]);
+
+  /// See [UserSettings.alertsEnabled].
+  static final alertsEnabled =
+      obx.QueryBooleanProperty<UserSettings>(_entities[1].properties[2]);
+}
+
+/// [Notification] entity fields to define ObjectBox queries.
+class Notification_ {
+  /// See [Notification.id].
+  static final id =
+      obx.QueryIntegerProperty<Notification>(_entities[2].properties[0]);
+
+  /// See [Notification.title].
+  static final title =
+      obx.QueryStringProperty<Notification>(_entities[2].properties[1]);
+
+  /// See [Notification.body].
+  static final body =
+      obx.QueryStringProperty<Notification>(_entities[2].properties[2]);
+
+  /// See [Notification.payload].
+  static final payload =
+      obx.QueryStringProperty<Notification>(_entities[2].properties[3]);
+
+  /// See [Notification.scheduledTime].
+  static final scheduledTime =
+      obx.QueryDateProperty<Notification>(_entities[2].properties[4]);
 }
