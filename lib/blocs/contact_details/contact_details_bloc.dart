@@ -72,8 +72,7 @@ class ContactDetailsBloc
           emit(const ContactDetailsState.loading());
           try {
             final newContact = await _contactRepository.add(e.contact);
-            emit(ContactDetailsState.loaded(
-                newContact)); // Emit loaded state with the NEW contact
+            emit(ContactDetailsState.loaded(newContact)); // Emit loaded state with the NEW contact
           } catch (error) {
             emit(ContactDetailsState.error(error.toString()));
           }
