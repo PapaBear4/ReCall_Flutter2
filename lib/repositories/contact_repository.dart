@@ -21,6 +21,7 @@ class ContactRepository implements Repository<Contact> {
     if (!kIsWeb) {
       try {
         _contactBox = _store!.box<Contact>();
+
         _source = ContactObjectBoxSource(_contactBox!);
       } catch (e) {
         contactRepoLogger.i("Error opening ObjectBox store: $e");
@@ -32,6 +33,7 @@ class ContactRepository implements Repository<Contact> {
         _source = ContactsSharedPreferencesSource();
       } catch (e) {
         contactRepoLogger.i("Error opening shared preferences: $e");
+
       }
     }
   }
@@ -62,9 +64,11 @@ class ContactRepository implements Repository<Contact> {
 
   @override
   Future<Contact> add(Contact item) async {
+
     final contact = await _source.add(item);
     if (item.id != null) {
       _contacts[item.id!] = item;
+
     }
     return contact;
   }
