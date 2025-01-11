@@ -1,12 +1,12 @@
-// lib/sources/contacts_ob_source.dart
+// lib/sources/contact_ob_source.dart
 import 'package:recall/models/contact.dart';
 import 'package:objectbox/objectbox.dart';
 import 'package:recall/sources/data_source.dart';
 
-class ContactsObjectBoxSource implements DataSource<Contact> {
+class ContactObjectBoxSource implements DataSource<Contact> {
   final Box<Contact> _contactBox;
 
-  ContactsObjectBoxSource(this._contactBox);
+  ContactObjectBoxSource(this._contactBox);
 
   @override
   Future<Contact> add(Contact item) async {

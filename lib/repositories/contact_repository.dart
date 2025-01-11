@@ -1,8 +1,9 @@
-// lib/repositories/contactrepository.dart
+// lib/repositories/contact_repository.dart
 import 'package:recall/models/contact.dart'; // Import the Contact model
 import 'package:logger/logger.dart';
 import 'package:objectbox/objectbox.dart';
-import 'package:recall/models/contact_frequency.dart';
+import 'package:recall/sources/contact_ob_source.dart';
+import 'package:recall/sources/contact_sp_source.dart';
 import 'package:recall/sources/data_source.dart';
 import 'repository.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -13,14 +14,14 @@ class ContactRepository implements Repository<Contact> {
   late final Store? _store;
   late final Box<Contact>? _contactBox;
   late final DataSource<Contact> _source;
-  final Map<int, Contact> _contacts = {}; 
+  final Map<int, Contact> _contacts = {};
 
   // Initialize the repository
   ContactRepository(this._store) {
     if (!kIsWeb) {
       try {
         _contactBox = _store!.box<Contact>();
-        _source = ContactsObjectBoxSource(_contactBox!);
+        _source = ContactObjectBoxSource(_contactBox!);
       } catch (e) {
         contactRepoLogger.i("Error opening ObjectBox store: $e");
         _source = _createInMemorySource();
@@ -30,7 +31,7 @@ class ContactRepository implements Repository<Contact> {
       try {
         _source = ContactsSharedPreferencesSource();
       } catch (e) {
-          contactRepoLogger.i("Error opening shared preferences: $e");
+        contactRepoLogger.i("Error opening shared preferences: $e");
       }
     }
   }
@@ -38,8 +39,8 @@ class ContactRepository implements Repository<Contact> {
   DataSource<Contact> _createInMemorySource() {
     return _InMemoryContactSource(contacts: _contacts);
   }
-  
-@override
+
+  @override
   Future<List<Contact>> getAll() async {
     final contacts = await _source.getAll();
     _contacts.clear();
@@ -50,28 +51,31 @@ class ContactRepository implements Repository<Contact> {
     }
     return contacts;
   }
-@override
+
+  @override
   Future<Contact?> getById(int id) async {
-    if(_contacts.containsKey(id)) {
+    if (_contacts.containsKey(id)) {
       return _contacts[id];
     }
     return _source.getById(id);
   }
 
   @override
-  Future<void> add(Contact item) async {
-    await _source.add(item);
-    if(item.id != null) {
+  Future<Contact> add(Contact item) async {
+    final contact = await _source.add(item);
+    if (item.id != null) {
       _contacts[item.id!] = item;
     }
+    return contact;
   }
 
   @override
-  Future<void> update(Contact item) async {
-    await _source.update(item);
-     if(item.id != null) {
+  Future<Contact> update(Contact item) async {
+    final contact =await _source.update(item);
+    if (item.id != null) {
       _contacts[item.id!] = item;
     }
+    return contact;
   }
 
   @override
@@ -81,36 +85,62 @@ class ContactRepository implements Repository<Contact> {
   }
 }
 
-
 class _InMemoryContactSource implements DataSource<Contact> {
   final Map<int, Contact> contacts;
 
   _InMemoryContactSource({required this.contacts});
 
-    @override
-    Future<void> add(Contact item) async {
+  @override
+  Future<Contact> add(Contact item) async {
+    final id = contacts.keys.length + 1;
+    final newItem = item.copyWith(id: id);
+    contacts[id] = newItem;
+    return newItem;
+  }
+
+  @override
+  Future<List<Contact>> addMany(List<Contact> items) async {
+    final updatedItems = <Contact>[];
+    for (final item in items) {
       final id = contacts.keys.length + 1;
-      contacts[id] = item.copyWith(id: id);
+      final newItem = item.copyWith(id: id);
+      contacts[id] = newItem;
+      updatedItems.add(newItem);
     }
+    return updatedItems;
+  }
 
-    @override
-    Future<void> delete(int id) async {
-       contacts.remove(id);
-    }
+  @override
+  Future<void> delete(int id) async {
+    contacts.remove(id);
+  }
 
-    @override
-    Future<List<Contact>> getAll() async {
-      return contacts.values.toList();
+  @override
+  Future<void> deleteMany(List<int> ids) async {
+    for (final id in ids) {
+      contacts.remove(id);
     }
+  }
 
-    @override
-    Future<Contact?> getById(int id) async {
-       return contacts[id];
-    }
+  @override
+  Future<int> count() async {
+    return contacts.length;
+  }
 
-    @override
-    Future<void> update(Contact item) async {
-      if(item.id == null) return;
-      contacts[item.id!] = item;
-    }
+  @override
+  Future<List<Contact>> getAll() async {
+    return contacts.values.toList();
+  }
+
+  @override
+  Future<Contact?> getById(int id) async {
+    return contacts[id];
+  }
+
+  @override
+  Future<Contact> update(Contact item) async {
+    if (item.id == null) return item;
+    contacts[item.id!] = item;
+    return item;
+  }
 }

@@ -70,26 +70,30 @@ class UserSettingsRepository implements Repository<UserSettings> {
   }
 
   @override
-  Future<void> add(UserSettings item) async {
+  Future<UserSettings> add(UserSettings item) async {
     try {
-      await _source.add(item);
+      final usersettings = await _source.add(item);
       if (item.id != null) {
         _userSettings[item.id!] = item;
       }
+      return usersettings;
     } catch (e) {
       userSettingsRepoLogger.i("Error adding user settings: $e");
+      return item;
     }
   }
 
   @override
-  Future<void> update(UserSettings item) async {
+  Future<UserSettings> update(UserSettings item) async {
     try {
-      await _source.update(item);
+      final usersettings = await _source.update(item);
       if (item.id != null) {
         _userSettings[item.id!] = item;
       }
+      return usersettings;
     } catch (e) {
       userSettingsRepoLogger.i("Error updating user settings: $e");
+      return item;
     }
   }
 
@@ -110,6 +114,43 @@ class _InMemoryUserSettingsSource implements DataSource<UserSettings> {
   _InMemoryUserSettingsSource({required this.userSettings});
 
   @override
+  Future<UserSettings> add(UserSettings item) async {
+    final id = userSettings.keys.length + 1;
+    final newItem = item.copyWith(id: id);
+    userSettings[id] = newItem;
+    return newItem;
+  }
+
+  @override
+  Future<List<UserSettings>> addMany(List<UserSettings> items) async {
+    final updatedItems = <UserSettings>[];
+    for (final item in items) {
+      final id = userSettings.keys.length + 1;
+      final newItem = item.copyWith(id: id);
+      userSettings[id] = newItem;
+      updatedItems.add(newItem);
+    }
+    return updatedItems;
+  }
+
+  @override
+  Future<void> delete(int id) async {
+    userSettings.remove(id);
+  }
+
+  @override
+  Future<void> deleteMany(List<int> ids) async {
+    for (final id in ids) {
+      userSettings.remove(id);
+    }
+  }
+
+  @override
+  Future<int> count() async {
+    return userSettings.length;
+  }
+
+  @override
   Future<List<UserSettings>> getAll() async {
     return userSettings.values.toList();
   }
@@ -120,19 +161,9 @@ class _InMemoryUserSettingsSource implements DataSource<UserSettings> {
   }
 
   @override
-  Future<void> add(UserSettings item) async {
-    final id = userSettings.keys.length + 1;
-    userSettings[id] = item.copyWith(id: id);
-  }
-
-  @override
-  Future<void> update(UserSettings item) async {
-    if (item.id == null) return;
+  Future<UserSettings> update(UserSettings item) async {
+    if (item.id == null) return item;
     userSettings[item.id!] = item;
-  }
-
-  @override
-  Future<void> delete(int id) async {
-    userSettings.remove(id);
+    return item;
   }
 }

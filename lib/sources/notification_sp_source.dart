@@ -4,7 +4,7 @@ import 'package:recall/sources/data_source.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
-class NotificationsSharedPreferencesSource implements DataSource<Notification> {
+class NotificationSharedPreferencesSource implements DataSource<Notification> {
   final String _key = 'notifications';
 
   @override

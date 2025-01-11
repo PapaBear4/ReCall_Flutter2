@@ -1,12 +1,12 @@
-// lib/sources/notifications_ob_source.dart
+// lib/sources/notification_ob_source.dart
 import 'package:recall/models/notification.dart';
 import 'package:objectbox/objectbox.dart';
 import 'package:recall/sources/data_source.dart';
 
-class NotificationsObjectBoxSource implements DataSource<Notification> {
+class NotificationObjectBoxSource implements DataSource<Notification> {
   final Box<Notification> _notificationBox;
 
-  NotificationsObjectBoxSource(this._notificationBox);
+  NotificationObjectBoxSource(this._notificationBox);
 
   @override
   Future<Notification> add(Notification item) async {

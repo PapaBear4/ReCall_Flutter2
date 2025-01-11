@@ -45,9 +45,9 @@ class NotificationRepository implements Repository<Notification> {
       final notifications = await _source.getAll();
       _notifications.clear();
       for (final notification in notifications) {
-          if (notification.id != null) {
-            _notifications[notification.id!] = notification;
-          }
+        if (notification.id != null) {
+          _notifications[notification.id!] = notification;
+        }
       }
       return notifications;
     } catch (e) {
@@ -58,38 +58,42 @@ class NotificationRepository implements Repository<Notification> {
 
   @override
   Future<Notification?> getById(int id) async {
-      if(_notifications.containsKey(id)) {
-        return _notifications[id];
-      }
-      try {
-        return await _source.getById(id);
-      } catch (e) {
-         notificationRepoLogger.i("Error getting notification by id: $e");
-        return null;
-      }
-  }
-
-  @override
-  Future<void> add(Notification item) async {
+    if (_notifications.containsKey(id)) {
+      return _notifications[id];
+    }
     try {
-      await _source.add(item);
-      if(item.id != null) {
-        _notifications[item.id!] = item;
-      }
+      return await _source.getById(id);
     } catch (e) {
-        notificationRepoLogger.i("Error adding notification: $e");
+      notificationRepoLogger.i("Error getting notification by id: $e");
+      return null;
     }
   }
 
   @override
-  Future<void> update(Notification item) async {
+  Future<Notification> add(Notification item) async {
     try {
-      await _source.update(item);
-        if(item.id != null) {
-          _notifications[item.id!] = item;
-        }
+      final notification = await _source.add(item);
+      if (item.id != null) {
+        _notifications[item.id!] = item;
+      }
+      return notification;
+    } catch (e) {
+      notificationRepoLogger.i("Error adding notification: $e");
+      return item;
+    }
+  }
+
+  @override
+  Future<Notification> update(Notification item) async {
+    try {
+      final notification = await _source.update(item);
+      if (item.id != null) {
+        _notifications[item.id!] = item;
+      }
+      return notification;
     } catch (e) {
       notificationRepoLogger.i("Error updating notification: $e");
+      return item;
     }
   }
 
@@ -110,14 +114,40 @@ class _InMemoryNotificationSource implements DataSource<Notification> {
   _InMemoryNotificationSource({required this.notifications});
 
   @override
-  Future<void> add(Notification item) async {
+  Future<Notification> add(Notification item) async {
     final id = notifications.keys.length + 1;
-    notifications[id] = item.copyWith(id: id);
+    final newItem = item.copyWith(id: id);
+    notifications[id] = newItem;
+    return newItem;
+  }
+
+  @override
+  Future<List<Notification>> addMany(List<Notification> items) async {
+    final updatedItems = <Notification>[];
+    for (final item in items) {
+      final id = notifications.keys.length + 1;
+      final newItem = item.copyWith(id: id);
+      notifications[id] = newItem;
+      updatedItems.add(newItem);
+    }
+    return updatedItems;
   }
 
   @override
   Future<void> delete(int id) async {
-     notifications.remove(id);
+    notifications.remove(id);
+  }
+
+  @override
+  Future<void> deleteMany(List<int> ids) async {
+    for (final id in ids) {
+      notifications.remove(id);
+    }
+  }
+
+  @override
+  Future<int> count() async {
+    return notifications.length;
   }
 
   @override
@@ -127,12 +157,13 @@ class _InMemoryNotificationSource implements DataSource<Notification> {
 
   @override
   Future<Notification?> getById(int id) async {
-      return notifications[id];
+    return notifications[id];
   }
 
   @override
-  Future<void> update(Notification item) async {
-    if(item.id == null) return;
-      notifications[item.id!] = item;
+  Future<Notification> update(Notification item) async {
+    if (item.id == null) return item;
+    notifications[item.id!] = item;
+    return item;
   }
 }
