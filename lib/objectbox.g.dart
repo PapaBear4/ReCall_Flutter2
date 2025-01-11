@@ -15,7 +15,7 @@ import 'package:objectbox/objectbox.dart' as obx;
 import 'package:objectbox_flutter_libs/objectbox_flutter_libs.dart';
 
 import 'models/contact.dart';
-import 'models/localnotification.dart';
+import 'models/notification.dart';
 import 'models/usersettings.dart';
 
 export 'package:objectbox/objectbox.dart'; // so that callers only have to import this file
@@ -85,33 +85,33 @@ final _entities = <obx_int.ModelEntity>[
       relations: <obx_int.ModelRelation>[],
       backlinks: <obx_int.ModelBacklink>[]),
   obx_int.ModelEntity(
-      id: const obx_int.IdUid(7, 5183510925355051723),
-      name: 'LocalNotification',
-      lastPropertyId: const obx_int.IdUid(5, 1853185443928922145),
+      id: const obx_int.IdUid(8, 4257298478959120818),
+      name: 'Notification',
+      lastPropertyId: const obx_int.IdUid(5, 449191454545520003),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(1, 7940482150474329527),
+            id: const obx_int.IdUid(1, 8833873927943227251),
             name: 'id',
             type: 6,
             flags: 129),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(2, 3118537303778595395),
+            id: const obx_int.IdUid(2, 3979434219446780961),
             name: 'title',
             type: 9,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(3, 5165757658859297415),
+            id: const obx_int.IdUid(3, 8793448275874487525),
             name: 'body',
             type: 9,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(4, 3930322113880387302),
+            id: const obx_int.IdUid(4, 6432866865444641207),
             name: 'payload',
             type: 9,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(5, 1853185443928922145),
+            id: const obx_int.IdUid(5, 449191454545520003),
             name: 'scheduledTime',
             type: 10,
             flags: 0)
@@ -155,7 +155,7 @@ Future<obx.Store> openStore(
 obx_int.ModelDefinition getObjectBoxModel() {
   final model = obx_int.ModelInfo(
       entities: _entities,
-      lastEntityId: const obx_int.IdUid(7, 5183510925355051723),
+      lastEntityId: const obx_int.IdUid(8, 4257298478959120818),
       lastIndexId: const obx_int.IdUid(0, 0),
       lastRelationId: const obx_int.IdUid(0, 0),
       lastSequenceId: const obx_int.IdUid(0, 0),
@@ -163,7 +163,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
         8247498634308133081,
         2634096001833180392,
         2749572804835222325,
-        7933436140937691858
+        7933436140937691858,
+        5183510925355051723
       ],
       retiredIndexUids: const [],
       retiredPropertyUids: const [
@@ -185,7 +186,12 @@ obx_int.ModelDefinition getObjectBoxModel() {
         3574552719774564365,
         2658647324382796442,
         1934801791299021307,
-        5889096991651133988
+        5889096991651133988,
+        7940482150474329527,
+        3118537303778595395,
+        5165757658859297415,
+        3930322113880387302,
+        1853185443928922145
       ],
       retiredRelationUids: const [],
       modelVersion: 5,
@@ -290,21 +296,21 @@ obx_int.ModelDefinition getObjectBoxModel() {
 
           return object;
         }),
-    LocalNotification: obx_int.EntityDefinition<LocalNotification>(
+    Notification: obx_int.EntityDefinition<Notification>(
         model: _entities[2],
-        toOneRelations: (LocalNotification object) => [],
-        toManyRelations: (LocalNotification object) => {},
-        getId: (LocalNotification object) => object.id,
-        setId: (LocalNotification object, int id) {
+        toOneRelations: (Notification object) => [],
+        toManyRelations: (Notification object) => {},
+        getId: (Notification object) => object.id,
+        setId: (Notification object, int id) {
           if (object.id != id) {
-            throw ArgumentError('Field LocalNotification.id is read-only '
+            throw ArgumentError('Field Notification.id is read-only '
                 '(final or getter-only) and it was declared to be self-assigned. '
                 'However, the currently inserted object (.id=${object.id}) '
                 "doesn't match the inserted ID (ID $id). "
                 'You must assign an ID before calling [box.put()].');
           }
         },
-        objectToFB: (LocalNotification object, fb.Builder fbb) {
+        objectToFB: (Notification object, fb.Builder fbb) {
           final titleOffset = fbb.writeString(object.title);
           final bodyOffset = fbb.writeString(object.body);
           final payloadOffset =
@@ -334,7 +340,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final scheduledTimeParam = scheduledTimeValue == null
               ? null
               : DateTime.fromMillisecondsSinceEpoch(scheduledTimeValue);
-          final object = LocalNotification(
+          final object = Notification(
               id: idParam,
               title: titleParam,
               body: bodyParam,
@@ -390,25 +396,25 @@ class UserSettings_ {
       obx.QueryBooleanProperty<UserSettings>(_entities[1].properties[2]);
 }
 
-/// [LocalNotification] entity fields to define ObjectBox queries.
-class LocalNotification_ {
-  /// See [LocalNotification.id].
+/// [Notification] entity fields to define ObjectBox queries.
+class Notification_ {
+  /// See [Notification.id].
   static final id =
-      obx.QueryIntegerProperty<LocalNotification>(_entities[2].properties[0]);
+      obx.QueryIntegerProperty<Notification>(_entities[2].properties[0]);
 
-  /// See [LocalNotification.title].
+  /// See [Notification.title].
   static final title =
-      obx.QueryStringProperty<LocalNotification>(_entities[2].properties[1]);
+      obx.QueryStringProperty<Notification>(_entities[2].properties[1]);
 
-  /// See [LocalNotification.body].
+  /// See [Notification.body].
   static final body =
-      obx.QueryStringProperty<LocalNotification>(_entities[2].properties[2]);
+      obx.QueryStringProperty<Notification>(_entities[2].properties[2]);
 
-  /// See [LocalNotification.payload].
+  /// See [Notification.payload].
   static final payload =
-      obx.QueryStringProperty<LocalNotification>(_entities[2].properties[3]);
+      obx.QueryStringProperty<Notification>(_entities[2].properties[3]);
 
-  /// See [LocalNotification.scheduledTime].
+  /// See [Notification.scheduledTime].
   static final scheduledTime =
-      obx.QueryDateProperty<LocalNotification>(_entities[2].properties[4]);
+      obx.QueryDateProperty<Notification>(_entities[2].properties[4]);
 }

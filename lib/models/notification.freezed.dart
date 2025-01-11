@@ -3,7 +3,7 @@
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'localnotification.dart';
+part of 'notification.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -14,12 +14,12 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
-LocalNotification _$LocalNotificationFromJson(Map<String, dynamic> json) {
-  return _LocalNotification.fromJson(json);
+Notification _$NotificationFromJson(Map<String, dynamic> json) {
+  return _Notification.fromJson(json);
 }
 
 /// @nodoc
-mixin _$LocalNotification {
+mixin _$Notification {
   @Id(assignable: true)
   int? get id => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
@@ -28,21 +28,21 @@ mixin _$LocalNotification {
   @Property(type: PropertyType.date)
   DateTime? get scheduledTime => throw _privateConstructorUsedError;
 
-  /// Serializes this LocalNotification to a JSON map.
+  /// Serializes this Notification to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
-  /// Create a copy of LocalNotification
+  /// Create a copy of Notification
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $LocalNotificationCopyWith<LocalNotification> get copyWith =>
+  $NotificationCopyWith<Notification> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $LocalNotificationCopyWith<$Res> {
-  factory $LocalNotificationCopyWith(
-          LocalNotification value, $Res Function(LocalNotification) then) =
-      _$LocalNotificationCopyWithImpl<$Res, LocalNotification>;
+abstract class $NotificationCopyWith<$Res> {
+  factory $NotificationCopyWith(
+          Notification value, $Res Function(Notification) then) =
+      _$NotificationCopyWithImpl<$Res, Notification>;
   @useResult
   $Res call(
       {@Id(assignable: true) int? id,
@@ -53,16 +53,16 @@ abstract class $LocalNotificationCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$LocalNotificationCopyWithImpl<$Res, $Val extends LocalNotification>
-    implements $LocalNotificationCopyWith<$Res> {
-  _$LocalNotificationCopyWithImpl(this._value, this._then);
+class _$NotificationCopyWithImpl<$Res, $Val extends Notification>
+    implements $NotificationCopyWith<$Res> {
+  _$NotificationCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of LocalNotification
+  /// Create a copy of Notification
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
@@ -99,11 +99,11 @@ class _$LocalNotificationCopyWithImpl<$Res, $Val extends LocalNotification>
 }
 
 /// @nodoc
-abstract class _$$LocalNotificationImplCopyWith<$Res>
-    implements $LocalNotificationCopyWith<$Res> {
-  factory _$$LocalNotificationImplCopyWith(_$LocalNotificationImpl value,
-          $Res Function(_$LocalNotificationImpl) then) =
-      __$$LocalNotificationImplCopyWithImpl<$Res>;
+abstract class _$$NotificationImplCopyWith<$Res>
+    implements $NotificationCopyWith<$Res> {
+  factory _$$NotificationImplCopyWith(
+          _$NotificationImpl value, $Res Function(_$NotificationImpl) then) =
+      __$$NotificationImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
@@ -115,14 +115,14 @@ abstract class _$$LocalNotificationImplCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$LocalNotificationImplCopyWithImpl<$Res>
-    extends _$LocalNotificationCopyWithImpl<$Res, _$LocalNotificationImpl>
-    implements _$$LocalNotificationImplCopyWith<$Res> {
-  __$$LocalNotificationImplCopyWithImpl(_$LocalNotificationImpl _value,
-      $Res Function(_$LocalNotificationImpl) _then)
+class __$$NotificationImplCopyWithImpl<$Res>
+    extends _$NotificationCopyWithImpl<$Res, _$NotificationImpl>
+    implements _$$NotificationImplCopyWith<$Res> {
+  __$$NotificationImplCopyWithImpl(
+      _$NotificationImpl _value, $Res Function(_$NotificationImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of LocalNotification
+  /// Create a copy of Notification
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
@@ -133,7 +133,7 @@ class __$$LocalNotificationImplCopyWithImpl<$Res>
     Object? payload = freezed,
     Object? scheduledTime = freezed,
   }) {
-    return _then(_$LocalNotificationImpl(
+    return _then(_$NotificationImpl(
       id: freezed == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
@@ -160,10 +160,9 @@ class __$$LocalNotificationImplCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-@Entity(realClass: LocalNotification)
-class _$LocalNotificationImpl extends _LocalNotification
-    with DiagnosticableTreeMixin {
-  _$LocalNotificationImpl(
+@Entity(realClass: Notification)
+class _$NotificationImpl extends _Notification with DiagnosticableTreeMixin {
+  _$NotificationImpl(
       {@Id(assignable: true) this.id,
       required this.title,
       required this.body,
@@ -171,8 +170,8 @@ class _$LocalNotificationImpl extends _LocalNotification
       @Property(type: PropertyType.date) this.scheduledTime})
       : super._();
 
-  factory _$LocalNotificationImpl.fromJson(Map<String, dynamic> json) =>
-      _$$LocalNotificationImplFromJson(json);
+  factory _$NotificationImpl.fromJson(Map<String, dynamic> json) =>
+      _$$NotificationImplFromJson(json);
 
   @override
   @Id(assignable: true)
@@ -189,14 +188,14 @@ class _$LocalNotificationImpl extends _LocalNotification
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'LocalNotification(id: $id, title: $title, body: $body, payload: $payload, scheduledTime: $scheduledTime)';
+    return 'Notification(id: $id, title: $title, body: $body, payload: $payload, scheduledTime: $scheduledTime)';
   }
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(properties);
     properties
-      ..add(DiagnosticsProperty('type', 'LocalNotification'))
+      ..add(DiagnosticsProperty('type', 'Notification'))
       ..add(DiagnosticsProperty('id', id))
       ..add(DiagnosticsProperty('title', title))
       ..add(DiagnosticsProperty('body', body))
@@ -208,7 +207,7 @@ class _$LocalNotificationImpl extends _LocalNotification
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$LocalNotificationImpl &&
+            other is _$NotificationImpl &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.title, title) || other.title == title) &&
             (identical(other.body, body) || other.body == body) &&
@@ -222,35 +221,34 @@ class _$LocalNotificationImpl extends _LocalNotification
   int get hashCode =>
       Object.hash(runtimeType, id, title, body, payload, scheduledTime);
 
-  /// Create a copy of LocalNotification
+  /// Create a copy of Notification
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
-  _$$LocalNotificationImplCopyWith<_$LocalNotificationImpl> get copyWith =>
-      __$$LocalNotificationImplCopyWithImpl<_$LocalNotificationImpl>(
-          this, _$identity);
+  _$$NotificationImplCopyWith<_$NotificationImpl> get copyWith =>
+      __$$NotificationImplCopyWithImpl<_$NotificationImpl>(this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$LocalNotificationImplToJson(
+    return _$$NotificationImplToJson(
       this,
     );
   }
 }
 
-abstract class _LocalNotification extends LocalNotification {
-  factory _LocalNotification(
+abstract class _Notification extends Notification {
+  factory _Notification(
           {@Id(assignable: true) final int? id,
           required final String title,
           required final String body,
           final String? payload,
           @Property(type: PropertyType.date) final DateTime? scheduledTime}) =
-      _$LocalNotificationImpl;
-  _LocalNotification._() : super._();
+      _$NotificationImpl;
+  _Notification._() : super._();
 
-  factory _LocalNotification.fromJson(Map<String, dynamic> json) =
-      _$LocalNotificationImpl.fromJson;
+  factory _Notification.fromJson(Map<String, dynamic> json) =
+      _$NotificationImpl.fromJson;
 
   @override
   @Id(assignable: true)
@@ -265,10 +263,10 @@ abstract class _LocalNotification extends LocalNotification {
   @Property(type: PropertyType.date)
   DateTime? get scheduledTime;
 
-  /// Create a copy of LocalNotification
+  /// Create a copy of Notification
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$LocalNotificationImplCopyWith<_$LocalNotificationImpl> get copyWith =>
+  _$$NotificationImplCopyWith<_$NotificationImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

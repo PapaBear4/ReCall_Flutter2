@@ -1,14 +1,13 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'localnotification.dart';
+part of 'notification.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$LocalNotificationImpl _$$LocalNotificationImplFromJson(
-        Map<String, dynamic> json) =>
-    _$LocalNotificationImpl(
+_$NotificationImpl _$$NotificationImplFromJson(Map<String, dynamic> json) =>
+    _$NotificationImpl(
       id: (json['id'] as num?)?.toInt(),
       title: json['title'] as String,
       body: json['body'] as String,
@@ -18,8 +17,7 @@ _$LocalNotificationImpl _$$LocalNotificationImplFromJson(
           : DateTime.parse(json['scheduledTime'] as String),
     );
 
-Map<String, dynamic> _$$LocalNotificationImplToJson(
-        _$LocalNotificationImpl instance) =>
+Map<String, dynamic> _$$NotificationImplToJson(_$NotificationImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
       'title': instance.title,

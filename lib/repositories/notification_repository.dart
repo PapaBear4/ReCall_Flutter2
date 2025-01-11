@@ -1,4 +1,4 @@
-import '../models/localnotification.dart';
+import '../models/notification.dart';
 import 'repository.dart';
 
 /*class NotificationRepository implements Repository<LocalNotification> {
