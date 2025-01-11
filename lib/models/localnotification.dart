@@ -1,28 +1,10 @@
+// lib/models/localnotification.dart
 import 'package:objectbox/objectbox.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:flutter/foundation.dart';
 
-part 'notifications.freezed.dart';
-part 'notifications.g.dart';
-
-// This class represents the user's notification preferences.
-// It is stored in the local database using ObjectBox.
-// Properties can be added or removed as needed to reflect different notification settings.
-@freezed
-class NotificationSettings with _$NotificationSettings {
-  const NotificationSettings._();
-
-  @Entity(realClass: NotificationSettings)
-  factory NotificationSettings({
-    @Id(assignable: true) int? id,
-    @Default(true) bool remindersEnabled,
-    @Default(true) bool alertsEnabled,
-  }) = _NotificationSettings;
-
-  factory NotificationSettings.fromJson(Map<String, dynamic> json) =>
-      _$NotificationSettingsFromJson(json);
-
-}
+part 'localnotification.freezed.dart';
+part 'localnotification.g.dart';
 
 // This class represents a single notification that will be displayed to the user.
 // It contains information such as the title, body, and optional payload data.
@@ -36,6 +18,7 @@ class LocalNotification with _$LocalNotification {
     required String title,
     required String body,
     String? payload,
+    @Property(type: PropertyType.date) DateTime? scheduledTime,
   }) = _LocalNotification;
 
 
