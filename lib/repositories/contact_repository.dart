@@ -16,128 +16,101 @@ class ContactRepository implements Repository<Contact> {
   final Map<int, Contact> _contacts = {}; 
 
   // Initialize the repository
-  ContactRepository(this._store, this._source) {
+  ContactRepository(this._store) {
     if (!kIsWeb) {
       try {
-        //_store = openStore();
         _contactBox = _store!.box<Contact>();
-        _initializeData();
+        _source = ContactsObjectBoxSource(_contactBox!);
       } catch (e) {
-        contactRepoLogger.i("Erro opening ObjectBox store: $e");
+        contactRepoLogger.i("Error opening ObjectBox store: $e");
+        _source = _createInMemorySource();
       }
-    }
-  }
-
-  Future<void> _initializeData() async {
-    if (_store != null && _contactBox != null && _contactBox.isEmpty()) {
-      // Check if the database is empty
-      contactRepoLogger
-          .i("LOG: No contacts found.  Initializing with dummy data...");
-      //1. create a single contact
-      final firstContact = Contact(
-        id: null,
-        firstName: 'Delete',
-        lastName: 'Me',
-        frequency: ContactFrequency.never.value,
-        birthday: null,
-        lastContacted: null,
-      ); // first dummy contact
-      //2. add it to the box
-      final firstId = _contactBox.put(firstContact);
-      //3. update the contact
-      final firstSavedContact = firstContact.copyWith(id: firstId);
-      //get the dummy contacts
-      //final dummyContacts = InMemoryContactRepository.createDummyContacts();
-      //create more dummy contacts
-      final secondContact = Contact(
-        id: null,
-        firstName: 'Delete',
-        lastName: 'Me 2',
-        frequency: ContactFrequency.never.value,
-        birthday: null,
-        lastContacted: null,
-      ); // second dummy contact
-      final thirdContact = Contact(
-        id: 0,
-        firstName: 'Delete',
-        lastName: 'Me 3',
-        frequency: ContactFrequency.never.value,
-        birthday: null,
-        lastContacted: null,
-      ); // third dummy contact
-      final fourthContact = Contact(
-        id: 0,
-        firstName: 'Delete',
-        lastName: 'Me 4',
-        frequency: ContactFrequency.never.value,
-        birthday: null,
-        lastContacted: null,
-      ); // fourth dummy contact
-      // add a second contact
-      final secondId = _contactBox.put(secondContact);
-      //3. update the contact
-      final secondSavedContact = secondContact.copyWith(id: secondId);
-
-      final contactsToPut = [thirdContact, fourthContact];
-      final addedIds =
-          _contactBox.putMany(contactsToPut); // Add dummy contacts to ObjectBox
-      contactRepoLogger.i("LOG added IDs: $addedIds");
-    }
-  }
-
-//
-  @override
-  Future<List<Contact>> getAll() async {
-    if (!kIsWeb && _store != null && _contactBox != null) {
-      return _contactBox.getAll();
     } else {
-      return await _webContactRepository.getAll();
-    }
-  }
-
-  @override
-  Future<Contact?> getById(int id) async {
-    if (!kIsWeb && _store != null && _contactBox != null) {
-      return _contactBox.get(id);
-    } else {
-      return await _webContactRepository.getById(id);
-    }
-  }
-
-  @override
-  Future<Contact> add(Contact item) async {
-    //TODO: need something here to handle the id value
-    if (!kIsWeb && _store != null && _contactBox != null) {
+      _source = _createInMemorySource();
       try {
-        contactRepoLogger.i("LOG contact sent for save $item");
-        final newId = _contactBox.put(item);
-        contactRepoLogger.i("LOG SUCCESS id returned $newId");
-        return item.copyWith(id: newId);
+        _source = ContactsSharedPreferencesSource();
       } catch (e) {
-        contactRepoLogger.i("Error saving to store: $e");
+          contactRepoLogger.i("Error opening shared preferences: $e");
       }
-      return item.copyWith(firstName: 'FAILED');
-    } else {
-      final newContact = await _webContactRepository.add(item);
-      return newContact;
+    }
+  }
+
+  DataSource<Contact> _createInMemorySource() {
+    return _InMemoryContactSource(contacts: _contacts);
+  }
+  
+@override
+  Future<List<Contact>> getAll() async {
+    final contacts = await _source.getAll();
+    _contacts.clear();
+    for (final contact in contacts) {
+      if (contact.id != null) {
+        _contacts[contact.id!] = contact;
+      }
+    }
+    return contacts;
+  }
+@override
+  Future<Contact?> getById(int id) async {
+    if(_contacts.containsKey(id)) {
+      return _contacts[id];
+    }
+    return _source.getById(id);
+  }
+
+  @override
+  Future<void> add(Contact item) async {
+    await _source.add(item);
+    if(item.id != null) {
+      _contacts[item.id!] = item;
     }
   }
 
   @override
   Future<void> update(Contact item) async {
-    if (!kIsWeb && _store != null && _contactBox != null) {
-      _contactBox.put(item);
-    } else {
-      await _webContactRepository.update(item);
+    await _source.update(item);
+     if(item.id != null) {
+      _contacts[item.id!] = item;
     }
   }
 
   @override
   Future<void> delete(int id) async {
-    if (!kIsWeb && _store != null && _contactBox != null) {
-      _contactBox.remove(id);
-    } else {
-      await _webContactRepository.delete(id);
-    }
+    await _source.delete(id);
+    _contacts.remove(id);
   }
+}
+
+
+class _InMemoryContactSource implements DataSource<Contact> {
+  final Map<int, Contact> contacts;
+
+  _InMemoryContactSource({required this.contacts});
+
+    @override
+    Future<void> add(Contact item) async {
+      final id = contacts.keys.length + 1;
+      contacts[id] = item.copyWith(id: id);
+    }
+
+    @override
+    Future<void> delete(int id) async {
+       contacts.remove(id);
+    }
+
+    @override
+    Future<List<Contact>> getAll() async {
+      return contacts.values.toList();
+    }
+
+    @override
+    Future<Contact?> getById(int id) async {
+       return contacts[id];
+    }
+
+    @override
+    Future<void> update(Contact item) async {
+      if(item.id == null) return;
+      contacts[item.id!] = item;
+    }
 }
