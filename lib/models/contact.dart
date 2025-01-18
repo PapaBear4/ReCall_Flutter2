@@ -1,3 +1,4 @@
+// lib/models/contact.dart
 import 'package:objectbox/objectbox.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'contact_frequency.dart';
