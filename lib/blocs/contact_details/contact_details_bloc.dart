@@ -4,6 +4,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:recall/models/contact.dart';
 import 'package:recall/repositories/contact_repository.dart';
 import 'package:logger/logger.dart';
+import 'package:recall/services/notification_service.dart';
 
 part 'contact_details_event.dart';
 part 'contact_details_state.dart';
@@ -16,10 +17,14 @@ class ContactDetailsBloc
     extends Bloc<ContactDetailsEvent, ContactDetailsState> {
   // Repository for interacting with contact data
   final ContactRepository _contactRepository;
+  final NotificationService _notificationService;
 
   // Constructor initializes the bloc with the contact repository and initial state
-  ContactDetailsBloc({required ContactRepository contactRepository})
-      : _contactRepository = contactRepository,
+  ContactDetailsBloc({
+    required ContactRepository contactRepository,
+    required NotificationService notificationService,
+  })  : _contactRepository = contactRepository,
+        _notificationService = notificationService,
         super(const ContactDetailsState.initial()) {
     // Event handler for loading contact details
     on<ContactDetailsEvent>((event, emit) async {
@@ -52,6 +57,7 @@ class ContactDetailsBloc
                 await _contactRepository.getById(e.contact.id!);
             if (updatedContact != null) {
               emit(ContactDetailsState.loaded(updatedContact));
+              _notificationService.updateContact(updatedContact);
             } else {
               emit(const ContactDetailsState.error(
                   'Failed to reload updated contact'));
@@ -72,7 +78,8 @@ class ContactDetailsBloc
           emit(const ContactDetailsState.loading());
           try {
             final newContact = await _contactRepository.add(e.contact);
-            emit(ContactDetailsState.loaded(newContact)); // Emit loaded state with the NEW contact
+            emit(ContactDetailsState.loaded(
+                newContact)); // Emit loaded state with the NEW contact
           } catch (error) {
             emit(ContactDetailsState.error(error.toString()));
           }

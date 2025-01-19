@@ -4,7 +4,6 @@ import 'package:recall/repositories/contact_repository.dart';
 import 'package:logger/logger.dart';
 import 'package:recall/utils/objectbox_utils.dart' as objectbox_utils;
 import 'package:recall/app.dart';
-import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:recall/services/notification_service.dart';
 import 'package:recall/services/notification_helper.dart';
 import 'objectbox.g.dart' as objectbox_g;
@@ -22,11 +21,15 @@ void main() async {
   final notificationHelper = NotificationHelper();
   await notificationHelper.init();
 
+  final contactRepository = ContactRepository(store);
+
   // Initialize NotificationService
-  final notificationService = NotificationService(store, notificationHelper);
+  final notificationService =
+      NotificationService(contactRepository, notificationHelper);
 
   runApp(ReCall(
-      contactRepository:
-          ContactRepository(store))); // Pass the store to the repository
+    contactRepository: ContactRepository(store),
+    notificationService: notificationService,
+  )); // Pass the store to the repository
   logger.i('LOG:App started');
 }

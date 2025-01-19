@@ -7,31 +7,44 @@ import 'package:recall/repositories/contact_repository.dart';
 import 'package:recall/screens/contact_list_screen.dart';
 import 'package:recall/blocs/contact_details/contact_details_bloc.dart';
 import 'package:recall/screens/contact_details_screen.dart';
+import 'package:recall/services/notification_service.dart';
 
 final logger = Logger();
 
 class ReCall extends StatelessWidget {
   final ContactRepository _contactRepository; // Add contactRepository parameter
+  final NotificationService _notificationService;
 
-  const ReCall({super.key, required ContactRepository contactRepository})
-      : _contactRepository = contactRepository;
+  const ReCall(
+      {super.key,
+      required ContactRepository contactRepository,
+      required NotificationService notificationService})
+      : _contactRepository = contactRepository,
+        _notificationService = notificationService;
+
   @override
   Widget build(BuildContext context) {
-    return RepositoryProvider.value(
+    return MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<ContactRepository>.value(value: _contactRepository),
+        RepositoryProvider<NotificationService>.value(
+            value: _notificationService),
+      ],
       // Use RepositoryProvider.value
-      value: _contactRepository, // Provide the initialized repository
       child: MultiBlocProvider(
         providers: [
           BlocProvider(
             create: (context) => ContactListBloc(
               contactRepository:
                   _contactRepository, // Access repository directly
+                  notificationService: _notificationService,
             )..add(const ContactListEvent.loadContacts()),
           ),
           BlocProvider(
             create: (context) => ContactDetailsBloc(
               contactRepository:
                   _contactRepository, // Access repository directly
+                  notificationService:_notificationService,
             ),
           ),
         ],

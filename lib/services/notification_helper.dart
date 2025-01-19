@@ -1,4 +1,7 @@
 // lib/services/notification_helper.dart
+// does the work to get the notification service 
+// set up and active for the app.  Handles callbacks.
+// 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -18,6 +21,7 @@ class NotificationHelper {
   Future<void> init() async {
     // Initialize Time Zones
     tz.initializeTimeZones();
+    // TODO: Make this dynamic based on the user's actual time zone
     tz.setLocalLocation(tz.getLocation('America/New_York')); // Set your desired timezone
 
     // Android Initialization
