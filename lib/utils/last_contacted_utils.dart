@@ -1,5 +1,6 @@
 // lib/utils/last_contacted_helper.dart
 import 'package:recall/models/contact_frequency.dart';
+import 'package:recall/models/contact.dart';
 
 String formatLastContacted(DateTime? lastContacted) {
   if (lastContacted == null) {
@@ -55,5 +56,35 @@ bool isOverdue(String frequency, DateTime? lastContacted) {
 
     default:
       return false;
+  }
+}
+
+DateTime calculateNextDueDate(Contact contact) {
+  if (contact.lastContacted == null) {
+    return DateTime.now(); // Or some other default behavior
+  }
+
+  final frequency = ContactFrequency.fromString(contact.frequency);
+  final lastContacted = contact.lastContacted!;
+
+  switch (frequency) {
+    case ContactFrequency.daily:
+      return lastContacted.add(const Duration(days: 1));
+    case ContactFrequency.weekly:
+      return lastContacted.add(const Duration(days: 7));
+    case ContactFrequency.biweekly:
+      return lastContacted.add(const Duration(days: 14));
+    case ContactFrequency.monthly:
+      return lastContacted.add(const Duration(days: 30));
+    case ContactFrequency.quarterly:
+      return lastContacted.add(const Duration(days: 90));
+    case ContactFrequency.yearly:
+      return lastContacted.add(const Duration(days: 365));
+    case ContactFrequency.rarely:
+      return lastContacted.add(const Duration(days: 750));
+    case ContactFrequency.never:
+    default:
+      return DateTime.now()
+          .add(const Duration(days: 365 * 10)); // A long time in the future
   }
 }

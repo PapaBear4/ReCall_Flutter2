@@ -25,10 +25,10 @@ void main() async {
 
   // Initialize NotificationService
   final notificationService =
-      NotificationService(contactRepository, notificationHelper);
+      NotificationService(notificationHelper);
 
   runApp(ReCall(
-    contactRepository: ContactRepository(store),
+    contactRepository: contactRepository,
     notificationService: notificationService,
   )); // Pass the store to the repository
   logger.i('LOG:App started');

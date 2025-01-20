@@ -32,7 +32,6 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
               emit(const ContactListState.empty());
             } else {
               emit(ContactListState.loaded(contacts: contacts));
-              _notificationService.scheduleNotificationsForDueContacts();
             }
           } catch (e) {
             emit(ContactListState.error(e.toString()));
@@ -47,12 +46,13 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           final currentState = state as _Loaded;
           emit(const ContactListState.loading());
           try {
-            await _contactRepository.update(e.contact);
+            final newContact = await _contactRepository.update(e.contact);
             final updatedContacts = await _contactRepository.getAll();
             emit(ContactListState.loaded(
                 contacts: updatedContacts,
                 sortField: currentState.sortField,
                 ascending: currentState.ascending));
+            _notificationService.scheduleNotificationIfNeeded(newContact);
           } catch (e) {
             emit(ContactListState.error(e.toString()));
           }

@@ -57,7 +57,7 @@ class ContactDetailsBloc
                 await _contactRepository.getById(e.contact.id!);
             if (updatedContact != null) {
               emit(ContactDetailsState.loaded(updatedContact));
-              _notificationService.updateContact(updatedContact);
+              _notificationService.scheduleNotificationIfNeeded(updatedContact);
             } else {
               emit(const ContactDetailsState.error(
                   'Failed to reload updated contact'));
@@ -80,6 +80,7 @@ class ContactDetailsBloc
             final newContact = await _contactRepository.add(e.contact);
             emit(ContactDetailsState.loaded(
                 newContact)); // Emit loaded state with the NEW contact
+            _notificationService.scheduleNotificationIfNeeded(newContact);
           } catch (error) {
             emit(ContactDetailsState.error(error.toString()));
           }
@@ -90,6 +91,7 @@ class ContactDetailsBloc
             await _contactRepository.delete(e.contactId);
             emit(const ContactDetailsState
                 .cleared()); // Emit cleared state after successful deletion
+            _notificationService.cancelNotification(e.contactId);
           } catch (error) {
             emit(ContactDetailsState.error(error.toString()));
           }

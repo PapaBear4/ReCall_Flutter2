@@ -48,7 +48,7 @@ dependencies:
   freezed_annotation: ^2.4.4
   shared_preferences: ^2.3.5
   flutter_local_notifications: ^18.0.1
-  flutter_timezone: ^4.0.0
+  #flutter_timezone: ^4.0.0  #needed for dynamic timezone
   timezone: ^0.10.0
 
 dev_dependencies:
