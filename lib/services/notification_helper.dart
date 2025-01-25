@@ -1,5 +1,5 @@
 // lib/services/notification_helper.dart
-// does the work to get the notification service 
+// does the work to get the notification service
 // set up and active for the app.  Handles callbacks.
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -22,7 +22,8 @@ class NotificationHelper {
     tz.initializeTimeZones();
     // TODO: Make this dynamic based on the user's actual time zone
     // For now it's hardcoded to NY
-    tz.setLocalLocation(tz.getLocation('America/New_York')); // Set your desired timezone
+    tz.setLocalLocation(
+        tz.getLocation('America/New_York')); // Set your desired timezone
 
     // Android Initialization
     const AndroidInitializationSettings initializationSettingsAndroid =
@@ -112,5 +113,25 @@ class NotificationHelper {
 
   Future<void> cancelAllNotifications() async {
     await flutterLocalNotificationsPlugin.cancelAll();
+  }
+
+  Future<void> showTestNotification() async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'recall_channel_id', // Your channel ID
+      'Recall Channel', // Your channel name
+      channelDescription: 'Notifications for due contacts',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+    const NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    await flutterLocalNotificationsPlugin.show(
+      123, // A test notification ID (make it unique)
+      'Test Notification',
+      'This is a test notification.',
+      platformChannelSpecifics,
+    );
   }
 }

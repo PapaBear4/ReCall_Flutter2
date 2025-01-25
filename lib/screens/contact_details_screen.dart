@@ -7,6 +7,7 @@ import 'package:recall/models/contact.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:recall/models/contact_frequency.dart';
+import 'package:recall/services/notification_helper.dart';
 
 var contactDetailScreenLogger = Logger();
 
@@ -26,6 +27,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   late Contact _localContact;
   bool _hasUnsavedChanges = false;
   bool _initialized = false; // Build the form for editing contact details
+  final NotificationHelper notificationHelper = NotificationHelper();
 
   // ...other controllers
 
@@ -124,10 +126,15 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const SizedBox(width: 0),
             IconButton(
               icon: const Icon(Icons.save),
               onPressed: () => _onSaveButtonPressed(context),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                notificationHelper.showTestNotification();
+              },
+              child: const Text('Send Test Notification'),
             ),
             IconButton(
               icon: const Icon(Icons.delete),
