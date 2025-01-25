@@ -1,7 +1,10 @@
 // lib/sources/contact_ob_source.dart
+import 'package:logger/logger.dart';
 import 'package:recall/models/contact.dart';
 import 'package:objectbox/objectbox.dart';
 import 'package:recall/sources/data_source.dart';
+
+var obLogger = Logger();
 
 class ContactObjectBoxSource implements DataSource<Contact> {
   final Box<Contact> _contactBox;
@@ -10,10 +13,12 @@ class ContactObjectBoxSource implements DataSource<Contact> {
 
   @override
   Future<Contact> add(Contact item) async {
-    final newContact = item.copyWith(id:null);
-    final id = _contactBox.put(newContact);
-    return newContact.copyWith(id:id);
-  //item.copyWith(id: id);
+    obLogger.i('ob received this contact: $item');
+    final id = _contactBox.put(item);
+    obLogger.i('new id is: $id');
+    obLogger.i('try to return from box: ${item.copyWith(id: id)}');
+    return item.copyWith(id: id);
+    //item.copyWith(id: id);
   }
 
   @override

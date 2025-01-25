@@ -10,16 +10,17 @@ class NotificationService extends ChangeNotifier {
   NotificationService(this._notificationHelper);
 
   Future<void> scheduleNotificationIfNeeded(Contact contact) async {
-    if (isOverdue(contact.frequency, contact.lastContacted)) {
-      final nextDueDate = calculateNextDueDate(contact);
-      await _notificationHelper.scheduleDailyNotification(
-        id: contact.id!,
-        title: "Contact ${contact.firstName} ${contact.lastName}",
-        body:
-            "${contact.firstName} ${contact.lastName} is due to be contacted. Frequency: ${contact.frequency}",
-        dueDate: nextDueDate,
-      );
-    }
+    //notificationLogger.i('LOG: scheduler called');
+    final nextDueDate = calculateNextDueDate(contact);
+    notificationLogger.i('LOG: nextDueDate = $nextDueDate');
+    notificationLogger.i('LOG: Call helper function');
+    await _notificationHelper.scheduleDailyNotification(
+      id: contact.id!,
+      title: "Contact ${contact.firstName} ${contact.lastName}",
+      body:
+          "${contact.firstName} ${contact.lastName} is due to be contacted. Frequency: ${contact.frequency}",
+      dueDate: nextDueDate,
+    );
   }
 
   Future<void> cancelNotification(int contactId) async {

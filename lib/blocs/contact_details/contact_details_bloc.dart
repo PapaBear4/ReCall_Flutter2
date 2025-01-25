@@ -4,6 +4,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:recall/models/contact.dart';
 import 'package:recall/repositories/contact_repository.dart';
 import 'package:logger/logger.dart';
+import 'package:recall/services/notification_helper.dart';
 import 'package:recall/services/notification_service.dart';
 
 part 'contact_details_event.dart';
@@ -47,16 +48,22 @@ class ContactDetailsBloc
         },
         saveContact: (e) async {
           emit(const ContactDetailsState.loading());
+          //contactDetailLogger.i('LOG:emit loading');
           try {
             if (e.contact.id == null) {
               await _contactRepository.add(e.contact);
+              //contactDetailLogger.i('LOG:added contact');
             } else {
               await _contactRepository.update(e.contact);
+              //contactDetailLogger.i('LOG:updated contact');
             }
             final updatedContact =
                 await _contactRepository.getById(e.contact.id!);
+            //contactDetailLogger.i('LOG: updatedContact= $updatedContact');
             if (updatedContact != null) {
               emit(ContactDetailsState.loaded(updatedContact));
+              //contactDetailLogger.i('LOG:emit loaded updated contact');
+              //notificationLogger.i('LOG: Calling notification service');
               _notificationService.scheduleNotificationIfNeeded(updatedContact);
             } else {
               emit(const ContactDetailsState.error(

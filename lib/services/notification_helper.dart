@@ -4,6 +4,9 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:logger/logger.dart';
+
+var notificationLogger = Logger();
 
 class NotificationHelper {
   static final NotificationHelper _instance = NotificationHelper._internal();
@@ -74,18 +77,20 @@ class NotificationHelper {
         ?.requestNotificationsPermission();
   }
 
-  Future<void> scheduleDailyNotification(
-      {required int id,
-      required String title,
-      required String body,
+  Future<void> scheduleDailyNotification({
+    required int id,
+    required String title,
+    required String body,
       required DateTime dueDate}) async {
     final scheduledDate = tz.TZDateTime(
-      tz.local,
-      dueDate.year,
-      dueDate.month,
-      dueDate.day,
-      10, // Set the notification time (e.g., 10:00 AM)
-    );
+            tz.local,
+            dueDate.year,
+            dueDate.month,
+            dueDate.day,
+            10, // Set the notification time (e.g., 10:00 AM)
+          );
+    notificationLogger.i('LOG: helper function called');
+    notificationLogger.i('Scheduling notification with ID: $id, title: $title, body: $body, due date: $scheduledDate');
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
         id,
@@ -101,10 +106,12 @@ class NotificationHelper {
             priority: Priority.high,
           ),
         ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
+            payload: scheduledDate.toString(),
         matchDateTimeComponents: DateTimeComponents.time);
+    notificationLogger.i('LOG: Notification Scheduled');
   }
 
   Future<void> cancelNotification(int id) async {
@@ -133,5 +140,13 @@ class NotificationHelper {
       'This is a test notification.',
       platformChannelSpecifics,
     );
+  }
+
+  Future<List<PendingNotificationRequest>> getPendingNotifications() async {
+    final List<PendingNotificationRequest> pendingNotificationRequests =
+        await flutterLocalNotificationsPlugin.pendingNotificationRequests();
+    notificationLogger
+        .i("Pending Notifications: ${pendingNotificationRequests.toString()}");
+    return pendingNotificationRequests;
   }
 }

@@ -80,38 +80,38 @@ final _entities = <obx_int.ModelEntity>[
       relations: <obx_int.ModelRelation>[],
       backlinks: <obx_int.ModelBacklink>[]),
   obx_int.ModelEntity(
-      id: const obx_int.IdUid(10, 8157224055218288165),
+      id: const obx_int.IdUid(11, 4220768979207252381),
       name: 'Contact',
-      lastPropertyId: const obx_int.IdUid(6, 1883847672291612715),
+      lastPropertyId: const obx_int.IdUid(6, 8964901162355723932),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(1, 4442663343691907691),
+            id: const obx_int.IdUid(1, 3821439054952038333),
             name: 'id',
             type: 6,
             flags: 129),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(2, 6610312187592969713),
+            id: const obx_int.IdUid(2, 7094665084672935257),
             name: 'firstName',
             type: 9,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(3, 1899672713928990451),
+            id: const obx_int.IdUid(3, 5642368466276514879),
             name: 'lastName',
             type: 9,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(4, 1219906505818103297),
+            id: const obx_int.IdUid(4, 5686918552482380353),
             name: 'frequency',
             type: 9,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(5, 3784008241627644181),
+            id: const obx_int.IdUid(5, 3503045244748135573),
             name: 'birthday',
             type: 10,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(6, 1883847672291612715),
+            id: const obx_int.IdUid(6, 8964901162355723932),
             name: 'lastContacted',
             type: 10,
             flags: 0)
@@ -155,7 +155,7 @@ Future<obx.Store> openStore(
 obx_int.ModelDefinition getObjectBoxModel() {
   final model = obx_int.ModelInfo(
       entities: _entities,
-      lastEntityId: const obx_int.IdUid(10, 8157224055218288165),
+      lastEntityId: const obx_int.IdUid(11, 4220768979207252381),
       lastIndexId: const obx_int.IdUid(0, 0),
       lastRelationId: const obx_int.IdUid(0, 0),
       lastSequenceId: const obx_int.IdUid(0, 0),
@@ -166,7 +166,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
         7933436140937691858,
         5183510925355051723,
         1793994460556925285,
-        12534718281158471
+        12534718281158471,
+        8157224055218288165
       ],
       retiredIndexUids: const [],
       retiredPropertyUids: const [
@@ -205,7 +206,13 @@ obx_int.ModelDefinition getObjectBoxModel() {
         4008774437955728801,
         6656320859317818864,
         5053307212420824405,
-        7675704382788974436
+        7675704382788974436,
+        4442663343691907691,
+        6610312187592969713,
+        1899672713928990451,
+        1219906505818103297,
+        3784008241627644181,
+        1883847672291612715
       ],
       retiredRelationUids: const [],
       modelVersion: 5,

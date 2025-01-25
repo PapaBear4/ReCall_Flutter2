@@ -9,6 +9,8 @@ import 'package:logger/logger.dart';
 import 'package:recall/models/contact_frequency.dart';
 import 'package:recall/services/notification_helper.dart';
 
+import '../utils/last_contacted_utils.dart';
+
 var contactDetailScreenLogger = Logger();
 
 class ContactDetailsScreen extends StatefulWidget {
@@ -53,7 +55,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     //viewing an existing contact.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final contactId = ModalRoute.of(context)!.settings.arguments as int;
-      contactDetailLogger.i("LOG received ID $contactId");
+      //contactDetailLogger.i("LOG received ID $contactId");
       if (contactId != 0) {
         context
             .read<ContactDetailsBloc>()
@@ -161,6 +163,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            //First Name
             TextFormField(
               controller: _firstNameController,
               textCapitalization: TextCapitalization.words,
@@ -182,8 +185,15 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                     ContactDetailsEvent.updateContactLocally(
                         contact: _localContact));
               },
+              textInputAction: TextInputAction.next,
             ),
+            //Display when they are next due to be contacted
+            Text(calculateNextDueDateDisplay(
+              _localContact.lastContacted,
+              _localContact.frequency,
+            )),
             TextFormField(
+              //Last Name
               controller: _lastNameController,
               textCapitalization: TextCapitalization.words,
               decoration: const InputDecoration(labelText: 'Last Name'),
@@ -199,6 +209,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                 });
                 _hasUnsavedChanges = true;
               },
+              textInputAction: TextInputAction.done,
             ),
             // Dropdown for Contact Frequency
             const SizedBox(height: 16.0),
@@ -325,12 +336,13 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           );
         } else {
           //otherwise update the current contact
+          //contactDetailScreenLogger.i('LOG: initiate save');
           context
               .read<ContactDetailsBloc>()
               .add(ContactDetailsEvent.saveContact(contact: _localContact));
-          context
-              .read<ContactDetailsBloc>()
-              .add(ContactDetailsEvent.clearContact());
+          //context
+          //    .read<ContactDetailsBloc>()
+          //    .add(ContactDetailsEvent.clearContact());
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Changes saved')),
           );

@@ -4,6 +4,7 @@ import 'package:recall/models/contact.dart';
 import 'package:recall/repositories/contact_repository.dart';
 import 'package:logger/logger.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:recall/services/notification_helper.dart';
 import 'package:recall/services/notification_service.dart';
 
 part 'contact_list_event.dart';
@@ -53,6 +54,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
                 sortField: currentState.sortField,
                 ascending: currentState.ascending));
             _notificationService.scheduleNotificationIfNeeded(newContact);
+            notificationLogger.i('LOG: Calling notification service');
           } catch (e) {
             emit(ContactListState.error(e.toString()));
           }
