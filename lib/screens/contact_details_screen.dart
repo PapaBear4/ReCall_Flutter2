@@ -107,8 +107,9 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       body: BlocConsumer<ContactDetailsBloc, ContactDetailsState>(
         listener: (context, state) {
           state.mapOrNull(error: (errorState) {
-            ScaffoldMessenger.of(context)
-                .showSnackBar(SnackBar(content: Text(errorState.message)));
+            //ScaffoldMessenger.of(context)
+            //    .showSnackBar(SnackBar(content: Text(errorState.message)));
+            contactDetailScreenLogger.e('$errorState.message');
           });
         },
         builder: (context, state) {
@@ -162,6 +163,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           children: <Widget>[
             TextFormField(
               controller: _firstNameController,
+              textCapitalization: TextCapitalization.words,
               decoration: const InputDecoration(labelText: 'First Name'),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -183,6 +185,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             ),
             TextFormField(
               controller: _lastNameController,
+              textCapitalization: TextCapitalization.words,
               decoration: const InputDecoration(labelText: 'Last Name'),
               validator: (value) {
                 if (value == null || value.isEmpty) {

@@ -10,8 +10,10 @@ class ContactObjectBoxSource implements DataSource<Contact> {
 
   @override
   Future<Contact> add(Contact item) async {
-    final id = _contactBox.put(item);
-    return item.copyWith(id: id);
+    final newContact = item.copyWith(id:null);
+    final id = _contactBox.put(newContact);
+    return newContact.copyWith(id:id);
+  //item.copyWith(id: id);
   }
 
   @override
