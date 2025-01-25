@@ -1,5 +1,6 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:recall/repositories/contact_repository.dart';
 import 'package:logger/logger.dart';
 import 'package:recall/utils/objectbox_utils.dart' as objectbox_utils;
@@ -27,9 +28,11 @@ void main() async {
   final notificationService =
       NotificationService(notificationHelper);
 
-  runApp(ReCall(
-    contactRepository: contactRepository,
-    notificationService: notificationService,
-  )); // Pass the store to the repository
+  runApp(ChangeNotifierProvider<NotificationService>(
+        create: (_) => notificationService,
+        child: ReCall(
+          contactRepository: contactRepository,
+        ),
+      ));
   logger.i('LOG:App started');
 }
