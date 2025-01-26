@@ -77,20 +77,23 @@ class NotificationHelper {
         ?.requestNotificationsPermission();
   }
 
-  Future<void> scheduleDailyNotification({
-    required int id,
-    required String title,
-    required String body,
-      required DateTime dueDate}) async {
+  Future<void> scheduleDailyNotification(
+      {required int id,
+      required String title,
+      required String body,
+      required DateTime dueDate,
+      String? payload,  //TODO: used to link to contact_detail_screen for assoc ID
+      }) async {
     final scheduledDate = tz.TZDateTime(
-            tz.local,
-            dueDate.year,
-            dueDate.month,
-            dueDate.day,
-            10, // Set the notification time (e.g., 10:00 AM)
-          );
-    notificationLogger.i('LOG: helper function called');
-    notificationLogger.i('Scheduling notification with ID: $id, title: $title, body: $body, due date: $scheduledDate');
+      tz.local,
+      dueDate.year,
+      dueDate.month,
+      dueDate.day,
+      10, // Set the notification time (e.g., 10:00 AM)
+    );
+    //notificationLogger.i('LOG: helper function called');
+    //notificationLogger.i(
+    //    'Scheduling notification with ID: $id, title: $title, body: $body, due date: $scheduledDate');
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
         id,
@@ -102,14 +105,14 @@ class NotificationHelper {
             'recall_channel_id', // Define this in your AndroidManifest.xml
             'Recall Channel',
             channelDescription: 'Notifications for due contacts',
-            importance: Importance.max,
-            priority: Priority.high,
+            //importance: Importance.max,
+            //priority: Priority.high,
           ),
         ),
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        androidScheduleMode: AndroidScheduleMode.inexact,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
-            payload: scheduledDate.toString(),
+        //payload: scheduledDate.toString(),
         matchDateTimeComponents: DateTimeComponents.time);
     notificationLogger.i('LOG: Notification Scheduled');
   }

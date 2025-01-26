@@ -1,3 +1,4 @@
+// lib/utils/last_contacted_utils.dart
 import 'package:recall/models/contact.dart';
 import 'package:recall/models/contact_frequency.dart';
 
@@ -82,18 +83,24 @@ DateTime calculateNextDueDate(Contact contact) {
     case ContactFrequency.rarely:
       return lastContacted.add(const Duration(days: 750));
     case ContactFrequency.never:
-    return DateTime.now()
+      return DateTime.now()
           .add(const Duration(days: 365 * 10)); // A long time in the future
   }
 }
 
 String calculateNextDueDateDisplay(DateTime? lastContacted, String frequency) {
-    if (lastContacted == null) return 'Never Contacted';
-    final nextDueDate = calculateNextDueDate(Contact(firstName: '', frequency: frequency, id: 0, lastName: '', lastContacted: lastContacted));
+  if (lastContacted == null) return 'Never Contacted';
+  final nextDueDate = calculateNextDueDate(Contact(
+      firstName: '',
+      frequency: frequency,
+      id: 0,
+      lastName: '',
+      lastContacted: lastContacted));
   final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+  final today = DateTime(now.year, now.month, now.day);
   final tomorrow = today.add(const Duration(days: 1));
-  final nextDueDateDate = DateTime(nextDueDate.year, nextDueDate.month, nextDueDate.day);
+  final nextDueDateDate =
+      DateTime(nextDueDate.year, nextDueDate.month, nextDueDate.day);
 
   if (nextDueDateDate.isBefore(today)) {
     return 'Overdue';
@@ -102,7 +109,7 @@ String calculateNextDueDateDisplay(DateTime? lastContacted, String frequency) {
   } else if (nextDueDateDate == tomorrow) {
     return 'Tomorrow';
   } else {
-      final difference = nextDueDate.difference(today).inDays;
+    final difference = nextDueDate.difference(today).inDays;
     return 'In $difference day${difference == 1 ? '' : 's'}';
   }
 }

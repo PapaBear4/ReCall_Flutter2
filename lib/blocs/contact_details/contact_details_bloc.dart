@@ -4,7 +4,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:recall/models/contact.dart';
 import 'package:recall/repositories/contact_repository.dart';
 import 'package:logger/logger.dart';
-import 'package:recall/services/notification_helper.dart';
 import 'package:recall/services/notification_service.dart';
 
 part 'contact_details_event.dart';

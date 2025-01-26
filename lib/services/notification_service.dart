@@ -12,14 +12,15 @@ class NotificationService extends ChangeNotifier {
   Future<void> scheduleNotificationIfNeeded(Contact contact) async {
     //notificationLogger.i('LOG: scheduler called');
     final nextDueDate = calculateNextDueDate(contact);
-    notificationLogger.i('LOG: nextDueDate = $nextDueDate');
-    notificationLogger.i('LOG: Call helper function');
+    //notificationLogger.i('LOG: nextDueDate = $nextDueDate');
+    //notificationLogger.i('LOG: Call helper function');
     await _notificationHelper.scheduleDailyNotification(
       id: contact.id!,
       title: "Contact ${contact.firstName} ${contact.lastName}",
       body:
           "${contact.firstName} ${contact.lastName} is due to be contacted. Frequency: ${contact.frequency}",
       dueDate: nextDueDate,
+      payload: '',  //TODO: fill this in later if needed
     );
   }
 
