@@ -11,6 +11,16 @@ class NotificationService extends ChangeNotifier {
 
   Future<void> scheduleNotificationIfNeeded(Contact contact) async {
     //notificationLogger.i('LOG: scheduler called');
+    if (contact.lastContacted == null) {
+      await _notificationHelper.scheduleImmediateNotification(
+        id: contact.id!,
+        title: "Contact ${contact.firstName} ${contact.lastName}",
+        body: "You've never contacted ${contact.firstName} ${contact.lastName}",
+        //dueDate: nextDueDate,
+        payload: '', //TODO: fill this in later if needed
+      );
+      return;
+    }
     final nextDueDate = calculateNextDueDate(contact);
     //notificationLogger.i('LOG: nextDueDate = $nextDueDate');
     //notificationLogger.i('LOG: Call helper function');
@@ -20,7 +30,7 @@ class NotificationService extends ChangeNotifier {
       body:
           "${contact.firstName} ${contact.lastName} is due to be contacted. Frequency: ${contact.frequency}",
       dueDate: nextDueDate,
-      payload: '',  //TODO: fill this in later if needed
+      payload: '', //TODO: fill this in later if needed
     );
   }
 

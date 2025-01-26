@@ -1,7 +1,9 @@
 // lib/services/notification_helper.dart
 // does the work to get the notification service
 // set up and active for the app.  Handles callbacks.
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:recall/models/contact.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:logger/logger.dart';
@@ -58,13 +60,28 @@ class NotificationHelper {
         switch (notificationResponse.notificationResponseType) {
           case NotificationResponseType.selectedNotification:
             // Handle regular notification tap
+            //TODO: add code to take user to contact_detail_screen
+            final String? payload = notificationResponse.payload;
+            if (notificationResponse.payload != null) {
+              notificationLogger.i('notification payload: $payload');
+            }
+            /*await Navigator.pushNamed(
+              context,
+              '/contactDetails',
+              arguments: payload,
+            );*/
+
             break;
           case NotificationResponseType.selectedNotificationAction:
             // Handle action button tap (if you implement action buttons)
+            // TODO: compose text, initiate call, compose discord, etc.
             break;
         }
         // You might want to navigate to a specific screen based on the payload
       },
+      //TODO: This is for later implementation of Notification Actions (background?)
+      //https://pub.dev/packages/flutter_local_notifications#-usage
+      //onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
     );
 
     await requestPermissions();
@@ -77,13 +94,13 @@ class NotificationHelper {
         ?.requestNotificationsPermission();
   }
 
-  Future<void> scheduleDailyNotification(
-      {required int id,
-      required String title,
-      required String body,
-      required DateTime dueDate,
-      String? payload,  //TODO: used to link to contact_detail_screen for assoc ID
-      }) async {
+  Future<void> scheduleDailyNotification({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime dueDate,
+    String? payload, //TODO: used to link to contact_detail_screen for assoc ID
+  }) async {
     final scheduledDate = tz.TZDateTime(
       tz.local,
       dueDate.year,
@@ -125,21 +142,22 @@ class NotificationHelper {
     await flutterLocalNotificationsPlugin.cancelAll();
   }
 
-  Future<void> showTestNotification() async {
+  Future<void> showTestNotification(Contact contact) async {
+    final int notifyId = contact.id ?? 123;
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
       'recall_channel_id', // Your channel ID
       'Recall Channel', // Your channel name
       channelDescription: 'Notifications for due contacts',
-      importance: Importance.max,
-      priority: Priority.high,
+      //importance: Importance.max,
+      //priority: Priority.high,
     );
     const NotificationDetails platformChannelSpecifics =
         NotificationDetails(android: androidPlatformChannelSpecifics);
 
     await flutterLocalNotificationsPlugin.show(
-      123, // A test notification ID (make it unique)
-      'Test Notification',
+      notifyId, // A test notification ID (make it unique)
+      'Test Notification for ${contact.firstName} ${contact.lastName}',
       'This is a test notification.',
       platformChannelSpecifics,
     );
@@ -151,5 +169,42 @@ class NotificationHelper {
     notificationLogger
         .i("Pending Notifications: ${pendingNotificationRequests.toString()}");
     return pendingNotificationRequests;
+  }
+
+  Future<void> scheduleImmediateNotification({
+    required int id,
+    required String title,
+    required String body,
+    //required DateTime dueDate,
+    String? payload, //TODO: used to link to contact_detail_screen for assoc ID
+  }) async {
+    final now =
+        tz.TZDateTime.now(tz.local); // Get current time in the local time zone
+    final scheduledDate =
+        now.add(const Duration(minutes: 2)); // Add 2 minutes    );
+    //notificationLogger.i('LOG: helper function called');
+    //notificationLogger.i(
+    //    'Scheduling notification with ID: $id, title: $title, body: $body, due date: $scheduledDate');
+
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+        id,
+        title,
+        body,
+        scheduledDate,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'recall_channel_id', // Define this in your AndroidManifest.xml
+            'Recall Channel',
+            channelDescription: 'Notifications for due contacts',
+            //importance: Importance.max,
+            //priority: Priority.high,
+          ),
+        ),
+        androidScheduleMode: AndroidScheduleMode.inexact,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        //payload: scheduledDate.toString(),
+        matchDateTimeComponents: DateTimeComponents.time);
+    notificationLogger.i('LOG: Notification Scheduled');
   }
 }

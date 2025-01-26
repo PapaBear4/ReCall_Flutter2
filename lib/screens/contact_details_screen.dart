@@ -109,8 +109,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       body: BlocConsumer<ContactDetailsBloc, ContactDetailsState>(
         listener: (context, state) {
           state.mapOrNull(error: (errorState) {
-            //ScaffoldMessenger.of(context)
-            //    .showSnackBar(SnackBar(content: Text(errorState.message)));
+            ScaffoldMessenger.of(context)
+                .showSnackBar(SnackBar(content: Text(errorState.message)));
             contactDetailScreenLogger.e('$errorState.message');
           });
         },
@@ -135,7 +135,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             ),
             ElevatedButton(
               onPressed: () {
-                notificationHelper.showTestNotification();
+                notificationHelper.showTestNotification(_localContact);
               },
               child: const Text('Send Test Notification'),
             ),
