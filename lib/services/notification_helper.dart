@@ -181,7 +181,7 @@ class NotificationHelper {
     final now =
         tz.TZDateTime.now(tz.local); // Get current time in the local time zone
     final scheduledDate =
-        now.add(const Duration(minutes: 2)); // Add 2 minutes    );
+        now.add(const Duration(seconds: 10)); // Add 2 minutes    );
     //notificationLogger.i('LOG: helper function called');
     //notificationLogger.i(
     //    'Scheduling notification with ID: $id, title: $title, body: $body, due date: $scheduledDate');

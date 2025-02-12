@@ -15,7 +15,7 @@ class NotificationService extends ChangeNotifier {
       await _notificationHelper.scheduleImmediateNotification(
         id: contact.id!,
         title: "Contact ${contact.firstName} ${contact.lastName}",
-        body: "You've never contacted ${contact.firstName} ${contact.lastName}",
+        body: "SCHEDULED IMMEDIATE You've never contacted ${contact.firstName} ${contact.lastName}",
         //dueDate: nextDueDate,
         payload: '', //TODO: fill this in later if needed
       );
