@@ -1,6 +1,8 @@
 // lib/services/notification_helper.dart
 // does the work to get the notification service
 // set up and active for the app.  Handles callbacks.
+
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:recall/models/contact.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -8,6 +10,9 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:logger/logger.dart';
 
 var notificationLogger = Logger();
+
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
 
 class NotificationHelper {
   static final NotificationHelper _instance = NotificationHelper._internal();
@@ -17,9 +22,6 @@ class NotificationHelper {
   }
 
   NotificationHelper._internal();
-
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
 
   Future<void> init() async {
     // Initialize Time Zones
@@ -63,6 +65,16 @@ class NotificationHelper {
             final String? payload = notificationResponse.payload;
             if (notificationResponse.payload != null) {
               notificationLogger.i('notification payload: $payload');
+              final parts = payload!.split(':');
+              if (parts.length==2&&parts[0]=='contact_id') {
+                final contactId = int.tryParse(parts[1]);
+                if (contactId != null) {
+                  notificationLogger.i('final ID: $contactId');
+                  // Navigate to the contact details screen with the contact ID
+                  //Navigator.pushNamed(context, '/contactDetails', arguments: contactId);
+                  
+                }
+              }
             }
             /*await Navigator.pushNamed(
               context,
@@ -93,43 +105,47 @@ class NotificationHelper {
         ?.requestNotificationsPermission();
   }
 
-  Future<void> scheduleDailyNotification({
+  Future<void> scheduleNotification({
     required int id,
     required String title,
     required String body,
     required DateTime dueDate,
-    String? payload, //TODO: used to link to contact_detail_screen for assoc ID
+    required int contactId,
   }) async {
     final scheduledDate = tz.TZDateTime(
       tz.local,
       dueDate.year,
       dueDate.month,
       dueDate.day,
-      10, // Set the notification time (e.g., 10:00 AM)
+      7, // Set the notification time (e.g., 10:00 AM)
     );
     //notificationLogger.i('LOG: helper function called');
     //notificationLogger.i(
     //    'Scheduling notification with ID: $id, title: $title, body: $body, due date: $scheduledDate');
 
+    String payload = "contact_id:$contactId";
+
     await flutterLocalNotificationsPlugin.zonedSchedule(
-        id,
-        title,
-        body,
-        scheduledDate,
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'recall_channel_id', // Define this in your AndroidManifest.xml
-            'Recall Channel',
-            channelDescription: 'Notifications for due contacts',
-            //importance: Importance.max,
-            //priority: Priority.high,
-          ),
+      id,
+      title,
+      body,
+      scheduledDate,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'recall_channel_id', // Define this in your AndroidManifest.xml
+          'Recall Channel',
+          channelDescription: 'Notifications for due contacts',
+          //importance: Importance.max,
+          //priority: Priority.high,
         ),
-        androidScheduleMode: AndroidScheduleMode.inexact,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        //payload: scheduledDate.toString(),
-        matchDateTimeComponents: DateTimeComponents.time);
+      ),
+      androidScheduleMode: AndroidScheduleMode.inexact,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      //payload: scheduledDate.toString(),
+      //matchDateTimeComponents: DateTimeComponents.time,
+      payload: payload,
+    );
     notificationLogger.i('LOG: Notification Scheduled');
   }
 
@@ -175,7 +191,7 @@ class NotificationHelper {
     required String title,
     required String body,
     //required DateTime dueDate,
-    String? payload, //TODO: used to link to contact_detail_screen for assoc ID
+    required int contactId,
   }) async {
     final now =
         tz.TZDateTime.now(tz.local); // Get current time in the local time zone
@@ -185,27 +201,28 @@ class NotificationHelper {
     //notificationLogger.i(
     //    'Scheduling notification with ID: $id, title: $title, body: $body, due date: $scheduledDate');
 
+    String payload = "contact_id:$contactId";
+
     await flutterLocalNotificationsPlugin.zonedSchedule(
-        id,
-        title,
-        body,
-        scheduledDate,
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'recall_channel_id', // Define this in your AndroidManifest.xml
-            'Recall Channel',
-            channelDescription: 'Notifications for due contacts',
-            importance: Importance.max,
-            priority: Priority.high,
-          ),
+      id,
+      title,
+      body,
+      scheduledDate,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'recall_channel_id', // Define this in your AndroidManifest.xml
+          'Recall Channel',
+          channelDescription: 'Notifications for due contacts',
+          importance: Importance.max,
+          priority: Priority.high,
         ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        //payload: scheduledDate.toString(),
-        //matchDateTimeComponents: DateTimeComponents.time
-        );
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      payload: payload,
+      //matchDateTimeComponents: DateTimeComponents.time
+    );
     notificationLogger.i('LOG: Notification Scheduled');
   }
-
 }

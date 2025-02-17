@@ -17,7 +17,7 @@ class NotificationService extends ChangeNotifier {
         title: "Contact ${contact.firstName} ${contact.lastName}",
         body: "SCHEDULED IMMEDIATE You've never contacted ${contact.firstName} ${contact.lastName}",
         //dueDate: nextDueDate,
-        payload: '', //TODO: fill this in later if needed
+        contactId: contact.id!, //TODO: fill this in later if needed
       );
       return;
     }
@@ -25,13 +25,13 @@ class NotificationService extends ChangeNotifier {
     final nextDueDate = calculateNextDueDate(contact);
     //notificationLogger.i('LOG: nextDueDate = $nextDueDate');
     //notificationLogger.i('LOG: Call helper function');
-    await _notificationHelper.scheduleDailyNotification(
+    await _notificationHelper.scheduleNotification(
       id: contact.id!,
       title: "Contact ${contact.firstName} ${contact.lastName}",
       body:
           "${contact.firstName} ${contact.lastName} is due to be contacted. Frequency: ${contact.frequency}",
       dueDate: nextDueDate,
-      payload: '', //TODO: fill this in later if needed
+      contactId: contact.id!, //TODO: fill this in later if needed
     );
     
   }
