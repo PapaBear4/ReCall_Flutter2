@@ -1,7 +1,6 @@
 // lib/services/notification_helper.dart
 // does the work to get the notification service
 // set up and active for the app.  Handles callbacks.
-import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:recall/models/contact.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -181,7 +180,7 @@ class NotificationHelper {
     final now =
         tz.TZDateTime.now(tz.local); // Get current time in the local time zone
     final scheduledDate =
-        now.add(const Duration(seconds: 10)); // Add 2 minutes    );
+        now.add(const Duration(seconds: 10)); // Add 10 seconds    );
     //notificationLogger.i('LOG: helper function called');
     //notificationLogger.i(
     //    'Scheduling notification with ID: $id, title: $title, body: $body, due date: $scheduledDate');
@@ -196,15 +195,17 @@ class NotificationHelper {
             'recall_channel_id', // Define this in your AndroidManifest.xml
             'Recall Channel',
             channelDescription: 'Notifications for due contacts',
-            //importance: Importance.max,
-            //priority: Priority.high,
+            importance: Importance.max,
+            priority: Priority.high,
           ),
         ),
-        androidScheduleMode: AndroidScheduleMode.inexact,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         //payload: scheduledDate.toString(),
-        matchDateTimeComponents: DateTimeComponents.time);
+        //matchDateTimeComponents: DateTimeComponents.time
+        );
     notificationLogger.i('LOG: Notification Scheduled');
   }
+
 }

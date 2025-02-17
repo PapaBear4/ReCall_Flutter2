@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.recall"
-    compileSdk = 34//flutter.compileSdkVersion
+    compileSdk = 35//flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -18,7 +18,7 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11
+        jvmTarget = "11"//JavaVersion.VERSION_11
     }
 
     defaultConfig {
@@ -36,6 +36,11 @@ android {
 
     buildTypes {
         release {
+            minifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android.txt"),
+                "proguard-rules.pro"
+            )
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.debug
@@ -49,5 +54,5 @@ flutter {
 
 //added for notifications
 dependencies  {
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.2.2'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4' //was 1.2.2
 }

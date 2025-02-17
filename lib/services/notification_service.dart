@@ -21,6 +21,7 @@ class NotificationService extends ChangeNotifier {
       );
       return;
     }
+        
     final nextDueDate = calculateNextDueDate(contact);
     //notificationLogger.i('LOG: nextDueDate = $nextDueDate');
     //notificationLogger.i('LOG: Call helper function');
@@ -32,6 +33,7 @@ class NotificationService extends ChangeNotifier {
       dueDate: nextDueDate,
       payload: '', //TODO: fill this in later if needed
     );
+    
   }
 
   Future<void> cancelNotification(int contactId) async {
