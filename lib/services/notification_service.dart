@@ -9,31 +9,32 @@ class NotificationService extends ChangeNotifier {
 
   NotificationService(this._notificationHelper);
 
-  Future<void> scheduleNotificationIfNeeded(Contact contact) async {
+  //schedule a notification based on contact.frequency and contact.lastContacted
+  Future<void> scheduleReminder(Contact contact) async {
     //notificationLogger.i('LOG: scheduler called');
+    //if the contact has never been contacted, immediately fire a notification
     if (contact.lastContacted == null) {
-      await _notificationHelper.scheduleImmediateNotification(
+      await _notificationHelper.scheduleNotification(
         id: contact.id!,
-        title: "Contact ${contact.firstName} ${contact.lastName}",
-        body: "SCHEDULED IMMEDIATE You've never contacted ${contact.firstName} ${contact.lastName}",
-        //dueDate: nextDueDate,
-        contactId: contact.id!, //TODO: fill this in later if needed
+        title: "Immediately Contact ${contact.firstName} ${contact.lastName}",
+        body: "You've never contacted ${contact.firstName} ${contact.lastName}",
+        dueDate: DateTime.now(),
+        contactId: contact.id!, //pass contact.id to notification helper
       );
       return;
+    } else {
+      final nextDueDate = calculateNextDueDate(contact);
+      notificationLogger.i('LOG: nextDueDate = $nextDueDate');
+      //notificationLogger.i('LOG: Call helper function');
+      await _notificationHelper.scheduleNotification(
+        id: contact.id!,
+        title: "Scheduled Contact ${contact.firstName} ${contact.lastName}",
+        body:
+            "${contact.firstName} ${contact.lastName} is due to be contacted on $nextDueDate.",
+        dueDate: nextDueDate,
+        contactId: contact.id!, //pass contact.id to notification helper
+      );
     }
-        
-    final nextDueDate = calculateNextDueDate(contact);
-    //notificationLogger.i('LOG: nextDueDate = $nextDueDate');
-    //notificationLogger.i('LOG: Call helper function');
-    await _notificationHelper.scheduleNotification(
-      id: contact.id!,
-      title: "Contact ${contact.firstName} ${contact.lastName}",
-      body:
-          "${contact.firstName} ${contact.lastName} is due to be contacted. Frequency: ${contact.frequency}",
-      dueDate: nextDueDate,
-      contactId: contact.id!, //TODO: fill this in later if needed
-    );
-    
   }
 
   Future<void> cancelNotification(int contactId) async {
@@ -43,7 +44,7 @@ class NotificationService extends ChangeNotifier {
   Future<void> scheduleNotificationsForDueContacts(
       List<Contact> contacts) async {
     for (final contact in contacts) {
-      await scheduleNotificationIfNeeded(contact);
+      await scheduleReminder(contact);
     }
   }
 }

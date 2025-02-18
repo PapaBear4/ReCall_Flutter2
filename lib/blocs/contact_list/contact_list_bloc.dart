@@ -53,7 +53,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
                 contacts: updatedContacts,
                 sortField: currentState.sortField,
                 ascending: currentState.ascending));
-            _notificationService.scheduleNotificationIfNeeded(newContact);
+            _notificationService.scheduleReminder(newContact);
             notificationLogger.i('LOG: Calling notification service');
           } catch (e) {
             emit(ContactListState.error(e.toString()));

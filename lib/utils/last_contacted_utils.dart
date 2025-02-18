@@ -65,7 +65,14 @@ DateTime calculateNextDueDate(Contact contact) {
   }
 
   final frequency = ContactFrequency.fromString(contact.frequency);
-  final lastContacted = contact.lastContacted!;
+  final lastContacted = DateTime(
+    contact.lastContacted!.year,
+    contact.lastContacted!.month,
+    contact.lastContacted!.day,
+    7, // Set to 7 AM;
+    0, // Set to 0 minutes;
+    0, // Set to 0 seconds; 
+  );
 
   switch (frequency) {
     case ContactFrequency.daily:

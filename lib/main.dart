@@ -11,6 +11,8 @@ import 'objectbox.g.dart' as objectbox_g;
 
 final logger = Logger();
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 late final objectbox_g.Store? store; // Declare the store
 
 void main() async {

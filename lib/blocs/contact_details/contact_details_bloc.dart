@@ -63,7 +63,7 @@ class ContactDetailsBloc
               emit(ContactDetailsState.loaded(updatedContact));
               //contactDetailLogger.i('LOG:emit loaded updated contact');
               //notificationLogger.i('LOG: Calling notification service');
-              _notificationService.scheduleNotificationIfNeeded(updatedContact);
+              _notificationService.scheduleReminder(updatedContact);
             } else {
               emit(const ContactDetailsState.error(
                   'Failed to reload updated contact'));
@@ -86,7 +86,7 @@ class ContactDetailsBloc
             final newContact = await _contactRepository.add(e.contact);
             emit(ContactDetailsState.loaded(
                 newContact)); // Emit loaded state with the NEW contact
-            _notificationService.scheduleNotificationIfNeeded(newContact);
+            _notificationService.scheduleReminder(newContact);
           } catch (error) {
             emit(ContactDetailsState.error(error.toString()));
           }

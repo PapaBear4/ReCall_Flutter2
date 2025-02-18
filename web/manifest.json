@@ -1,6 +1,6 @@
 {
-    "name": "ReCall",
-    "short_name": "ReCall",
+    "name": "reCall",
+    "short_name": "reCall",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
