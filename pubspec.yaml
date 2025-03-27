@@ -48,7 +48,7 @@ dependencies:
   freezed_annotation: ^2.4.4
   shared_preferences: ^2.3.5
   timezone: ^0.10.0
-  flutter_local_notifications: ^18.0.1
+  flutter_local_notifications: ^19.0.0
   device_info_plus: ^11.3.0  
   permission_handler: ^11.3.1 # Use the latest version from pub.dev
 

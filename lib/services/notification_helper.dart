@@ -149,8 +149,6 @@ Future<void> checkAndRequestNotificationPermission() async {
         ),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
       payload: payload,
     );
     notificationLogger.i('LOG: Notification Scheduled for $scheduledDate');
