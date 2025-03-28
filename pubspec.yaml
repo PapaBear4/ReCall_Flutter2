@@ -51,6 +51,7 @@ dependencies:
   flutter_local_notifications: ^19.0.0
   device_info_plus: ^11.3.0  
   permission_handler: ^11.3.1 # Use the latest version from pub.dev
+  workmanager: ^0.5.2
 
 dev_dependencies:
   flutter_test:
