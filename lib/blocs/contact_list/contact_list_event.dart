@@ -7,13 +7,19 @@ class ContactListEvent with _$ContactListEvent {
   const factory ContactListEvent.deleteContactFromList(int contactId) = _DeleteContactFromList;
   const factory ContactListEvent.updateContactFromList(Contact contact) =
       _UpdateContactFromList;
-  const factory ContactListEvent.sortContacts(
-      ContactListSortField sortField, bool ascending) = _SortContacts;
+  // Use standard Dart default values for factory parameters
+  const factory ContactListEvent.sortContacts({
+    // Default to dueDate
+    @Default(ContactListSortField.dueDate) ContactListSortField sortField,
+    // Default to true (ascending: earliest due date first)
+    @Default(true) bool ascending,
+  }) = _SortContacts;
 }
 
 enum ContactListSortField {
   lastName,
   birthday,
   contactFrequency,
-  lastContacted
+  lastContacted,
+  dueDate // Add this field
 }

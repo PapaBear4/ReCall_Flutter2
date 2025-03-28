@@ -8,7 +8,7 @@ class ContactListState with _$ContactListState {
   const factory ContactListState.loading() = _Loading;
   const factory ContactListState.loaded({
     required List<Contact> contacts,
-    @Default(ContactListSortField.lastName) ContactListSortField sortField,
+    @Default(ContactListSortField.dueDate) ContactListSortField sortField,
     @Default(true) bool ascending,
   }) = _Loaded;
   const factory ContactListState.error(String message) = _Error;

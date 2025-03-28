@@ -575,11 +575,11 @@ class __$$SortContactsImplCopyWithImpl<$Res>
     Object? ascending = null,
   }) {
     return _then(_$SortContactsImpl(
-      null == sortField
+      sortField: null == sortField
           ? _value.sortField
           : sortField // ignore: cast_nullable_to_non_nullable
               as ContactListSortField,
-      null == ascending
+      ascending: null == ascending
           ? _value.ascending
           : ascending // ignore: cast_nullable_to_non_nullable
               as bool,
@@ -590,11 +590,16 @@ class __$$SortContactsImplCopyWithImpl<$Res>
 /// @nodoc
 
 class _$SortContactsImpl implements _SortContacts {
-  const _$SortContactsImpl(this.sortField, this.ascending);
+  const _$SortContactsImpl(
+      {this.sortField = ContactListSortField.dueDate, this.ascending = true});
 
+// Default to dueDate
   @override
+  @JsonKey()
   final ContactListSortField sortField;
+// Default to true (ascending: earliest due date first)
   @override
+  @JsonKey()
   final bool ascending;
 
   @override
@@ -706,10 +711,12 @@ class _$SortContactsImpl implements _SortContacts {
 
 abstract class _SortContacts implements ContactListEvent {
   const factory _SortContacts(
-          final ContactListSortField sortField, final bool ascending) =
-      _$SortContactsImpl;
+      {final ContactListSortField sortField,
+      final bool ascending}) = _$SortContactsImpl;
 
-  ContactListSortField get sortField;
+// Default to dueDate
+  ContactListSortField
+      get sortField; // Default to true (ascending: earliest due date first)
   bool get ascending;
 
   /// Create a copy of ContactListEvent
@@ -1242,7 +1249,7 @@ class __$$LoadedImplCopyWithImpl<$Res>
 class _$LoadedImpl implements _Loaded {
   const _$LoadedImpl(
       {required final List<Contact> contacts,
-      this.sortField = ContactListSortField.lastName,
+      this.sortField = ContactListSortField.dueDate,
       this.ascending = true})
       : _contacts = contacts;
 

@@ -1,6 +1,5 @@
 // lib/services/background_service.dart
 import 'package:logger/logger.dart';
-import 'package:recall/main.dart'; // To access store if needed globally (or pass path)
 import 'package:recall/models/contact.dart';
 import 'package:recall/models/contact_frequency.dart';
 import 'package:recall/repositories/contact_repository.dart';
