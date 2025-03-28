@@ -2,7 +2,7 @@
 part of 'contact_list_bloc.dart';
 
 @freezed
-class ContactListEvent with _$ContactListEvent {
+sealed class ContactListEvent with _$ContactListEvent {
   const factory ContactListEvent.loadContacts() = _LoadContacts;
   const factory ContactListEvent.deleteContactFromList(int contactId) = _DeleteContactFromList;
   const factory ContactListEvent.updateContactFromList(Contact contact) =

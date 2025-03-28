@@ -26,7 +26,9 @@ void main() async {
   final notificationHelper = NotificationHelper();
   await notificationHelper.init();
 
+  // Create repositories
   final contactRepository = ContactRepository(store);
+  final userSettingsRepository = UserSettingsRepository(store); 
 
   // Initialize NotificationService
   final notificationService =
@@ -41,6 +43,7 @@ void main() async {
         create: (_) => notificationService,
         child: ReCall(
           contactRepository: contactRepository,
+          userSettingsRepository: userSettingsRepository,
         ),
       ));
   logger.i('LOG:App started, background service initialized');

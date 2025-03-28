@@ -2,12 +2,13 @@
 import 'package:objectbox/objectbox.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'contact_frequency.dart';
+import 'package:flutter/foundation.dart';
 
 part 'contact.freezed.dart';
 part 'contact.g.dart';
 
 @freezed
-class Contact with _$Contact {
+abstract class Contact with _$Contact {
   const Contact._();
 
   @Entity(realClass: Contact)

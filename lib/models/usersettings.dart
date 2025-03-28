@@ -1,18 +1,14 @@
 // lib/models/usersettings.dart
 import 'package:objectbox/objectbox.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 part 'usersettings.freezed.dart';
 part 'usersettings.g.dart';
 
-
-
-// This class represents the user's notification preferences.
-// It is stored in the local database using ObjectBox.
-// Properties can be added or removed as needed to reflect different notification UserSettings.
 @freezed
-class UserSettings with _$UserSettings {
+// Add 'abstract' here
+abstract class UserSettings with _$UserSettings {
   const UserSettings._();
 
   @Entity(realClass: UserSettings)
@@ -20,9 +16,12 @@ class UserSettings with _$UserSettings {
     @Id(assignable: true) int? id,
     @Default(true) bool remindersEnabled,
     @Default(true) bool alertsEnabled,
+    @Default(7) int notificationHour,
+    @Default(0) int notificationMinute,
   }) = _UserSettings;
 
   factory UserSettings.fromJson(Map<String, dynamic> json) =>
       _$UserSettingsFromJson(json);
 
+  TimeOfDay get notificationTimeOfDay => TimeOfDay(hour: notificationHour, minute: notificationMinute);
 }

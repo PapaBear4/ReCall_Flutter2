@@ -9,7 +9,7 @@ part 'notification.g.dart';
 // This class represents a single notification that will be displayed to the user.
 // It contains information such as the title, body, and optional payload data.
 @freezed
-class Notification with _$Notification {
+abstract class Notification with _$Notification {
   const Notification._();
 
   @Entity(realClass: Notification)
