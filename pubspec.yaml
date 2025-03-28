@@ -51,8 +51,12 @@ dependencies:
   flutter_local_notifications: ^19.0.0
   device_info_plus: ^11.3.0  
   permission_handler: ^11.3.1 # Use the latest version from pub.dev
-  workmanager: ^0.5.2
   provider: ^6.1.4
+  workmanager: 
+    git:
+      url: https://github.com/fluttercommunity/flutter_workmanager.git
+      path: workmanager # Specifies the package is within a subfolder in the repo
+      ref: main   # Use the 'main' branch
 
 dev_dependencies:
   flutter_test:
