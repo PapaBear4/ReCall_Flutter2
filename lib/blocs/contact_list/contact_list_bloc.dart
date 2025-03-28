@@ -4,6 +4,8 @@ import 'package:recall/models/contact.dart';
 import 'package:recall/repositories/contact_repository.dart';
 import 'package:logger/logger.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:recall/services/notification_helper.dart';
+import 'package:recall/services/notification_service.dart';
 
 part 'contact_list_event.dart';
 part 'contact_list_state.dart';
@@ -13,9 +15,13 @@ var contactListLogger = Logger();
 
 class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
   final ContactRepository _contactRepository;
+  final NotificationService _notificationService;
 
-  ContactListBloc({required ContactRepository contactRepository})
-      : _contactRepository = contactRepository,
+  ContactListBloc({
+    required ContactRepository contactRepository,
+    required NotificationService notificationService,
+  })  : _contactRepository = contactRepository,
+        _notificationService = notificationService,
         super(const ContactListState.initial()) {
     on<ContactListEvent>((event, emit) async {
       await event.map(
@@ -41,12 +47,14 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           final currentState = state as _Loaded;
           emit(const ContactListState.loading());
           try {
-            await _contactRepository.update(e.contact);
+            final newContact = await _contactRepository.update(e.contact);
             final updatedContacts = await _contactRepository.getAll();
             emit(ContactListState.loaded(
                 contacts: updatedContacts,
                 sortField: currentState.sortField,
                 ascending: currentState.ascending));
+            _notificationService.scheduleReminder(newContact);
+            notificationLogger.i('LOG: Calling notification service');
           } catch (e) {
             emit(ContactListState.error(e.toString()));
           }

@@ -1,3 +1,4 @@
+// lib/models/contact_frequency.dart
 enum ContactFrequency {
   daily('daily'),
   weekly('weekly'),

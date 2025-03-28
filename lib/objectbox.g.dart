@@ -22,45 +22,6 @@ export 'package:objectbox/objectbox.dart'; // so that callers only have to impor
 
 final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
-      id: const obx_int.IdUid(3, 1793994460556925285),
-      name: 'Contact',
-      lastPropertyId: const obx_int.IdUid(7, 3683856921556564968),
-      flags: 0,
-      properties: <obx_int.ModelProperty>[
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(1, 90881113209169037),
-            name: 'id',
-            type: 6,
-            flags: 129),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(2, 2697999848323947938),
-            name: 'firstName',
-            type: 9,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(3, 8457285260018957115),
-            name: 'lastName',
-            type: 9,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(4, 8989760233651442574),
-            name: 'birthday',
-            type: 10,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(5, 3038223345535722784),
-            name: 'lastContacted',
-            type: 10,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(7, 3683856921556564968),
-            name: 'frequency',
-            type: 9,
-            flags: 0)
-      ],
-      relations: <obx_int.ModelRelation>[],
-      backlinks: <obx_int.ModelBacklink>[]),
-  obx_int.ModelEntity(
       id: const obx_int.IdUid(6, 3445238387805404030),
       name: 'UserSettings',
       lastPropertyId: const obx_int.IdUid(3, 7942218515340831358),
@@ -117,6 +78,45 @@ final _entities = <obx_int.ModelEntity>[
             flags: 0)
       ],
       relations: <obx_int.ModelRelation>[],
+      backlinks: <obx_int.ModelBacklink>[]),
+  obx_int.ModelEntity(
+      id: const obx_int.IdUid(11, 4220768979207252381),
+      name: 'Contact',
+      lastPropertyId: const obx_int.IdUid(6, 8964901162355723932),
+      flags: 0,
+      properties: <obx_int.ModelProperty>[
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(1, 3821439054952038333),
+            name: 'id',
+            type: 6,
+            flags: 129),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(2, 7094665084672935257),
+            name: 'firstName',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(3, 5642368466276514879),
+            name: 'lastName',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(4, 5686918552482380353),
+            name: 'frequency',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(5, 3503045244748135573),
+            name: 'birthday',
+            type: 10,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(6, 8964901162355723932),
+            name: 'lastContacted',
+            type: 10,
+            flags: 0)
+      ],
+      relations: <obx_int.ModelRelation>[],
       backlinks: <obx_int.ModelBacklink>[])
 ];
 
@@ -155,7 +155,7 @@ Future<obx.Store> openStore(
 obx_int.ModelDefinition getObjectBoxModel() {
   final model = obx_int.ModelInfo(
       entities: _entities,
-      lastEntityId: const obx_int.IdUid(8, 4257298478959120818),
+      lastEntityId: const obx_int.IdUid(11, 4220768979207252381),
       lastIndexId: const obx_int.IdUid(0, 0),
       lastRelationId: const obx_int.IdUid(0, 0),
       lastSequenceId: const obx_int.IdUid(0, 0),
@@ -164,7 +164,10 @@ obx_int.ModelDefinition getObjectBoxModel() {
         2634096001833180392,
         2749572804835222325,
         7933436140937691858,
-        5183510925355051723
+        5183510925355051723,
+        1793994460556925285,
+        12534718281158471,
+        8157224055218288165
       ],
       retiredIndexUids: const [],
       retiredPropertyUids: const [
@@ -191,7 +194,25 @@ obx_int.ModelDefinition getObjectBoxModel() {
         3118537303778595395,
         5165757658859297415,
         3930322113880387302,
-        1853185443928922145
+        1853185443928922145,
+        90881113209169037,
+        2697999848323947938,
+        8457285260018957115,
+        8989760233651442574,
+        3038223345535722784,
+        3683856921556564968,
+        1770390370346626134,
+        8254980502753290530,
+        4008774437955728801,
+        6656320859317818864,
+        5053307212420824405,
+        7675704382788974436,
+        4442663343691907691,
+        6610312187592969713,
+        1899672713928990451,
+        1219906505818103297,
+        3784008241627644181,
+        1883847672291612715
       ],
       retiredRelationUids: const [],
       modelVersion: 5,
@@ -199,67 +220,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
       version: 1);
 
   final bindings = <Type, obx_int.EntityDefinition>{
-    Contact: obx_int.EntityDefinition<Contact>(
-        model: _entities[0],
-        toOneRelations: (Contact object) => [],
-        toManyRelations: (Contact object) => {},
-        getId: (Contact object) => object.id,
-        setId: (Contact object, int id) {
-          if (object.id != id) {
-            throw ArgumentError('Field Contact.id is read-only '
-                '(final or getter-only) and it was declared to be self-assigned. '
-                'However, the currently inserted object (.id=${object.id}) '
-                "doesn't match the inserted ID (ID $id). "
-                'You must assign an ID before calling [box.put()].');
-          }
-        },
-        objectToFB: (Contact object, fb.Builder fbb) {
-          final firstNameOffset = fbb.writeString(object.firstName);
-          final lastNameOffset = fbb.writeString(object.lastName);
-          final frequencyOffset = fbb.writeString(object.frequency);
-          fbb.startTable(8);
-          fbb.addInt64(0, object.id ?? 0);
-          fbb.addOffset(1, firstNameOffset);
-          fbb.addOffset(2, lastNameOffset);
-          fbb.addInt64(3, object.birthday?.millisecondsSinceEpoch);
-          fbb.addInt64(4, object.lastContacted?.millisecondsSinceEpoch);
-          fbb.addOffset(6, frequencyOffset);
-          fbb.finish(fbb.endTable());
-          return object.id ?? 0;
-        },
-        objectFromFB: (obx.Store store, ByteData fbData) {
-          final buffer = fb.BufferContext(fbData);
-          final rootOffset = buffer.derefObject(0);
-          final birthdayValue =
-              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 10);
-          final lastContactedValue =
-              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 12);
-          final idParam =
-              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 4);
-          final firstNameParam = const fb.StringReader(asciiOptimization: true)
-              .vTableGet(buffer, rootOffset, 6, '');
-          final lastNameParam = const fb.StringReader(asciiOptimization: true)
-              .vTableGet(buffer, rootOffset, 8, '');
-          final frequencyParam = const fb.StringReader(asciiOptimization: true)
-              .vTableGet(buffer, rootOffset, 16, '');
-          final birthdayParam = birthdayValue == null
-              ? null
-              : DateTime.fromMillisecondsSinceEpoch(birthdayValue);
-          final lastContactedParam = lastContactedValue == null
-              ? null
-              : DateTime.fromMillisecondsSinceEpoch(lastContactedValue);
-          final object = Contact(
-              id: idParam,
-              firstName: firstNameParam,
-              lastName: lastNameParam,
-              frequency: frequencyParam,
-              birthday: birthdayParam,
-              lastContacted: lastContactedParam);
-
-          return object;
-        }),
     UserSettings: obx_int.EntityDefinition<UserSettings>(
-        model: _entities[1],
+        model: _entities[0],
         toOneRelations: (UserSettings object) => [],
         toManyRelations: (UserSettings object) => {},
         getId: (UserSettings object) => object.id,
@@ -297,7 +259,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           return object;
         }),
     Notification: obx_int.EntityDefinition<Notification>(
-        model: _entities[2],
+        model: _entities[1],
         toOneRelations: (Notification object) => [],
         toManyRelations: (Notification object) => {},
         getId: (Notification object) => object.id,
@@ -348,73 +310,132 @@ obx_int.ModelDefinition getObjectBoxModel() {
               scheduledTime: scheduledTimeParam);
 
           return object;
+        }),
+    Contact: obx_int.EntityDefinition<Contact>(
+        model: _entities[2],
+        toOneRelations: (Contact object) => [],
+        toManyRelations: (Contact object) => {},
+        getId: (Contact object) => object.id,
+        setId: (Contact object, int id) {
+          if (object.id != id) {
+            throw ArgumentError('Field Contact.id is read-only '
+                '(final or getter-only) and it was declared to be self-assigned. '
+                'However, the currently inserted object (.id=${object.id}) '
+                "doesn't match the inserted ID (ID $id). "
+                'You must assign an ID before calling [box.put()].');
+          }
+        },
+        objectToFB: (Contact object, fb.Builder fbb) {
+          final firstNameOffset = fbb.writeString(object.firstName);
+          final lastNameOffset = fbb.writeString(object.lastName);
+          final frequencyOffset = fbb.writeString(object.frequency);
+          fbb.startTable(7);
+          fbb.addInt64(0, object.id ?? 0);
+          fbb.addOffset(1, firstNameOffset);
+          fbb.addOffset(2, lastNameOffset);
+          fbb.addOffset(3, frequencyOffset);
+          fbb.addInt64(4, object.birthday?.millisecondsSinceEpoch);
+          fbb.addInt64(5, object.lastContacted?.millisecondsSinceEpoch);
+          fbb.finish(fbb.endTable());
+          return object.id ?? 0;
+        },
+        objectFromFB: (obx.Store store, ByteData fbData) {
+          final buffer = fb.BufferContext(fbData);
+          final rootOffset = buffer.derefObject(0);
+          final birthdayValue =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 12);
+          final lastContactedValue =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 14);
+          final idParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 4);
+          final firstNameParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 6, '');
+          final lastNameParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 8, '');
+          final frequencyParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 10, '');
+          final birthdayParam = birthdayValue == null
+              ? null
+              : DateTime.fromMillisecondsSinceEpoch(birthdayValue);
+          final lastContactedParam = lastContactedValue == null
+              ? null
+              : DateTime.fromMillisecondsSinceEpoch(lastContactedValue);
+          final object = Contact(
+              id: idParam,
+              firstName: firstNameParam,
+              lastName: lastNameParam,
+              frequency: frequencyParam,
+              birthday: birthdayParam,
+              lastContacted: lastContactedParam);
+
+          return object;
         })
   };
 
   return obx_int.ModelDefinition(model, bindings);
 }
 
-/// [Contact] entity fields to define ObjectBox queries.
-class Contact_ {
-  /// See [Contact.id].
-  static final id =
-      obx.QueryIntegerProperty<Contact>(_entities[0].properties[0]);
-
-  /// See [Contact.firstName].
-  static final firstName =
-      obx.QueryStringProperty<Contact>(_entities[0].properties[1]);
-
-  /// See [Contact.lastName].
-  static final lastName =
-      obx.QueryStringProperty<Contact>(_entities[0].properties[2]);
-
-  /// See [Contact.birthday].
-  static final birthday =
-      obx.QueryDateProperty<Contact>(_entities[0].properties[3]);
-
-  /// See [Contact.lastContacted].
-  static final lastContacted =
-      obx.QueryDateProperty<Contact>(_entities[0].properties[4]);
-
-  /// See [Contact.frequency].
-  static final frequency =
-      obx.QueryStringProperty<Contact>(_entities[0].properties[5]);
-}
-
 /// [UserSettings] entity fields to define ObjectBox queries.
 class UserSettings_ {
   /// See [UserSettings.id].
   static final id =
-      obx.QueryIntegerProperty<UserSettings>(_entities[1].properties[0]);
+      obx.QueryIntegerProperty<UserSettings>(_entities[0].properties[0]);
 
   /// See [UserSettings.remindersEnabled].
   static final remindersEnabled =
-      obx.QueryBooleanProperty<UserSettings>(_entities[1].properties[1]);
+      obx.QueryBooleanProperty<UserSettings>(_entities[0].properties[1]);
 
   /// See [UserSettings.alertsEnabled].
   static final alertsEnabled =
-      obx.QueryBooleanProperty<UserSettings>(_entities[1].properties[2]);
+      obx.QueryBooleanProperty<UserSettings>(_entities[0].properties[2]);
 }
 
 /// [Notification] entity fields to define ObjectBox queries.
 class Notification_ {
   /// See [Notification.id].
   static final id =
-      obx.QueryIntegerProperty<Notification>(_entities[2].properties[0]);
+      obx.QueryIntegerProperty<Notification>(_entities[1].properties[0]);
 
   /// See [Notification.title].
   static final title =
-      obx.QueryStringProperty<Notification>(_entities[2].properties[1]);
+      obx.QueryStringProperty<Notification>(_entities[1].properties[1]);
 
   /// See [Notification.body].
   static final body =
-      obx.QueryStringProperty<Notification>(_entities[2].properties[2]);
+      obx.QueryStringProperty<Notification>(_entities[1].properties[2]);
 
   /// See [Notification.payload].
   static final payload =
-      obx.QueryStringProperty<Notification>(_entities[2].properties[3]);
+      obx.QueryStringProperty<Notification>(_entities[1].properties[3]);
 
   /// See [Notification.scheduledTime].
   static final scheduledTime =
-      obx.QueryDateProperty<Notification>(_entities[2].properties[4]);
+      obx.QueryDateProperty<Notification>(_entities[1].properties[4]);
+}
+
+/// [Contact] entity fields to define ObjectBox queries.
+class Contact_ {
+  /// See [Contact.id].
+  static final id =
+      obx.QueryIntegerProperty<Contact>(_entities[2].properties[0]);
+
+  /// See [Contact.firstName].
+  static final firstName =
+      obx.QueryStringProperty<Contact>(_entities[2].properties[1]);
+
+  /// See [Contact.lastName].
+  static final lastName =
+      obx.QueryStringProperty<Contact>(_entities[2].properties[2]);
+
+  /// See [Contact.frequency].
+  static final frequency =
+      obx.QueryStringProperty<Contact>(_entities[2].properties[3]);
+
+  /// See [Contact.birthday].
+  static final birthday =
+      obx.QueryDateProperty<Contact>(_entities[2].properties[4]);
+
+  /// See [Contact.lastContacted].
+  static final lastContacted =
+      obx.QueryDateProperty<Contact>(_entities[2].properties[5]);
 }

@@ -21,7 +21,6 @@ class ContactRepository implements Repository<Contact> {
     if (!kIsWeb) {
       try {
         _contactBox = _store!.box<Contact>();
-
         _source = ContactObjectBoxSource(_contactBox!);
       } catch (e) {
         contactRepoLogger.i("Error opening ObjectBox store: $e");
@@ -33,7 +32,6 @@ class ContactRepository implements Repository<Contact> {
         _source = ContactsSharedPreferencesSource();
       } catch (e) {
         contactRepoLogger.i("Error opening shared preferences: $e");
-
       }
     }
   }
@@ -57,25 +55,32 @@ class ContactRepository implements Repository<Contact> {
   @override
   Future<Contact?> getById(int id) async {
     if (_contacts.containsKey(id)) {
-      return _contacts[id];
+      //contactRepoLogger.i('LOG: return from local ${_contacts[id]}');
+      final foundContact = _contacts[id];
+      return foundContact;
     }
-    return _source.getById(id);
+    //contactRepoLogger.i('LOG: return from source ${_contacts[id]}');
+    final foundContact = _source.getById(id);
+    return foundContact;
   }
 
   @override
   Future<Contact> add(Contact item) async {
-
+    contactRepoLogger.i('LOG: repo received from call: $item');
     final contact = await _source.add(item);
+    contactRepoLogger.i('LOG: repo got back from source: $contact');
+    final addedContact = await _source.getById(contact.id!);
+    contactRepoLogger.i('LOG: repo retrieved: $addedContact');
+
     if (item.id != null) {
       _contacts[item.id!] = item;
-
     }
     return contact;
   }
 
   @override
   Future<Contact> update(Contact item) async {
-    final contact =await _source.update(item);
+    final contact = await _source.update(item);
     if (item.id != null) {
       _contacts[item.id!] = item;
     }

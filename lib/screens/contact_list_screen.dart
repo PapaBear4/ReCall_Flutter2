@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:recall/blocs/contact_details/contact_details_bloc.dart';
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
-import 'package:intl/intl.dart';
 import 'package:recall/models/contact.dart';
-import 'package:recall/utils/last_contacted_helper.dart';
+import 'package:recall/screens/scheduled_notifications_screen.dart';
+import 'package:recall/utils/last_contacted_utils.dart';
 import 'package:recall/models/contact_frequency.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -49,25 +49,34 @@ class ContactListScreen extends StatelessWidget {
         }),
       ),
       // Floating action button for adding a new contact.
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          //Load up a new contact in the details bloc
-          context
-              .read<ContactDetailsBloc>()
-              .add(ContactDetailsEvent.updateContactLocally(
-                  contact: Contact(
-                id: 0,
-                firstName: '',
-                lastName: '',
-                frequency: ContactFrequency.never.value,
-                birthday: null,
-                lastContacted: null,
-              )));
-          // Navigate to the add contact screen
-          Navigator.pushNamed(context, '/contactDetails',
-              arguments: 0); // Pass null to prevent errors
-        },
-        child: const Icon(Icons.add),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            onPressed: () {
+              //Load up a new contact in the details bloc
+              context
+                  .read<ContactDetailsBloc>()
+                  .add(ContactDetailsEvent.updateContactLocally(
+                      contact: Contact(
+                    id: 0,
+                    firstName: '',
+                    lastName: '',
+                    frequency: ContactFrequency.never.value,
+                    birthday: null,
+                    lastContacted: null,
+                  )));
+              // Navigate to the add contact screen
+              Navigator.pushNamed(context, '/contactDetails',
+                  arguments: 0); // Pass null to prevent errors
+            },
+            child: const Icon(Icons.add),
+          ),
+          FloatingActionButton(
+            onPressed: () => _viewScheduledNotifications(context),
+            child: const Icon(Icons.notifications),
+          ),
+        ],
       ),
     );
   }
@@ -117,11 +126,9 @@ Widget _contactList(List<Contact> contacts) {
             child: ListTile(
               title: Text('${contact.firstName} ${contact.lastName}'),
               subtitle: Text(
-                contact.birthday != null
-                    ? DateFormat('MM/dd').format(contact.birthday!)
-                    : '',
-                style: const TextStyle(fontSize: 12),
-              ),
+                  calculateNextDueDateDisplay(
+                      contact.lastContacted, contact.frequency),
+                  style: const TextStyle(fontSize: 12)),
               trailing: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -165,4 +172,12 @@ Widget _contactList(List<Contact> contacts) {
       );
     },
   );
+}
+
+void _viewScheduledNotifications(BuildContext context) {
+  Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => const ScheduledNotificationsScreen()));
+  contactListScreenLogger.i('LOG: Show notifications button pushed');
 }

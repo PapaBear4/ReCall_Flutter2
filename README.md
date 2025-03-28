@@ -1,4 +1,4 @@
-# ReCall
+# reCall
 
 A new Flutter project.
 

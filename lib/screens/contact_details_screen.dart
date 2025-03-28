@@ -7,6 +7,9 @@ import 'package:recall/models/contact.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:recall/models/contact_frequency.dart';
+import 'package:recall/services/notification_helper.dart';
+
+import '../utils/last_contacted_utils.dart';
 
 var contactDetailScreenLogger = Logger();
 
@@ -26,6 +29,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   late Contact _localContact;
   bool _hasUnsavedChanges = false;
   bool _initialized = false; // Build the form for editing contact details
+  final NotificationHelper notificationHelper = NotificationHelper();
 
   // ...other controllers
 
@@ -51,7 +55,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     //viewing an existing contact.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final contactId = ModalRoute.of(context)!.settings.arguments as int;
-      contactDetailLogger.i("LOG received ID $contactId");
+      //contactDetailLogger.i("LOG received ID $contactId");
       if (contactId != 0) {
         context
             .read<ContactDetailsBloc>()
@@ -107,6 +111,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           state.mapOrNull(error: (errorState) {
             ScaffoldMessenger.of(context)
                 .showSnackBar(SnackBar(content: Text(errorState.message)));
+            contactDetailScreenLogger.e('$errorState.message');
           });
         },
         builder: (context, state) {
@@ -124,10 +129,15 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const SizedBox(width: 0),
             IconButton(
               icon: const Icon(Icons.save),
               onPressed: () => _onSaveButtonPressed(context),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                notificationHelper.showTestNotification(_localContact);
+              },
+              child: const Text('Send Test Notification'),
             ),
             IconButton(
               icon: const Icon(Icons.delete),
@@ -153,8 +163,10 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            //First Name
             TextFormField(
               controller: _firstNameController,
+              textCapitalization: TextCapitalization.words,
               decoration: const InputDecoration(labelText: 'First Name'),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -173,9 +185,17 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                     ContactDetailsEvent.updateContactLocally(
                         contact: _localContact));
               },
+              textInputAction: TextInputAction.next,
             ),
+            //Display when they are next due to be contacted
+            Text(calculateNextDueDateDisplay(
+              _localContact.lastContacted,
+              _localContact.frequency,
+            )),
             TextFormField(
+              //Last Name
               controller: _lastNameController,
+              textCapitalization: TextCapitalization.words,
               decoration: const InputDecoration(labelText: 'Last Name'),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -189,6 +209,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                 });
                 _hasUnsavedChanges = true;
               },
+              textInputAction: TextInputAction.done,
             ),
             // Dropdown for Contact Frequency
             const SizedBox(height: 16.0),
@@ -315,12 +336,13 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           );
         } else {
           //otherwise update the current contact
+          //contactDetailScreenLogger.i('LOG: initiate save');
           context
               .read<ContactDetailsBloc>()
               .add(ContactDetailsEvent.saveContact(contact: _localContact));
-          context
-              .read<ContactDetailsBloc>()
-              .add(ContactDetailsEvent.clearContact());
+          //context
+          //    .read<ContactDetailsBloc>()
+          //    .add(ContactDetailsEvent.clearContact());
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Changes saved')),
           );
