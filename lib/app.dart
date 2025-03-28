@@ -9,6 +9,7 @@ import 'package:recall/screens/contact_list_screen.dart';
 import 'package:recall/blocs/contact_details/contact_details_bloc.dart';
 import 'package:recall/screens/contact_details_screen.dart';
 import 'package:recall/services/notification_service.dart';
+import 'package:recall/screens/settings_screen.dart';
 
 final logger = Logger();
 
@@ -53,6 +54,7 @@ class ReCall extends StatelessWidget {
             routes: {
               '/contactDetails': (context) =>
                   const ContactDetailsScreen(contactId: 0),
+              '/settings': (context) => const SettingsScreen(),
             },
           ),
         ));
