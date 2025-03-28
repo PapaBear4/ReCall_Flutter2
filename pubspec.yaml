@@ -45,12 +45,18 @@ dependencies:
   objectbox: ^4.0.3
   objectbox_flutter_libs: ^4.0.3
   json_annotation: ^4.9.0
-  freezed_annotation: ^2.4.4
+  freezed_annotation: ^3.0.0
   shared_preferences: ^2.3.5
   timezone: ^0.10.0
   flutter_local_notifications: ^19.0.0
   device_info_plus: ^11.3.0  
   permission_handler: ^11.3.1 # Use the latest version from pub.dev
+  provider: ^6.1.4
+  workmanager: 
+    git:
+      url: https://github.com/fluttercommunity/flutter_workmanager.git
+      path: workmanager # Specifies the package is within a subfolder in the repo
+      ref: main   # Use the 'main' branch
 
 dev_dependencies:
   flutter_test:
@@ -64,7 +70,7 @@ dev_dependencies:
   flutter_lints: ^5.0.0
   build_runner: ^2.3.3  #added for objectbox 'code generation'
   objectbox_generator: ^4.0.3 
-  freezed: ^2.5.7
+  freezed: ^3.0.0-0.0.dev
   json_serializable: ^6.9.0
   bloc_test: ^10.0.0
 

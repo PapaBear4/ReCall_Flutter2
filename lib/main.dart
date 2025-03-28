@@ -8,6 +8,8 @@ import 'package:recall/app.dart';
 import 'package:recall/services/notification_service.dart';
 import 'package:recall/services/notification_helper.dart';
 import 'objectbox.g.dart' as objectbox_g;
+import 'package:workmanager/workmanager.dart';
+import 'package:recall/services/background_service.dart';
 
 final logger = Logger();
 
@@ -30,11 +32,16 @@ void main() async {
   final notificationService =
       NotificationService(notificationHelper);
 
+  // --- Initialize Background Service ---
+  await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+  initializeBackgroundService(); // Call the helper from background_service.dart
+
+
   runApp(ChangeNotifierProvider<NotificationService>(
         create: (_) => notificationService,
         child: ReCall(
           contactRepository: contactRepository,
         ),
       ));
-  logger.i('LOG:App started');
+  logger.i('LOG:App started, background service initialized');
 }

@@ -3,8 +3,10 @@
 // set up and active for the app.  Handles callbacks.
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:intl/intl.dart';
 import 'package:recall/main.dart';
 import 'package:recall/models/contact.dart';
+import 'package:recall/models/contact_frequency.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:logger/logger.dart';
@@ -116,43 +118,71 @@ Future<void> checkAndRequestNotificationPermission() async {
   }
 
   Future<void> scheduleNotification({
-    required int id,
-    required String title,
-    required String body,
-    required DateTime dueDate,
-    required int contactId,
-  }) async {
-    DateTime now = DateTime.now();
-    DateTime scheduledDateTime;
+  required int id, // Keep using contact ID as notification ID
+  required String title, // Base title
+  required String body, // Base body
+  required DateTime calculatedDueDate, // The ideal due date
+  required Contact contact, // Pass the full contact
+}) async {
+  tz.TZDateTime scheduledDate;
+  String notificationTitle = title; // Start with base title
+  String notificationBody = body; // Start with base body
 
-    if (dueDate.difference(now).inMilliseconds.abs()<10){
-      scheduledDateTime=now.add(const Duration(seconds:10));
-    } else {
-      scheduledDateTime=dueDate;
-    }
+  final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+  final tz.TZDateTime tzCalculatedDueDate = tz.TZDateTime.from(calculatedDueDate, tz.local);
 
-    final scheduledDate = tz.TZDateTime.from(scheduledDateTime,tz.local);
-    String payload = "contact_id:$contactId";
+  // Check if the calculated due date is in the past (or very close to now)
+  if (tzCalculatedDueDate.isBefore(now) || now.difference(tzCalculatedDueDate).inSeconds.abs() < 5) {
+    // It's overdue or happening right now. Schedule for tomorrow morning.
+    tz.TZDateTime tomorrow = tz.TZDateTime(tz.local, now.year, now.month, now.day)
+        .add(const Duration(days: 1));
+    // Assuming you want it at 7 AM like in calculateNextDueDate
+    scheduledDate = tz.TZDateTime(tz.local, tomorrow.year, tomorrow.month, tomorrow.day, 7);
 
-    await flutterLocalNotificationsPlugin.zonedSchedule(
-      id,
-      title,
-      body,
-      scheduledDate,
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'recall_channel_id', // Define this in your AndroidManifest.xml
-          'Recall Channel',
-          channelDescription: 'Notifications for due contacts',
-          importance: Importance.max,
-          priority: Priority.high,
-        ),
-      ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      payload: payload,
-    );
-    notificationLogger.i('LOG: Notification Scheduled for $scheduledDate');
+    // Optional: Modify title/body for overdue notifications
+    notificationTitle = "Overdue: ${contact.firstName} ${contact.lastName}";
+    notificationBody = "Contact was due on ${DateFormat.yMd().format(calculatedDueDate)}. Reminder set for tomorrow.";
+    notificationLogger.i('LOG: Contact $id overdue (due $calculatedDueDate). Scheduling for $scheduledDate');
+
+  } else {
+    // It's due in the future. Schedule for the calculated date.
+    scheduledDate = tzCalculatedDueDate;
+     notificationLogger.i('LOG: Contact $id due in future. Scheduling for $scheduledDate');
   }
+
+  // Ensure we don't schedule in the past (safety net)
+  if (scheduledDate.isBefore(now)) {
+      scheduledDate = now.add(const Duration(seconds: 5)); // Schedule 5 seconds from now
+      notificationLogger.w('LOG: Adjusted schedule time for contact $id to be in the future: $scheduledDate');
+  }
+
+
+  String payload = "contact_id:${contact.id}";
+
+  await flutterLocalNotificationsPlugin.zonedSchedule(
+    id,
+    notificationTitle, // Use potentially modified title
+    notificationBody, // Use potentially modified body
+    scheduledDate, // The finally determined schedule date
+    const NotificationDetails(
+      android: AndroidNotificationDetails(
+        'recall_channel_id', // Channel ID
+        'Recall Channel', // Channel Name
+        channelDescription: 'Notifications for due contacts',
+        importance: Importance.max,
+        priority: Priority.high,
+      ),
+    ),
+    androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    payload: payload,
+    matchDateTimeComponents: contact.frequency == ContactFrequency.daily.value // Match time components only for daily repeating tasks? Needs careful thought.
+      ? DateTimeComponents.time // Example: Might repeat daily at the same time if needed.
+      : null // Or null to match the exact date and time for others. You might need to adjust this based on desired behavior for non-overdue cases.
+                                         // For the overdue-repeat-daily logic, this might not be needed as we schedule a specific day each time. Let's keep it null for now.
+
+  );
+  notificationLogger.i('LOG: Notification $id scheduled for $scheduledDate with payload $payload');
+}
 
   Future<void> cancelNotification(int id) async {
     await flutterLocalNotificationsPlugin.cancel(id);

@@ -192,8 +192,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               _localContact.lastContacted,
               _localContact.frequency,
             )),
+            //Last Name
             TextFormField(
-              //Last Name
               controller: _lastNameController,
               textCapitalization: TextCapitalization.words,
               decoration: const InputDecoration(labelText: 'Last Name'),
@@ -211,9 +211,37 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               },
               textInputAction: TextInputAction.done,
             ),
-            // Dropdown for Contact Frequency
             const SizedBox(height: 16.0),
+            // Display Last Contacted  ***
+            if (_localContact.lastContacted != null) // Only show if contacted
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Text(
+                  'Last Contacted: ${formatLastContacted(_localContact.lastContacted)}', // Use the formatting function
+                  style: const TextStyle(fontSize: 16),
+                ),
+              )
+            else // Optional: Show if never contacted
+              const Padding(
+                padding: EdgeInsets.only(bottom: 8.0),
+                child: Text(
+                  'Last Contacted: Never',
+                  style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+                ),
+              ),
+            // ***************************************
+
+            const SizedBox(height: 8.0), // Adjust spacing
+
+            // Display when they are next due to be contacted
+            Text('Next Due: ${calculateNextDueDateDisplay(
+              // Label this clearly
+              _localContact.lastContacted,
+              _localContact.frequency,
+            )}'),
+
             const Text('Contact Frequency:'),
+            // Dropdown for Contact Frequency
             DropdownButtonFormField<String>(
               value: _localContact.frequency,
               onTap: () {

@@ -15,7 +15,7 @@ var contactListScreenLogger = Logger();
 class ContactListScreen extends StatelessWidget {
   const ContactListScreen({super.key});
 
-  @override
+@override
   Widget build(BuildContext context) {
     // Scaffold provides the basic structure of the screen.
     return Scaffold(
@@ -48,39 +48,61 @@ class ContactListScreen extends StatelessWidget {
           );
         }),
       ),
-      // Floating action button for adding a new contact.
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            onPressed: () {
-              //Load up a new contact in the details bloc
-              context
-                  .read<ContactDetailsBloc>()
-                  .add(ContactDetailsEvent.updateContactLocally(
-                      contact: Contact(
-                    id: 0,
-                    firstName: '',
-                    lastName: '',
-                    frequency: ContactFrequency.never.value,
-                    birthday: null,
-                    lastContacted: null,
-                  )));
-              // Navigate to the add contact screen
-              Navigator.pushNamed(context, '/contactDetails',
-                  arguments: 0); // Pass null to prevent errors
-            },
-            child: const Icon(Icons.add),
+      // Remove the original floatingActionButton property
+
+      // Add the bottomNavigationBar
+      bottomNavigationBar: BottomAppBar(
+        child: Container( // Use Container for padding
+          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space out items
+            children: <Widget>[
+              // Your static text
+              const Expanded( // Allow text to take available space
+                child: Text(
+                  'Swipe/Tap list item to mark as contacted',
+                  style: TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
+                  overflow: TextOverflow.ellipsis, // Prevent overflow on small screens
+                ),
+              ),
+              const SizedBox(width: 10), // Add spacing between text and buttons
+              // Keep your FloatingActionButtons here, maybe in a Row or Column
+              Row( // Use a Row for the buttons
+                mainAxisSize: MainAxisSize.min, // Take minimum space
+                children: [
+                   FloatingActionButton.small( // Use .small for less space
+                    heroTag: "btn1", // Add unique heroTags
+                    onPressed: () => _viewScheduledNotifications(context),
+                    child: const Icon(Icons.notifications),
+                  ),
+                  const SizedBox(width: 8), // Space between buttons
+                  FloatingActionButton.small( // Use .small for less space
+                    heroTag: "btn2", // Add unique heroTags
+                    onPressed: () {
+                      context
+                          .read<ContactDetailsBloc>()
+                          .add(ContactDetailsEvent.updateContactLocally(
+                              contact: Contact(
+                            id: 0,
+                            firstName: '',
+                            lastName: '',
+                            frequency: ContactFrequency.never.value,
+                            birthday: null,
+                            lastContacted: null,
+                          )));
+                      Navigator.pushNamed(context, '/contactDetails',
+                          arguments: 0);
+                    },
+                    child: const Icon(Icons.add),
+                  ),
+                ],
+              )
+            ],
           ),
-          FloatingActionButton(
-            onPressed: () => _viewScheduledNotifications(context),
-            child: const Icon(Icons.notifications),
-          ),
-        ],
+        ),
       ),
     );
-  }
-}
+  }}
 
 Widget _contactList(List<Contact> contacts) {
   return ListView.builder(
