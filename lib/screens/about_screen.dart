@@ -24,7 +24,7 @@ class AboutScreen extends StatelessWidget {
         'Set how often you want to contact someone, mark when you last did, '
         'and get reminders when they\'re due!';
     // --- Team Information Placeholder ---
-    const String teamInfo = 'Developed by mbworth.';
+    const String teamInfo = 'Developed by markbworth.';
 
 
     return Scaffold(
@@ -56,7 +56,7 @@ class AboutScreen extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.email),
             title: const Text('Contact Developer'),
-            subtitle: const Text('mbworth@gmail.com'),
+            subtitle: const Text('markbworth@gmail.com'),
             onTap: () => _launchUrl('mailto:markbworth@gmail.com', context),
           ),
 

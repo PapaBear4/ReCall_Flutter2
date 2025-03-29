@@ -35,8 +35,8 @@ class NotificationHelper {
         tz.getLocation('America/New_York')); // Set your desired timezone
 
     // Android Initialization
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher'); // Your app icon
+const AndroidInitializationSettings initializationSettingsAndroid =
+    AndroidInitializationSettings('notification_icon_android'); // Use underscores, no extension
 
     // iOS Initialization (add if needed, with appropriate settings)
     // final DarwinInitializationSettings initializationSettingsDarwin =
