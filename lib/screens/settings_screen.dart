@@ -404,6 +404,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                            onTap: _isExporting ? null : _startImportProcess, // Call import function
                          ),
                          // --- END IMPORT TILE ---
+                         const Divider(),
+                         // --- ABOUT TILE ---
+                         ListTile(
+                            title: const Text('About'),
+                            subtitle: const Text('App description and contact info'),
+                            trailing: const Icon(Icons.info_outline),
+                            onTap: () {
+                               Navigator.pushNamed(context, '/about');
+                            },
+                         ),
+                         const Divider(),
+                         // --- END ABOUT TILE ---
                         const Divider(),
                       ],
                     ),

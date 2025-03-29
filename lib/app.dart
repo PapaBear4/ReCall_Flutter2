@@ -7,6 +7,7 @@ import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
 import 'package:recall/main.dart';
 import 'package:recall/repositories/contact_repository.dart';
 import 'package:recall/repositories/usersettings_repository.dart';
+import 'package:recall/screens/about_screen.dart';
 import 'package:recall/screens/contact_list_screen.dart';
 import 'package:recall/blocs/contact_details/contact_details_bloc.dart';
 import 'package:recall/screens/contact_details_screen.dart';
@@ -65,6 +66,7 @@ class ReCall extends StatelessWidget {
               '/contactDetails': (context) =>
                   const ContactDetailsScreen(contactId: 0),
               '/settings': (context) => const SettingsScreen(),
+              '/about': (context) => const AboutScreen(),
             },
           ),
         ));
