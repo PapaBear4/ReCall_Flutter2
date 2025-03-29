@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:recall/repositories/contact_repository.dart';
+import 'package:recall/repositories/usersettings_repository.dart';
 import 'package:logger/logger.dart';
 import 'package:recall/utils/objectbox_utils.dart' as objectbox_utils;
 import 'package:recall/app.dart';
@@ -32,7 +33,7 @@ void main() async {
 
   // Initialize NotificationService
   final notificationService =
-      NotificationService(notificationHelper);
+      NotificationService(notificationHelper, userSettingsRepository);
 
   // --- Initialize Background Service ---
   await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);

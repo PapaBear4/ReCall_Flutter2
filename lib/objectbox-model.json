@@ -41,9 +41,77 @@
         }
       ],
       "relations": []
+    },
+    {
+      "id": "12:1784426728073819086",
+      "lastPropertyId": "5:6573977566468965613",
+      "name": "Notification",
+      "properties": [
+        {
+          "id": "1:2459268052215205661",
+          "name": "id",
+          "type": 6,
+          "flags": 129
+        },
+        {
+          "id": "2:8506655930478219000",
+          "name": "title",
+          "type": 9
+        },
+        {
+          "id": "3:7243481609753653056",
+          "name": "body",
+          "type": 9
+        },
+        {
+          "id": "4:1426471823485695424",
+          "name": "payload",
+          "type": 9
+        },
+        {
+          "id": "5:6573977566468965613",
+          "name": "scheduledTime",
+          "type": 10
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "13:5902005222654570482",
+      "lastPropertyId": "5:6468200214272398994",
+      "name": "UserSettings",
+      "properties": [
+        {
+          "id": "1:4464869310520865168",
+          "name": "id",
+          "type": 6,
+          "flags": 129
+        },
+        {
+          "id": "2:7856577139768921628",
+          "name": "remindersEnabled",
+          "type": 1
+        },
+        {
+          "id": "3:7646979399950300979",
+          "name": "alertsEnabled",
+          "type": 1
+        },
+        {
+          "id": "4:8404092922733395948",
+          "name": "notificationHour",
+          "type": 6
+        },
+        {
+          "id": "5:6468200214272398994",
+          "name": "notificationMinute",
+          "type": 6
+        }
+      ],
+      "relations": []
     }
   ],
-  "lastEntityId": "11:4220768979207252381",
+  "lastEntityId": "13:5902005222654570482",
   "lastIndexId": "0:0",
   "lastRelationId": "0:0",
   "lastSequenceId": "0:0",

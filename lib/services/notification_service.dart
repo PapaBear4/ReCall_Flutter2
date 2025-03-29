@@ -2,13 +2,16 @@
 import 'package:flutter/foundation.dart';
 import 'package:recall/models/contact.dart';
 import 'package:recall/models/contact_frequency.dart';
+import 'package:recall/models/usersettings.dart';
+import 'package:recall/repositories/usersettings_repository.dart';
 import 'package:recall/services/notification_helper.dart';
 import 'package:recall/utils/last_contacted_utils.dart'; // Import the new utils file
 
 class NotificationService extends ChangeNotifier {
   final NotificationHelper _notificationHelper;
+  final UserSettingsRepository _userSettingsRepository;
 
-  NotificationService(this._notificationHelper);
+  NotificationService(this._notificationHelper, this._userSettingsRepository);
 
   //schedule a notification based on contact.frequency and contact.lastContacted
   Future<void> scheduleReminder(Contact contact) async {
@@ -22,7 +25,12 @@ class NotificationService extends ChangeNotifier {
          return;
     }
 
-
+    // Assuming settings are stored with ID 1, as in settings_screen.dart
+    // Provide default time (e.g., 7:00 AM) if settings not found
+    UserSettings? settings = await _userSettingsRepository.getById(1);
+    final int notificationHour = settings?.notificationHour ?? 7; // Default hour 7
+    final int notificationMinute = settings?.notificationMinute ?? 0; // Default minute 0
+    
     DateTime nextDueDate;
     String baseTitle;
     String baseBody;
@@ -48,6 +56,8 @@ class NotificationService extends ChangeNotifier {
       body: baseBody,
       calculatedDueDate: nextDueDate, // Pass the ideal date
       contact: contact, // Pass the contact object
+      notificationHour: notificationHour, // Pass the loaded hour
+      notificationMinute: notificationMinute, // Pass the loaded minute
     );
   }
 

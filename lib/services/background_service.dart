@@ -3,6 +3,7 @@ import 'package:logger/logger.dart';
 import 'package:recall/models/contact.dart';
 import 'package:recall/models/contact_frequency.dart';
 import 'package:recall/repositories/contact_repository.dart';
+import 'package:recall/repositories/usersettings_repository.dart';
 import 'package:recall/services/notification_helper.dart';
 import 'package:recall/services/notification_service.dart';
 import 'package:recall/utils/last_contacted_utils.dart';
@@ -29,6 +30,7 @@ void callbackDispatcher() {
 
       // 2. Initialize Repositories and Services
       final contactRepository = ContactRepository(store);
+      final userSettingsRepository = UserSettingsRepository(store); // Create repository here
       final notificationHelper = NotificationHelper();
       // IMPORTANT: NotificationHelper init needs WidgetsFlutterBinding.ensureInitialized()
       // if it uses platform channels internally beyond the plugin itself.
@@ -36,7 +38,7 @@ void callbackDispatcher() {
       // if you added other platform channel calls there. Let's assume it's okay for now.
       // await notificationHelper.init(); // Usually called in main, might not be needed again unless state is lost
 
-      final notificationService = NotificationService(notificationHelper);
+      final notificationService = NotificationService(notificationHelper, userSettingsRepository);
 
       // --- Task Logic Phase ---
       // 3. Fetch Contacts

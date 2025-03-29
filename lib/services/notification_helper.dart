@@ -118,71 +118,91 @@ Future<void> checkAndRequestNotificationPermission() async {
   }
 
   Future<void> scheduleNotification({
-  required int id, // Keep using contact ID as notification ID
-  required String title, // Base title
-  required String body, // Base body
-  required DateTime calculatedDueDate, // The ideal due date
-  required Contact contact, // Pass the full contact
-}) async {
-  tz.TZDateTime scheduledDate;
-  String notificationTitle = title; // Start with base title
-  String notificationBody = body; // Start with base body
+    required int id, // Keep using contact ID as notification ID
+    required String title, // Base title
+    required String body, // Base body
+    required DateTime calculatedDueDate, // The ideal due date
+    required Contact contact, // Pass the full contact
+    required int notificationHour,
+    required int notificationMinute,
+  }) async {
+    tz.TZDateTime scheduledDate;
+    String notificationTitle = title; // Start with base title
+    String notificationBody = body; // Start with base body
 
-  final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
-  final tz.TZDateTime tzCalculatedDueDate = tz.TZDateTime.from(calculatedDueDate, tz.local);
+    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+    final tz.TZDateTime tzCalculatedDueDate =
+        tz.TZDateTime.from(calculatedDueDate, tz.local);
 
-  // Check if the calculated due date is in the past (or very close to now)
-  if (tzCalculatedDueDate.isBefore(now) || now.difference(tzCalculatedDueDate).inSeconds.abs() < 5) {
-    // It's overdue or happening right now. Schedule for tomorrow morning.
-    tz.TZDateTime tomorrow = tz.TZDateTime(tz.local, now.year, now.month, now.day)
-        .add(const Duration(days: 1));
-    // Assuming you want it at 7 AM like in calculateNextDueDate
-    scheduledDate = tz.TZDateTime(tz.local, tomorrow.year, tomorrow.month, tomorrow.day, 7);
+    // Target time on a given date, using the user's settings
+    tz.TZDateTime targetTimeOnDate(tz.TZDateTime date) {
+      return tz.TZDateTime(tz.local, date.year, date.month, date.day,
+          notificationHour, notificationMinute);
+    }
 
-    // Optional: Modify title/body for overdue notifications
-    notificationTitle = "Overdue: ${contact.firstName} ${contact.lastName}";
-    notificationBody = "Contact was due on ${DateFormat.yMd().format(calculatedDueDate)}. Reminder set for tomorrow.";
-    notificationLogger.i('LOG: Contact $id overdue (due $calculatedDueDate). Scheduling for $scheduledDate');
+    // Check if the calculated due date is in the past (or very close to now)
+    if (tzCalculatedDueDate.isBefore(now) ||
+        now.difference(tzCalculatedDueDate).inSeconds.abs() < 5) {
+      // It's overdue or happening right now. Schedule for tomorrow morning.
+      tz.TZDateTime tomorrow =
+          tz.TZDateTime(tz.local, now.year, now.month, now.day)
+              .add(const Duration(days: 1));
+      // Assuming you want it at 7 AM like in calculateNextDueDate
+      scheduledDate = targetTimeOnDate(tomorrow); // Use user's time
 
-  } else {
-    // It's due in the future. Schedule for the calculated date.
-    scheduledDate = tzCalculatedDueDate;
-     notificationLogger.i('LOG: Contact $id due in future. Scheduling for $scheduledDate');
-  }
+      // Optional: Modify title/body for overdue notifications
+      notificationTitle = "Overdue: ${contact.firstName} ${contact.lastName}";
+      notificationBody =
+          "Contact was due on ${DateFormat.yMd().format(calculatedDueDate)}. Reminder set for tomorrow.";
+      notificationLogger.i(
+          'LOG: Contact $id overdue (due $calculatedDueDate). Scheduling for $scheduledDate');
+    } else {
+      // It's due in the future. Schedule for the calculated date.
+      scheduledDate = targetTimeOnDate(tzCalculatedDueDate); // Use user's time
+      notificationLogger
+          .i('LOG: Contact $id due in future. Scheduling for $scheduledDate');
+    }
 
-  // Ensure we don't schedule in the past (safety net)
-  if (scheduledDate.isBefore(now)) {
-      scheduledDate = now.add(const Duration(seconds: 5)); // Schedule 5 seconds from now
-      notificationLogger.w('LOG: Adjusted schedule time for contact $id to be in the future: $scheduledDate');
-  }
+    // Ensure we don't schedule in the past (safety net)
+    if (scheduledDate.isBefore(now)) {
+      // If the calculated time today/tomorrow is already past, schedule for the *next* occurrence
+      // (e.g., if it's 10 AM and time is 9 AM, schedule for 9 AM tomorrow)
+      if (scheduledDate.day == now.day) {
+        scheduledDate = scheduledDate
+            .add(const Duration(days: 1)); // Push to same time tomorrow
+      } else {
+        // If it was already calculated for tomorrow but still ended up in the past (unlikely but possible near midnight), push further
+        scheduledDate =
+            now.add(const Duration(seconds: 5)); // Fallback: 5 seconds from now
+      }
+      notificationLogger.w(
+          'LOG: Adjusted schedule time for contact $id to be in the future: $scheduledDate');
+    }
 
+    String payload = "contact_id:${contact.id}";
 
-  String payload = "contact_id:${contact.id}";
-
-  await flutterLocalNotificationsPlugin.zonedSchedule(
-    id,
-    notificationTitle, // Use potentially modified title
-    notificationBody, // Use potentially modified body
-    scheduledDate, // The finally determined schedule date
-    const NotificationDetails(
-      android: AndroidNotificationDetails(
-        'recall_channel_id', // Channel ID
-        'Recall Channel', // Channel Name
-        channelDescription: 'Notifications for due contacts',
-        importance: Importance.max,
-        priority: Priority.high,
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      id,
+      notificationTitle, // Use potentially modified title
+      notificationBody, // Use potentially modified body
+      scheduledDate, // The finally determined schedule date
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'recall_channel_id', // Channel ID
+          'Recall Channel', // Channel Name
+          channelDescription: 'Notifications for due contacts',
+          importance: Importance.max,
+          priority: Priority.high,
+        ),
       ),
-    ),
-    androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-    payload: payload,
-    matchDateTimeComponents: contact.frequency == ContactFrequency.daily.value // Match time components only for daily repeating tasks? Needs careful thought.
-      ? DateTimeComponents.time // Example: Might repeat daily at the same time if needed.
-      : null // Or null to match the exact date and time for others. You might need to adjust this based on desired behavior for non-overdue cases.
-                                         // For the overdue-repeat-daily logic, this might not be needed as we schedule a specific day each time. Let's keep it null for now.
-
-  );
-  notificationLogger.i('LOG: Notification $id scheduled for $scheduledDate with payload $payload');
-}
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      payload: payload,
+      matchDateTimeComponents:
+          null, // Usually null for specific date/time schedules
+    );
+    notificationLogger.i(
+        'LOG: Notification $id scheduled for $scheduledDate with payload $payload');
+  }
 
   Future<void> cancelNotification(int id) async {
     await flutterLocalNotificationsPlugin.cancel(id);
@@ -226,7 +246,8 @@ Future<void> checkAndRequestNotificationPermission() async {
       // Parse the payload to get the contact ID
       final contactId = int.tryParse(payload.split(':').last);
       if (contactId != null) {
-        navigatorKey.currentState?.pushNamed('/contactDetails', arguments:contactId);
+        navigatorKey.currentState
+            ?.pushNamed('/contactDetails', arguments: contactId);
       }
     }
   }
