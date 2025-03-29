@@ -106,18 +106,51 @@ class NotificationRepository implements Repository<Notification> {
       notificationRepoLogger.i("Error deleting notification: $e");
     }
   }
+
+  @override
+  Future<List<Notification>> addMany(List<Notification> items) async {
+    try {
+      final addedItems = await _source.addMany(items);
+      // Update cache with items returned from source (which have IDs)
+      for (final item in addedItems) {
+        if (item.id != null) {
+          _notifications[item.id!] = item;
+        }
+      }
+      return addedItems;
+    } catch (e) {
+      notificationRepoLogger.i("Error adding many notifications: $e");
+      return []; // Or handle error appropriately
+    }
+  }
+
+  @override
+  Future<void> deleteAll() async {
+    try {
+      await _source.deleteAll();
+      _notifications.clear(); // Clear cache
+    } catch (e) {
+      notificationRepoLogger.i("Error deleting all notifications: $e");
+    }
+  }
+
 }
 
 class _InMemoryNotificationSource implements DataSource<Notification> {
   final Map<int, Notification> notifications;
+  int _nextId = 1; // Add ID tracking
 
-  _InMemoryNotificationSource({required this.notifications});
+   _InMemoryNotificationSource({required this.notifications}) {
+     // Initialize _nextId based on existing items if any
+     if (notifications.isNotEmpty) {
+       _nextId = notifications.keys.reduce((a, b) => a > b ? a : b) + 1;
+     }
+   }
 
   @override
   Future<Notification> add(Notification item) async {
-    final id = notifications.keys.length + 1;
-    final newItem = item.copyWith(id: id);
-    notifications[id] = newItem;
+    final newItem = item.copyWith(id: _nextId++);
+    notifications[newItem.id!] = newItem;
     return newItem;
   }
 
@@ -125,15 +158,15 @@ class _InMemoryNotificationSource implements DataSource<Notification> {
   Future<List<Notification>> addMany(List<Notification> items) async {
     final updatedItems = <Notification>[];
     for (final item in items) {
-      final id = notifications.keys.length + 1;
-      final newItem = item.copyWith(id: id);
-      notifications[id] = newItem;
+      final newItem = item.copyWith(id: _nextId++);
+      notifications[newItem.id!] = newItem;
       updatedItems.add(newItem);
     }
     return updatedItems;
   }
 
-  @override
+  // ... (delete, deleteMany, count, getAll, getById, update remain the same)
+   @override
   Future<void> delete(int id) async {
     notifications.remove(id);
   }
@@ -163,7 +196,15 @@ class _InMemoryNotificationSource implements DataSource<Notification> {
   @override
   Future<Notification> update(Notification item) async {
     if (item.id == null) return item;
-    notifications[item.id!] = item;
+    if (notifications.containsKey(item.id)) {
+        notifications[item.id!] = item;
+    }
     return item;
+  }
+
+  @override
+  Future<void> deleteAll() async {
+    notifications.clear();
+    _nextId = 1; // Reset ID counter
   }
 }

@@ -4,7 +4,6 @@ import 'package:recall/sources/data_source.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
-
 class ContactsSharedPreferencesSource implements DataSource<Contact> {
   final String _key = 'contacts';
 
@@ -14,7 +13,8 @@ class ContactsSharedPreferencesSource implements DataSource<Contact> {
     final contacts = await getAll();
     int nextId = 1;
     if (contacts.isNotEmpty) {
-      nextId = contacts.map((e) => e.id ?? 0).reduce((a, b) => a > b ? a : b) + 1;
+      nextId =
+          contacts.map((e) => e.id ?? 0).reduce((a, b) => a > b ? a : b) + 1;
     }
     final newItem = item.copyWith(id: nextId);
     contacts.add(newItem);
@@ -29,32 +29,32 @@ class ContactsSharedPreferencesSource implements DataSource<Contact> {
     final contacts = await getAll();
     int nextId = 1;
     if (contacts.isNotEmpty) {
-      nextId = contacts.map((e) => e.id ?? 0).reduce((a, b) => a > b ? a : b) + 1;
+      nextId =
+          contacts.map((e) => e.id ?? 0).reduce((a, b) => a > b ? a : b) + 1;
     }
     final updatedItems = <Contact>[];
-    for(final item in items){
+    for (final item in items) {
       final newItem = item.copyWith(id: nextId++);
       contacts.add(newItem);
       updatedItems.add(newItem);
     }
-     final encoded = contacts.map((e) => jsonEncode(e.toJson())).toList();
-     await prefs.setStringList(_key, encoded);
+    final encoded = contacts.map((e) => jsonEncode(e.toJson())).toList();
+    await prefs.setStringList(_key, encoded);
     return updatedItems;
   }
-
 
   @override
   Future<void> delete(int id) async {
     final prefs = await SharedPreferences.getInstance();
     final contacts = await getAll();
     contacts.removeWhere((element) => element.id == id);
-     final encoded = contacts.map((e) => jsonEncode(e.toJson())).toList();
+    final encoded = contacts.map((e) => jsonEncode(e.toJson())).toList();
     await prefs.setStringList(_key, encoded);
   }
 
   @override
   Future<void> deleteMany(List<int> ids) async {
-     final prefs = await SharedPreferences.getInstance();
+    final prefs = await SharedPreferences.getInstance();
     final contacts = await getAll();
     contacts.removeWhere((element) => ids.contains(element.id));
     final encoded = contacts.map((e) => jsonEncode(e.toJson())).toList();
@@ -84,7 +84,6 @@ class ContactsSharedPreferencesSource implements DataSource<Contact> {
     }
   }
 
-
   @override
   Future<Contact> update(Contact item) async {
     final prefs = await SharedPreferences.getInstance();
@@ -93,8 +92,14 @@ class ContactsSharedPreferencesSource implements DataSource<Contact> {
     if (index != -1) {
       contacts[index] = item;
     }
-     final encoded = contacts.map((e) => jsonEncode(e.toJson())).toList();
+    final encoded = contacts.map((e) => jsonEncode(e.toJson())).toList();
     await prefs.setStringList(_key, encoded);
     return item;
+  }
+
+  @override
+  Future<void> deleteAll() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_key, []); // Set to empty list
   }
 }

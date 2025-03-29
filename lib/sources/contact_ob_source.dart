@@ -76,4 +76,9 @@ class ContactObjectBoxSource implements DataSource<Contact> {
     final id = _contactBox.put(item);
     return item.copyWith(id: id);
   }
+
+  @override
+  Future<void> deleteAll() async {
+    _contactBox.removeAll(); // Use ObjectBox's removeAll
+  }
 }

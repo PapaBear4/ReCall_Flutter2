@@ -14,6 +14,7 @@ class UserSettingsRepository implements Repository<UserSettings> {
   late final Store? _store;
   late final Box<UserSettings>? _userSettingsBox;
   late DataSource<UserSettings> _source;
+  // UserSettings typically only has one entry, but use Map for consistency
   final Map<int, UserSettings> _userSettings = {};
 
   UserSettingsRepository(this._store) {
@@ -106,18 +107,50 @@ class UserSettingsRepository implements Repository<UserSettings> {
       userSettingsRepoLogger.i("Error deleting user settings: $e");
     }
   }
+
+  @override
+  Future<List<UserSettings>> addMany(List<UserSettings> items) async {
+     try {
+      final addedItems = await _source.addMany(items);
+      // Update cache with items returned from source (which have IDs)
+      for (final item in addedItems) {
+        if (item.id != null) {
+          _userSettings[item.id!] = item;
+        }
+      }
+      return addedItems;
+    } catch (e) {
+      userSettingsRepoLogger.i("Error adding many user settings: $e");
+      return []; // Or handle error appropriately
+    }
+  }
+
+  @override
+  Future<void> deleteAll() async {
+     try {
+      await _source.deleteAll();
+      _userSettings.clear(); // Clear cache
+    } catch (e) {
+      userSettingsRepoLogger.i("Error deleting all user settings: $e");
+    }
+  }
 }
 
 class _InMemoryUserSettingsSource implements DataSource<UserSettings> {
   final Map<int, UserSettings> userSettings;
+  int _nextId = 1; // Add ID tracking
 
-  _InMemoryUserSettingsSource({required this.userSettings});
+  _InMemoryUserSettingsSource({required this.userSettings}) {
+     // Initialize _nextId based on existing items if any
+     if (userSettings.isNotEmpty) {
+       _nextId = userSettings.keys.reduce((a, b) => a > b ? a : b) + 1;
+     }
+  }
 
   @override
   Future<UserSettings> add(UserSettings item) async {
-    final id = userSettings.keys.length + 1;
-    final newItem = item.copyWith(id: id);
-    userSettings[id] = newItem;
+    final newItem = item.copyWith(id: _nextId++);
+    userSettings[newItem.id!] = newItem;
     return newItem;
   }
 
@@ -125,9 +158,8 @@ class _InMemoryUserSettingsSource implements DataSource<UserSettings> {
   Future<List<UserSettings>> addMany(List<UserSettings> items) async {
     final updatedItems = <UserSettings>[];
     for (final item in items) {
-      final id = userSettings.keys.length + 1;
-      final newItem = item.copyWith(id: id);
-      userSettings[id] = newItem;
+      final newItem = item.copyWith(id: _nextId++);
+      userSettings[newItem.id!] = newItem;
       updatedItems.add(newItem);
     }
     return updatedItems;
@@ -165,5 +197,11 @@ class _InMemoryUserSettingsSource implements DataSource<UserSettings> {
     if (item.id == null) return item;
     userSettings[item.id!] = item;
     return item;
+  }
+
+  @override
+  Future<void> deleteAll() async {
+    userSettings.clear();
+    _nextId = 1; // Reset ID counter
   }
 }

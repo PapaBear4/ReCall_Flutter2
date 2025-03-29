@@ -11,19 +11,18 @@ class UserSettingsObjectBoxSource implements DataSource<UserSettings> {
   @override
   Future<UserSettings> add(UserSettings item) async {
     final id = _userSettingsBox.put(item);
-     return item.copyWith(id: id);
+    return item.copyWith(id: id);
   }
 
   @override
   Future<List<UserSettings>> addMany(List<UserSettings> items) async {
-     final ids = _userSettingsBox.putMany(items);
+    final ids = _userSettingsBox.putMany(items);
     final updatedItems = <UserSettings>[];
     for (int i = 0; i < items.length; i++) {
       updatedItems.add(items[i].copyWith(id: ids[i]));
     }
     return updatedItems;
   }
-
 
   @override
   Future<void> delete(int id) async {
@@ -54,5 +53,10 @@ class UserSettingsObjectBoxSource implements DataSource<UserSettings> {
   Future<UserSettings> update(UserSettings item) async {
     final id = _userSettingsBox.put(item);
     return item.copyWith(id: id);
+  }
+
+  @override
+  Future<void> deleteAll() async {
+    _userSettingsBox.removeAll(); // Add this implementation
   }
 }
