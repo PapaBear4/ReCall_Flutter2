@@ -173,7 +173,7 @@ class __$$ContactImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 @Entity(realClass: Contact)
-class _$ContactImpl extends _Contact {
+class _$ContactImpl extends _Contact with DiagnosticableTreeMixin {
   _$ContactImpl(
       {@Id(assignable: true) this.id,
       required this.firstName,
@@ -205,8 +205,21 @@ class _$ContactImpl extends _Contact {
   final DateTime? lastContacted;
 
   @override
-  String toString() {
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
     return 'Contact(id: $id, firstName: $firstName, lastName: $lastName, frequency: $frequency, birthday: $birthday, lastContacted: $lastContacted)';
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties
+      ..add(DiagnosticsProperty('type', 'Contact'))
+      ..add(DiagnosticsProperty('id', id))
+      ..add(DiagnosticsProperty('firstName', firstName))
+      ..add(DiagnosticsProperty('lastName', lastName))
+      ..add(DiagnosticsProperty('frequency', frequency))
+      ..add(DiagnosticsProperty('birthday', birthday))
+      ..add(DiagnosticsProperty('lastContacted', lastContacted));
   }
 
   @override

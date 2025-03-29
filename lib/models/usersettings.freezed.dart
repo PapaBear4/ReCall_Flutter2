@@ -24,6 +24,8 @@ mixin _$UserSettings {
   int? get id => throw _privateConstructorUsedError;
   bool get remindersEnabled => throw _privateConstructorUsedError;
   bool get alertsEnabled => throw _privateConstructorUsedError;
+  int get notificationHour => throw _privateConstructorUsedError;
+  int get notificationMinute => throw _privateConstructorUsedError;
 
   /// Serializes this UserSettings to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -44,7 +46,9 @@ abstract class $UserSettingsCopyWith<$Res> {
   $Res call(
       {@Id(assignable: true) int? id,
       bool remindersEnabled,
-      bool alertsEnabled});
+      bool alertsEnabled,
+      int notificationHour,
+      int notificationMinute});
 }
 
 /// @nodoc
@@ -65,6 +69,8 @@ class _$UserSettingsCopyWithImpl<$Res, $Val extends UserSettings>
     Object? id = freezed,
     Object? remindersEnabled = null,
     Object? alertsEnabled = null,
+    Object? notificationHour = null,
+    Object? notificationMinute = null,
   }) {
     return _then(_value.copyWith(
       id: freezed == id
@@ -79,6 +85,14 @@ class _$UserSettingsCopyWithImpl<$Res, $Val extends UserSettings>
           ? _value.alertsEnabled
           : alertsEnabled // ignore: cast_nullable_to_non_nullable
               as bool,
+      notificationHour: null == notificationHour
+          ? _value.notificationHour
+          : notificationHour // ignore: cast_nullable_to_non_nullable
+              as int,
+      notificationMinute: null == notificationMinute
+          ? _value.notificationMinute
+          : notificationMinute // ignore: cast_nullable_to_non_nullable
+              as int,
     ) as $Val);
   }
 }
@@ -94,7 +108,9 @@ abstract class _$$UserSettingsImplCopyWith<$Res>
   $Res call(
       {@Id(assignable: true) int? id,
       bool remindersEnabled,
-      bool alertsEnabled});
+      bool alertsEnabled,
+      int notificationHour,
+      int notificationMinute});
 }
 
 /// @nodoc
@@ -113,6 +129,8 @@ class __$$UserSettingsImplCopyWithImpl<$Res>
     Object? id = freezed,
     Object? remindersEnabled = null,
     Object? alertsEnabled = null,
+    Object? notificationHour = null,
+    Object? notificationMinute = null,
   }) {
     return _then(_$UserSettingsImpl(
       id: freezed == id
@@ -127,6 +145,14 @@ class __$$UserSettingsImplCopyWithImpl<$Res>
           ? _value.alertsEnabled
           : alertsEnabled // ignore: cast_nullable_to_non_nullable
               as bool,
+      notificationHour: null == notificationHour
+          ? _value.notificationHour
+          : notificationHour // ignore: cast_nullable_to_non_nullable
+              as int,
+      notificationMinute: null == notificationMinute
+          ? _value.notificationMinute
+          : notificationMinute // ignore: cast_nullable_to_non_nullable
+              as int,
     ));
   }
 }
@@ -134,11 +160,13 @@ class __$$UserSettingsImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 @Entity(realClass: UserSettings)
-class _$UserSettingsImpl extends _UserSettings with DiagnosticableTreeMixin {
+class _$UserSettingsImpl extends _UserSettings {
   _$UserSettingsImpl(
       {@Id(assignable: true) this.id,
       this.remindersEnabled = true,
-      this.alertsEnabled = true})
+      this.alertsEnabled = true,
+      this.notificationHour = 7,
+      this.notificationMinute = 0})
       : super._();
 
   factory _$UserSettingsImpl.fromJson(Map<String, dynamic> json) =>
@@ -153,20 +181,16 @@ class _$UserSettingsImpl extends _UserSettings with DiagnosticableTreeMixin {
   @override
   @JsonKey()
   final bool alertsEnabled;
+  @override
+  @JsonKey()
+  final int notificationHour;
+  @override
+  @JsonKey()
+  final int notificationMinute;
 
   @override
-  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'UserSettings(id: $id, remindersEnabled: $remindersEnabled, alertsEnabled: $alertsEnabled)';
-  }
-
-  @override
-  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-    super.debugFillProperties(properties);
-    properties
-      ..add(DiagnosticsProperty('type', 'UserSettings'))
-      ..add(DiagnosticsProperty('id', id))
-      ..add(DiagnosticsProperty('remindersEnabled', remindersEnabled))
-      ..add(DiagnosticsProperty('alertsEnabled', alertsEnabled));
+  String toString() {
+    return 'UserSettings(id: $id, remindersEnabled: $remindersEnabled, alertsEnabled: $alertsEnabled, notificationHour: $notificationHour, notificationMinute: $notificationMinute)';
   }
 
   @override
@@ -178,13 +202,17 @@ class _$UserSettingsImpl extends _UserSettings with DiagnosticableTreeMixin {
             (identical(other.remindersEnabled, remindersEnabled) ||
                 other.remindersEnabled == remindersEnabled) &&
             (identical(other.alertsEnabled, alertsEnabled) ||
-                other.alertsEnabled == alertsEnabled));
+                other.alertsEnabled == alertsEnabled) &&
+            (identical(other.notificationHour, notificationHour) ||
+                other.notificationHour == notificationHour) &&
+            (identical(other.notificationMinute, notificationMinute) ||
+                other.notificationMinute == notificationMinute));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, remindersEnabled, alertsEnabled);
+  int get hashCode => Object.hash(runtimeType, id, remindersEnabled,
+      alertsEnabled, notificationHour, notificationMinute);
 
   /// Create a copy of UserSettings
   /// with the given fields replaced by the non-null parameter values.
@@ -206,7 +234,9 @@ abstract class _UserSettings extends UserSettings {
   factory _UserSettings(
       {@Id(assignable: true) final int? id,
       final bool remindersEnabled,
-      final bool alertsEnabled}) = _$UserSettingsImpl;
+      final bool alertsEnabled,
+      final int notificationHour,
+      final int notificationMinute}) = _$UserSettingsImpl;
   _UserSettings._() : super._();
 
   factory _UserSettings.fromJson(Map<String, dynamic> json) =
@@ -219,6 +249,10 @@ abstract class _UserSettings extends UserSettings {
   bool get remindersEnabled;
   @override
   bool get alertsEnabled;
+  @override
+  int get notificationHour;
+  @override
+  int get notificationMinute;
 
   /// Create a copy of UserSettings
   /// with the given fields replaced by the non-null parameter values.

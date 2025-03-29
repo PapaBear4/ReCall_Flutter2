@@ -44,8 +44,6 @@ dependencies:
   flutter_slidable: ^4.0.0
   objectbox: ^4.0.3
   objectbox_flutter_libs: ^4.0.3
-  json_annotation: ^4.9.0
-  freezed_annotation: ^3.0.0
   shared_preferences: ^2.3.5
   timezone: ^0.10.0
   flutter_local_notifications: ^19.0.0
@@ -57,6 +55,8 @@ dependencies:
       url: https://github.com/fluttercommunity/flutter_workmanager.git
       path: workmanager # Specifies the package is within a subfolder in the repo
       ref: main   # Use the 'main' branch
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.8.0
 
 dev_dependencies:
   flutter_test:
@@ -68,11 +68,11 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
-  build_runner: ^2.3.3  #added for objectbox 'code generation'
-  objectbox_generator: ^4.0.3 
-  freezed: ^3.0.0-0.0.dev
-  json_serializable: ^6.9.0
+  objectbox_generator: ^4.1.0 
   bloc_test: ^10.0.0
+  build_runner: ^2.4.15
+  freezed: ^2.5.7
+  json_serializable: ^6.9.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

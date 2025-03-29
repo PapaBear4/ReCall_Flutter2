@@ -4,64 +4,6 @@
   "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
   "entities": [
     {
-      "id": "6:3445238387805404030",
-      "lastPropertyId": "3:7942218515340831358",
-      "name": "UserSettings",
-      "properties": [
-        {
-          "id": "1:2047368366569960387",
-          "name": "id",
-          "type": 6,
-          "flags": 129
-        },
-        {
-          "id": "2:7721105638518060173",
-          "name": "remindersEnabled",
-          "type": 1
-        },
-        {
-          "id": "3:7942218515340831358",
-          "name": "alertsEnabled",
-          "type": 1
-        }
-      ],
-      "relations": []
-    },
-    {
-      "id": "8:4257298478959120818",
-      "lastPropertyId": "5:449191454545520003",
-      "name": "Notification",
-      "properties": [
-        {
-          "id": "1:8833873927943227251",
-          "name": "id",
-          "type": 6,
-          "flags": 129
-        },
-        {
-          "id": "2:3979434219446780961",
-          "name": "title",
-          "type": 9
-        },
-        {
-          "id": "3:8793448275874487525",
-          "name": "body",
-          "type": 9
-        },
-        {
-          "id": "4:6432866865444641207",
-          "name": "payload",
-          "type": 9
-        },
-        {
-          "id": "5:449191454545520003",
-          "name": "scheduledTime",
-          "type": 10
-        }
-      ],
-      "relations": []
-    },
-    {
       "id": "11:4220768979207252381",
       "lastPropertyId": "6:8964901162355723932",
       "name": "Contact",
@@ -99,9 +41,77 @@
         }
       ],
       "relations": []
+    },
+    {
+      "id": "12:1784426728073819086",
+      "lastPropertyId": "5:6573977566468965613",
+      "name": "Notification",
+      "properties": [
+        {
+          "id": "1:2459268052215205661",
+          "name": "id",
+          "type": 6,
+          "flags": 129
+        },
+        {
+          "id": "2:8506655930478219000",
+          "name": "title",
+          "type": 9
+        },
+        {
+          "id": "3:7243481609753653056",
+          "name": "body",
+          "type": 9
+        },
+        {
+          "id": "4:1426471823485695424",
+          "name": "payload",
+          "type": 9
+        },
+        {
+          "id": "5:6573977566468965613",
+          "name": "scheduledTime",
+          "type": 10
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "13:5902005222654570482",
+      "lastPropertyId": "5:6468200214272398994",
+      "name": "UserSettings",
+      "properties": [
+        {
+          "id": "1:4464869310520865168",
+          "name": "id",
+          "type": 6,
+          "flags": 129
+        },
+        {
+          "id": "2:7856577139768921628",
+          "name": "remindersEnabled",
+          "type": 1
+        },
+        {
+          "id": "3:7646979399950300979",
+          "name": "alertsEnabled",
+          "type": 1
+        },
+        {
+          "id": "4:8404092922733395948",
+          "name": "notificationHour",
+          "type": 6
+        },
+        {
+          "id": "5:6468200214272398994",
+          "name": "notificationMinute",
+          "type": 6
+        }
+      ],
+      "relations": []
     }
   ],
-  "lastEntityId": "11:4220768979207252381",
+  "lastEntityId": "13:5902005222654570482",
   "lastIndexId": "0:0",
   "lastRelationId": "0:0",
   "lastSequenceId": "0:0",
@@ -115,7 +125,9 @@
     5183510925355051723,
     1793994460556925285,
     12534718281158471,
-    8157224055218288165
+    8157224055218288165,
+    3445238387805404030,
+    4257298478959120818
   ],
   "retiredIndexUids": [],
   "retiredPropertyUids": [
@@ -160,7 +172,15 @@
     1899672713928990451,
     1219906505818103297,
     3784008241627644181,
-    1883847672291612715
+    1883847672291612715,
+    2047368366569960387,
+    7721105638518060173,
+    7942218515340831358,
+    8833873927943227251,
+    3979434219446780961,
+    8793448275874487525,
+    6432866865444641207,
+    449191454545520003
   ],
   "retiredRelationUids": [],
   "version": 1

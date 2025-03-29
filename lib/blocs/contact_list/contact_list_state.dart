@@ -2,7 +2,7 @@
 part of 'contact_list_bloc.dart';
 
 @freezed
-class ContactListState with _$ContactListState {
+sealed class ContactListState with _$ContactListState {
   const factory ContactListState.initial() = _Initial;
   const factory ContactListState.empty() = _Empty;
   const factory ContactListState.loading() = _Loading;

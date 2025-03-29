@@ -129,6 +129,15 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            // CONTACTED button
+            IconButton(
+              tooltip: 'Mark Contacted Today', // Add tooltip
+              icon: const Icon(Icons.check_circle_outline), // Or Icons.check
+              onPressed: (_localContact.id != null && _localContact.id != 0)
+                  ? _onContactedButtonPressed // Enable only for existing contacts
+                  : null, // Disable for new contacts
+            ),
+            // SAVE BUTTON
             IconButton(
               icon: const Icon(Icons.save),
               onPressed: () => _onSaveButtonPressed(context),
@@ -415,5 +424,40 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         );
       },
     );
+  }
+
+  void _onContactedButtonPressed() {
+    if (_localContact.id == null || _localContact.id == 0) {
+      // Cannot mark unsaved contact as contacted
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Save the contact first.')),
+      );
+      return;
+    }
+
+    final now = DateTime.now();
+    final updatedContact = _localContact.copyWith(lastContacted: now);
+
+    // Update local state for instant feedback
+    setState(() {
+      _localContact = updatedContact;
+      // Decide if this should count as an unsaved change or if it implicitly saves
+      // For simplicity here, let's assume it saves immediately via the BLoC event below.
+      _hasUnsavedChanges = false; // Or keep true if you want explicit save
+    });
+
+    // Update via BLoC (this will save and reschedule notification)
+    context
+        .read<ContactDetailsBloc>()
+        .add(ContactDetailsEvent.saveContact(contact: updatedContact));
+
+    // Show feedback
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+          content:
+              Text('Marked as contacted: ${DateFormat.yMd().format(now)}')),
+    );
+    // Optionally, reload the list screen if navigating back immediately
+    context.read<ContactListBloc>().add(const ContactListEvent.loadContacts());
   }
 }

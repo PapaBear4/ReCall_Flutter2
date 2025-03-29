@@ -4,19 +4,27 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:logger/logger.dart';
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
+import 'package:recall/main.dart';
 import 'package:recall/repositories/contact_repository.dart';
+import 'package:recall/repositories/usersettings_repository.dart';
 import 'package:recall/screens/contact_list_screen.dart';
 import 'package:recall/blocs/contact_details/contact_details_bloc.dart';
 import 'package:recall/screens/contact_details_screen.dart';
 import 'package:recall/services/notification_service.dart';
+import 'package:recall/screens/settings_screen.dart';
 
 final logger = Logger();
 
 class ReCall extends StatelessWidget {
   final ContactRepository _contactRepository;
+  final UserSettingsRepository _userSettingsRepository;
 
-  const ReCall({super.key, required ContactRepository contactRepository})
-      : _contactRepository = contactRepository;
+  const ReCall({
+    super.key,
+    required ContactRepository contactRepository,
+    required UserSettingsRepository userSettingsRepository,
+  })  : _contactRepository = contactRepository,
+        _userSettingsRepository = userSettingsRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +34,8 @@ class ReCall extends StatelessWidget {
           providers: [
             RepositoryProvider<ContactRepository>.value(
                 value: _contactRepository),
+            RepositoryProvider<UserSettingsRepository>.value(
+                value: _userSettingsRepository),
             BlocProvider(
               create: (context) => ContactListBloc(
                 contactRepository: _contactRepository,
@@ -40,12 +50,13 @@ class ReCall extends StatelessWidget {
             ),
           ],
           child: MaterialApp(
+            navigatorKey: navigatorKey, // Assign the global key here
             // Set the title of the app.
-
-            title: 'Contact App',
+            title: 'reCall App',
             // Set the theme of the app.
             theme: ThemeData(
               primarySwatch: Colors.blue,
+              useMaterial3: true,
             ),
             // Set the initial route of the app.
             home: const ContactListScreen(),
@@ -53,6 +64,7 @@ class ReCall extends StatelessWidget {
             routes: {
               '/contactDetails': (context) =>
                   const ContactDetailsScreen(contactId: 0),
+              '/settings': (context) => const SettingsScreen(),
             },
           ),
         ));

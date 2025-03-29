@@ -2,7 +2,7 @@
 part of 'contact_details_bloc.dart';
 
 @freezed
-class ContactDetailsEvent with _$ContactDetailsEvent {
+sealed class ContactDetailsEvent with _$ContactDetailsEvent {
   const factory ContactDetailsEvent.loadContact({required int contactId}) =
       _LoadContact;
   const factory ContactDetailsEvent.saveContact({required Contact contact}) =

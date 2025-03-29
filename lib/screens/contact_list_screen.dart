@@ -15,19 +15,29 @@ var contactListScreenLogger = Logger();
 class ContactListScreen extends StatelessWidget {
   const ContactListScreen({super.key});
 
-@override
+  @override
   Widget build(BuildContext context) {
     // Scaffold provides the basic structure of the screen.
     return Scaffold(
       appBar: AppBar(
         title: const Text('Contacts'),
         actions: [
+          //refresh button
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
               context
                   .read<ContactListBloc>()
                   .add(ContactListEvent.loadContacts());
+            },
+          ),
+          // Settings button
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: 'Settings', // Optional: Add tooltip
+            onPressed: () {
+              // Navigate to the settings screen
+              Navigator.pushNamed(context, '/settings');
             },
           ),
         ],
@@ -52,31 +62,38 @@ class ContactListScreen extends StatelessWidget {
 
       // Add the bottomNavigationBar
       bottomNavigationBar: BottomAppBar(
-        child: Container( // Use Container for padding
+        child: Container(
+          // Use Container for padding
           padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space out items
+            mainAxisAlignment:
+                MainAxisAlignment.spaceBetween, // Space out items
             children: <Widget>[
               // Your static text
-              const Expanded( // Allow text to take available space
+              const Expanded(
+                // Allow text to take available space
                 child: Text(
                   'Swipe/Tap list item to mark as contacted',
                   style: TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
-                  overflow: TextOverflow.ellipsis, // Prevent overflow on small screens
+                  overflow: TextOverflow
+                      .ellipsis, // Prevent overflow on small screens
                 ),
               ),
               const SizedBox(width: 10), // Add spacing between text and buttons
               // Keep your FloatingActionButtons here, maybe in a Row or Column
-              Row( // Use a Row for the buttons
+              Row(
+                // Use a Row for the buttons
                 mainAxisSize: MainAxisSize.min, // Take minimum space
                 children: [
-                   FloatingActionButton.small( // Use .small for less space
+                  FloatingActionButton.small(
+                    // Use .small for less space
                     heroTag: "btn1", // Add unique heroTags
                     onPressed: () => _viewScheduledNotifications(context),
                     child: const Icon(Icons.notifications),
                   ),
                   const SizedBox(width: 8), // Space between buttons
-                  FloatingActionButton.small( // Use .small for less space
+                  FloatingActionButton.small(
+                    // Use .small for less space
                     heroTag: "btn2", // Add unique heroTags
                     onPressed: () {
                       context
@@ -102,7 +119,8 @@ class ContactListScreen extends StatelessWidget {
         ),
       ),
     );
-  }}
+  }
+}
 
 Widget _contactList(List<Contact> contacts) {
   return ListView.builder(
