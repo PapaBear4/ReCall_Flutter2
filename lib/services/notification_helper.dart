@@ -180,11 +180,16 @@ Future<void> checkAndRequestNotificationPermission() async {
     }
 
     String payload = "contact_id:${contact.id}";
+    //debuging code
+    final String formattedScheduledTime = DateFormat.jm().format(scheduledDate);
+    final String debugNotificationBody =
+        '$notificationBody (Sch: $formattedScheduledTime)';
+    // end debugging code
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
       id,
       notificationTitle, // Use potentially modified title
-      notificationBody, // Use potentially modified body
+      debugNotificationBody, // Use potentially modified body
       scheduledDate, // The finally determined schedule date
       const NotificationDetails(
         android: AndroidNotificationDetails(

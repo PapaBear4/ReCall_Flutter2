@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:logger/logger.dart';
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
+import 'package:recall/main.dart';
 import 'package:recall/repositories/contact_repository.dart';
 import 'package:recall/repositories/usersettings_repository.dart';
 import 'package:recall/screens/contact_list_screen.dart';
@@ -49,9 +50,9 @@ class ReCall extends StatelessWidget {
             ),
           ],
           child: MaterialApp(
+            navigatorKey: navigatorKey, // Assign the global key here
             // Set the title of the app.
-
-            title: 'Contact App',
+            title: 'reCall App',
             // Set the theme of the app.
             theme: ThemeData(
               primarySwatch: Colors.blue,
