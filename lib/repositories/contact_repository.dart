@@ -92,18 +92,46 @@ class ContactRepository implements Repository<Contact> {
     await _source.delete(id);
     _contacts.remove(id);
   }
+
+  @override
+  Future<List<Contact>> addMany(List<Contact> items) async {
+    // We expect items here NOT to have IDs yet,
+    // the source should assign them.
+    final addedContacts = await _source.addMany(items);
+    // Update cache with the contacts returned from the source (which now have IDs)
+    for (final contact in addedContacts) {
+      if (contact.id != null) {
+        _contacts[contact.id!] = contact;
+      }
+    }
+    return addedContacts;
+  }
+
+  @override
+  Future<void> deleteAll() async {
+    await _source.deleteAll();
+    _contacts.clear(); // Clear the cache
+  }
 }
 
 class _InMemoryContactSource implements DataSource<Contact> {
   final Map<int, Contact> contacts;
 
-  _InMemoryContactSource({required this.contacts});
+  // Keep track of the next ID for in-memory source
+  int _nextId = 1;
+
+  _InMemoryContactSource({required this.contacts}) {
+    // Initialize _nextId based on existing contacts if any
+    if (contacts.isNotEmpty) {
+      _nextId = contacts.keys.reduce((a, b) => a > b ? a : b) + 1;
+    }
+  }
 
   @override
   Future<Contact> add(Contact item) async {
-    final id = contacts.keys.length + 1;
-    final newItem = item.copyWith(id: id);
-    contacts[id] = newItem;
+    // Use and increment _nextId
+    final newItem = item.copyWith(id: _nextId++);
+    contacts[newItem.id!] = newItem;
     return newItem;
   }
 
@@ -111,9 +139,9 @@ class _InMemoryContactSource implements DataSource<Contact> {
   Future<List<Contact>> addMany(List<Contact> items) async {
     final updatedItems = <Contact>[];
     for (final item in items) {
-      final id = contacts.keys.length + 1;
-      final newItem = item.copyWith(id: id);
-      contacts[id] = newItem;
+      // Use and increment _nextId for each item
+      final newItem = item.copyWith(id: _nextId++);
+      contacts[newItem.id!] = newItem;
       updatedItems.add(newItem);
     }
     return updatedItems;
@@ -151,5 +179,11 @@ class _InMemoryContactSource implements DataSource<Contact> {
     if (item.id == null) return item;
     contacts[item.id!] = item;
     return item;
+  }
+
+  @override
+  Future<void> deleteAll() async {
+    contacts.clear();
+    _nextId = 1; // Reset ID counter for in-memory
   }
 }

@@ -8,4 +8,5 @@ abstract class DataSource<T> {
   Future<void> delete(int id);
   Future<void> deleteMany(List<int> ids);
   Future<int> count();
+  Future<void> deleteAll();
 }

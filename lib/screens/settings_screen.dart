@@ -11,6 +11,7 @@ import 'dart:typed_data'; // For Uint8List
 import 'package:file_picker/file_picker.dart'; // For saving
 import 'package:path_provider/path_provider.dart'; // For temp directory
 import 'package:share_plus/share_plus.dart'; // For sharing
+import 'package:recall/blocs/contact_list/contact_list_bloc.dart'; // To refresh list
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -116,8 +117,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       List<Map<String, dynamic>> contactsJsonList =
           contacts.map((contact) => contact.toJson()).toList();
-      String jsonString =
-          const JsonEncoder.withIndent('  ').convert(contactsJsonList);
+      Map<String, dynamic> exportData = {
+        'version': 1, // Current export version
+        'contacts': contactsJsonList,
+      };
+      String jsonString = const JsonEncoder.withIndent('  ')
+          .convert(exportData); // Encode the new map
 
       setState(() => _isExporting = false);
       return jsonString;
@@ -241,6 +246,117 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  List<Contact>? _parseAndValidateImportData(String jsonData) {
+    try {
+      final decoded = jsonDecode(jsonData);
+
+      // Basic structure check
+      if (decoded is! Map<String, dynamic>) {
+        throw const FormatException('Invalid format: Expected a JSON object.');
+      }
+
+      // Version check
+      if (decoded['version'] != 1) {
+        throw FormatException('Invalid format: Expected version 1, found ${decoded['version'] ?? 'null'}.');
+      }
+
+      // Contacts list check
+      final contactsData = decoded['contacts'];
+      if (contactsData is! List) {
+        throw const FormatException('Invalid format: Expected "contacts" to be a list.');
+      }
+
+      // Try parsing each contact
+      final List<Contact> parsedContacts = [];
+      for (final contactMap in contactsData) {
+        if (contactMap is! Map<String, dynamic>) {
+           throw FormatException('Invalid format: Contact entry is not a valid object: $contactMap');
+        }
+        // The Contact.fromJson factory handles individual contact validation
+        parsedContacts.add(Contact.fromJson(contactMap));
+      }
+
+      // If all checks pass
+      return parsedContacts;
+
+    } on FormatException catch (e) { // Catch format errors during parsing/validation
+        if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(content: Text('Import Error: ${e.message}')),
+            );
+        }
+        return null;
+    } catch (e) { // Catch other potential errors (e.g., file read errors passed here)
+        if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(content: Text('Import Error: $e')),
+            );
+        }
+      return null;
+    }
+  }
+
+
+  // Orchestrates the import process
+  Future<void> _startImportProcess() async {
+    setState(() => _isExporting = true); // Show loading indicator
+
+    try {
+      // 1. Pick the file
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'], // Only allow .json files
+      );
+
+      if (result == null || result.files.single.path == null) {
+        // User canceled the picker
+         if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(
+             const SnackBar(content: Text('Import cancelled.')),
+           );
+           setState(() => _isExporting = false);
+         }
+        return;
+      }
+
+      // 2. Read the file
+      File file = File(result.files.single.path!);
+      String jsonData = await file.readAsString();
+
+      // 3. Parse and Validate
+      List<Contact>? newContacts = _parseAndValidateImportData(jsonData);
+
+      if (newContacts == null || !mounted) {
+        // Validation failed, message already shown by the parser function
+        setState(() => _isExporting = false);
+        return;
+      }
+
+      // 4. Overwrite Data
+      final contactRepo = context.read<ContactRepository>();
+      await contactRepo.deleteAll(); // Delete existing contacts
+      await contactRepo.addMany(newContacts); // Add imported contacts
+
+      // 5. Show Success & Refresh List
+       if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(content: Text('Successfully imported ${newContacts.length} contacts.')),
+           );
+           // Trigger refresh on the contact list screen
+           context.read<ContactListBloc>().add(const ContactListEvent.loadContacts());
+           setState(() => _isExporting = false); // Hide loading indicator
+       }
+
+    } catch (e) { // Catch potential errors during file picking/reading
+       if (mounted) {
+         ScaffoldMessenger.of(context).showSnackBar(
+           SnackBar(content: Text('Import failed: $e')),
+         );
+         setState(() => _isExporting = false);
+       }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -251,7 +367,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ? const Center(child: CircularProgressIndicator())
           : _userSettings == null
               ? const Center(child: Text('Could not load settings.'))
-              : Stack(  // Use Stack to overlay loading indicator
+              : Stack(
+                  // Use Stack to overlay loading indicator
                   children: [
                     ListView(
                       padding: const EdgeInsets.all(16.0),
@@ -278,18 +395,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         // --- END EXPORT TILE ---
                         const Divider(),
+                        // --- IMPORT TILE ---
                         ListTile(
-                          // Import Tile remains placeholder
-                          title: const Text('Import Data'),
-                          subtitle: const Text('Load contacts from a file'),
-                          trailing: const Icon(Icons.file_download),
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text('Import not yet implemented')),
-                            );
-                          },
-                        ),
+                           title: const Text('Import Data'),
+                           subtitle: const Text('Replace contacts from JSON file'), // Updated subtitle
+                           trailing: const Icon(Icons.file_download),
+                           enabled: !_isExporting, // Disable while busy
+                           onTap: _isExporting ? null : _startImportProcess, // Call import function
+                         ),
+                         // --- END IMPORT TILE ---
                         const Divider(),
                       ],
                     ),

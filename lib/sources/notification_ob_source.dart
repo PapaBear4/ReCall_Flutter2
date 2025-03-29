@@ -56,4 +56,9 @@ class NotificationObjectBoxSource implements DataSource<Notification> {
     final id = _notificationBox.put(item);
     return item.copyWith(id: id);
   }
+
+  @override
+  Future<void> deleteAll() async {
+    _notificationBox.removeAll(); // Add this implementation
+  }
 }

@@ -95,4 +95,10 @@ class UserSettingsSharedPreferencesSource implements DataSource<UserSettings> {
     await prefs.setStringList(_key, encoded);
     return item;
   }
+
+  @override
+  Future<void> deleteAll() async {
+     final prefs = await SharedPreferences.getInstance();
+     await prefs.setStringList(_key, []); // Add this implementation (clear the list)
+  }
 }
