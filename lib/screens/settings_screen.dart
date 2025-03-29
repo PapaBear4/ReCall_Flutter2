@@ -12,6 +12,8 @@ import 'package:file_picker/file_picker.dart'; // For saving
 import 'package:path_provider/path_provider.dart'; // For temp directory
 import 'package:share_plus/share_plus.dart'; // For sharing
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart'; // To refresh list
+import 'package:recall/services/notification_helper.dart';
+import 'package:recall/services/notification_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -300,6 +302,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // Orchestrates the import process
   Future<void> _startImportProcess() async {
     setState(() => _isExporting = true); // Show loading indicator
+    
+    // --- Get required services/helpers ---
+    // Use NotificationHelper directly for cancelAll
+    final notificationHelper = NotificationHelper();
+    // Use NotificationService from Provider for scheduling (accesses repositories)
+    final notificationService = context.read<NotificationService>();
+    final contactRepo = context.read<ContactRepository>();
+    // --- End Get services ---
 
     try {
       // 1. Pick the file
@@ -332,19 +342,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
         return;
       }
 
-      // 4. Overwrite Data
-      final contactRepo = context.read<ContactRepository>();
-      await contactRepo.deleteAll(); // Delete existing contacts
-      await contactRepo.addMany(newContacts); // Add imported contacts
+      // --- 4. Overwrite Data AND Notifications ---
+      // First, cancel all existing scheduled notifications
+      await notificationHelper.cancelAllNotifications(); // <-- ADD THIS
+      notificationLogger.i('LOG: Cancelled all existing notifications.');
 
-      // 5. Show Success & Refresh List
+      // Delete existing contacts
+      await contactRepo.deleteAll();
+
+      // Add imported contacts
+      // We use the list returned by addMany as it might contain updated IDs/data
+      final List<Contact> addedContacts = await contactRepo.addMany(newContacts);
+      // --- End Overwrite ---
+
+      // --- 5. Schedule NEW Notifications ---
+      for (final contact in addedContacts) { // Iterate over added contacts
+         // Use the service to schedule reminder (respects user settings)
+         await notificationService.scheduleReminder(contact); // <-- ADD THIS
+      }
+       notificationLogger.i('LOG: Scheduled notifications for ${addedContacts.length} imported contacts.');
+      // --- End Scheduling ---
+
+
+      // 6. Show Success & Refresh List (remains the same)
        if (mounted) {
            ScaffoldMessenger.of(context).showSnackBar(
-             SnackBar(content: Text('Successfully imported ${newContacts.length} contacts.')),
+             SnackBar(content: Text('Successfully imported ${addedContacts.length} contacts and updated notifications.')), // Updated message
            );
-           // Trigger refresh on the contact list screen
            context.read<ContactListBloc>().add(const ContactListEvent.loadContacts());
-           setState(() => _isExporting = false); // Hide loading indicator
+           setState(() => _isExporting = false);
        }
 
     } catch (e) { // Catch potential errors during file picking/reading
