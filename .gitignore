@@ -10,16 +10,18 @@
 .svn/
 migrate_working_dir/
 
-# IntelliJ related
+# IntelliJ & Android Studio
 *.iml
 *.ipr
 *.iws
 .idea/
+.gradle/
+/local.properties
+/.attach_pid
+/capture_snapshots/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# VS Code
+.vscode/
 
 # Flutter/Dart/Pub related
 **/doc/api/
@@ -27,12 +29,11 @@ migrate_working_dir/
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
-.packages # Add standard Dart package file ignore
+.packages
 .pub-cache/
 .pub/
 /build/
-# Ignore specific build fingerprint files wherever they appear
-**/configure_fingerprint.bin
+.metadata # Flutter project metadata file
 
 # Symbolication related
 app.*.symbols
@@ -40,14 +41,35 @@ app.*.symbols
 # Obfuscation related
 app.*.map.json
 
-# Android Studio will place build artifacts here
-# (These are covered by /build/ but explicit ignores don't hurt)
-/android/app/debug
-/android/app/profile
-/android/app/release
+# Android specific build files & caches
+/android/app/debug/
+/android/app/profile/
+/android/app/release/
+/android/.gradle/ # Android Gradle cache
+/android/gradle* # Ignore Gradle wrapper files if accidentally added
+/android/app/.cxx/
+
+# iOS specific build files & caches
+/ios/Pods/ # Cocoapods dependencies
+/ios/Flutter/ephemeral/ # Flutter generated files for iOS
+/ios/.symlinks/ # Flutter generated symlinks for iOS
+/ios/Runner/GeneratedPluginRegistrant.* # Generated plugin registrants
+
+# Linux specific build files & caches
+/linux/flutter/ephemeral/
+
+# macOS specific build files & caches
+/macos/Flutter/ephemeral/
+
+# Windows specific build files & caches
+/windows/flutter/ephemeral/
 
 # ObjectBox Generated Database Files (KEEP objectbox-model.json!)
 objectbox-data/
 *.objectbox.db
-data.mdb # Default ObjectBox data file name
-lock.mdb # Default ObjectBox lock file name
+data.mdb
+lock.mdb
+
+# Potentially ignore generated files in lib IF YOU PREFER (Usually committed)
+# lib/**.g.dart
+# lib/**.freezed.dart
