@@ -6,7 +6,6 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
 import 'package:recall/main.dart';
 import 'package:recall/models/contact.dart';
-import 'package:recall/models/contact_frequency.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:logger/logger.dart';
@@ -37,7 +36,7 @@ class NotificationHelper {
     // Android Initialization
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings(
-            'notification_icon_android'); // Use underscores, no extension
+            'notification_icon'); // Use underscores, no extension
 
     // iOS Initialization (add if needed, with appropriate settings)
     // final DarwinInitializationSettings initializationSettingsDarwin =
