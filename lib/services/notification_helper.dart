@@ -6,7 +6,6 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
 import 'package:recall/main.dart';
 import 'package:recall/models/contact.dart';
-import 'package:recall/models/contact_frequency.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:logger/logger.dart';
@@ -36,7 +35,8 @@ class NotificationHelper {
 
     // Android Initialization
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher'); // Your app icon
+        AndroidInitializationSettings(
+            'notification_icon'); // Use underscores, no extension
 
     // iOS Initialization (add if needed, with appropriate settings)
     // final DarwinInitializationSettings initializationSettingsDarwin =
@@ -60,7 +60,12 @@ class NotificationHelper {
       initializationSettings,
       onDidReceiveNotificationResponse:
           (NotificationResponse notificationResponse) async {
-        notificationLogger.i('LOG: Notification Response Received');
+        // LOGGING START
+        notificationLogger.i(
+            '>>> Notification Tapped! Type: ${notificationResponse.notificationResponseType}'); // Using logger
+        notificationLogger.i(
+            '>>> Received payload: ${notificationResponse.payload}'); // Using logger
+        // LOGGING END
         // Handle notification tap when app is in foreground/background
         switch (notificationResponse.notificationResponseType) {
           case NotificationResponseType.selectedNotification:
@@ -147,13 +152,12 @@ Future<void> checkAndRequestNotificationPermission() async {
       tz.TZDateTime tomorrow =
           tz.TZDateTime(tz.local, now.year, now.month, now.day)
               .add(const Duration(days: 1));
-      // Assuming you want it at 7 AM like in calculateNextDueDate
       scheduledDate = targetTimeOnDate(tomorrow); // Use user's time
 
       // Optional: Modify title/body for overdue notifications
-      notificationTitle = "Overdue: ${contact.firstName} ${contact.lastName}";
+      notificationTitle = "OVERDUE: ${contact.firstName} ${contact.lastName}";
       notificationBody =
-          "Contact was due on ${DateFormat.yMd().format(calculatedDueDate)}. Reminder set for tomorrow.";
+          "Contact was due on ${DateFormat.yMd().format(calculatedDueDate)}.";
       notificationLogger.i(
           'LOG: Contact $id overdue (due $calculatedDueDate). Scheduling for $scheduledDate');
     } else {
@@ -181,9 +185,12 @@ Future<void> checkAndRequestNotificationPermission() async {
 
     String payload = "contact_id:${contact.id}";
     //debuging code
-    final String formattedScheduledTime = DateFormat.jm().format(scheduledDate);
+    // Format the final 'scheduledDate' (include date and time)
+    final String formattedScheduledDateTime =
+        DateFormat.yMd().add_jm().format(scheduledDate);
+    // Append it to the original notification body
     final String debugNotificationBody =
-        '$notificationBody (Sch: $formattedScheduledTime)';
+        '$notificationBody (Scheduled: $formattedScheduledDateTime)'; // Use scheduled date/time
     // end debugging code
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
@@ -218,24 +225,39 @@ Future<void> checkAndRequestNotificationPermission() async {
   }
 
   Future<void> showTestNotification(Contact contact) async {
-    final int notifyId = contact.id ?? 123;
+    // Ensure contact ID is not null before creating payload
+    if (contact.id == null) {
+      notificationLogger
+          .e("Cannot show test notification for contact with null ID.");
+      return;
+    }
+    final int notifyId = contact.id!; // Use non-nullable ID
+    // --- Create the payload ---
+    final String payload = "contact_id:$notifyId";
+    // --- End Create payload ---
+
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
-      'recall_channel_id', // Your channel ID
-      'reCall Channel', // Your channel name
+      'recall_channel_id',
+      'reCall Channel',
       channelDescription: 'Notifications for due contacts',
-      //importance: Importance.max,
-      //priority: Priority.high,
+      importance: Importance.max, // Max importance for testing visibility
+      priority: Priority.high,
     );
     const NotificationDetails platformChannelSpecifics =
         NotificationDetails(android: androidPlatformChannelSpecifics);
 
     await flutterLocalNotificationsPlugin.show(
-      notifyId, // A test notification ID (make it unique)
-      'Test Notification for ${contact.firstName} ${contact.lastName}',
-      'This is a test notification.',
+      notifyId,
+      'Test: ${contact.firstName} ${contact.lastName}', // Test title
+      'This is a test notification. Tap me!', // Test body
       platformChannelSpecifics,
+      // --- ADD THIS LINE ---
+      payload: payload, // Pass the payload here
+      // --- END ADD ---
     );
+    notificationLogger
+        .i('LOG: Displayed test notification $notifyId with payload $payload');
   }
 
   Future<List<PendingNotificationRequest>> getPendingNotifications() async {
@@ -247,13 +269,36 @@ Future<void> checkAndRequestNotificationPermission() async {
   }
 
   void _handleNotificationTap(String? payload) {
-    if (payload != null && payload.isNotEmpty) {
-      // Parse the payload to get the contact ID
-      final contactId = int.tryParse(payload.split(':').last);
+    // --- ADD LOGGING HERE ---
+    notificationLogger.i(
+        '>>> _handleNotificationTap called with payload: $payload'); // Using logger
+    // --- END LOGGING ---
+
+    if (payload != null &&
+        payload.isNotEmpty &&
+        payload.startsWith('contact_id:')) {
+      final String idString = payload.split(':').last;
+      notificationLogger
+          .i('>>> Extracted ID string: $idString'); // Using logger
+      final contactId = int.tryParse(idString);
+      notificationLogger.i('>>> Parsed contactId: $contactId'); // Using logger
+
       if (contactId != null) {
+        // --- ADD LOGGING HERE ---
+        notificationLogger.i(
+            '>>> Attempting navigation to /contactDetails with argument: $contactId'); // Using logger
+        notificationLogger.i(
+            '>>> navigatorKey.currentState is null? ${navigatorKey.currentState == null}'); // Using logger
+        // --- END LOGGING ---
         navigatorKey.currentState
             ?.pushNamed('/contactDetails', arguments: contactId);
+      } else {
+        notificationLogger
+            .w('>>> Failed to parse contactId from payload.'); // Using logger
       }
+    } else {
+      notificationLogger
+          .w('>>> Payload is null, empty, or invalid format.'); // Using logger
     }
   }
 }

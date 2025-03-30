@@ -56,8 +56,11 @@ class ReCall extends StatelessWidget {
             title: 'reCall App',
             // Set the theme of the app.
             theme: ThemeData(
-              primarySwatch: Colors.blue,
-              useMaterial3: true,
+              // Use ColorScheme.fromSeed for Material 3
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: const Color(0xFF5592D9), // Use hex code from SCSS
+              ),
+              useMaterial3: true, // Keep this enabled
             ),
             // Set the initial route of the app.
             home: const ContactListScreen(),
