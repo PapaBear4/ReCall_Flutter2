@@ -74,16 +74,15 @@ class _ContactListScreenState extends State<ContactListScreen> {
       appBar: AppBar(
         title: const Text('Contacts'),
         actions: [
-          //refresh button
+          //USER HELP button
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.help_outline), // Help icon
+            tooltip: 'Help',
             onPressed: () {
-              context
-                  .read<ContactListBloc>()
-                  .add(ContactListEvent.loadContacts());
+              Navigator.pushNamed(context, '/help'); // Navigate to Help screen
             },
           ),
-          // Settings button
+          // SETTINGS button
           IconButton(
             icon: const Icon(Icons.settings),
             tooltip: 'Settings', // Optional: Add tooltip
