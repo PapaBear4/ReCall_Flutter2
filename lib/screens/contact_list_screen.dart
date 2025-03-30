@@ -8,12 +8,64 @@ import 'package:recall/utils/last_contacted_utils.dart';
 import 'package:recall/models/contact_frequency.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:recall/main.dart'
+    as main_app; // Import main to access the global payload variable
 
 var contactListScreenLogger = Logger();
 
 // Widget representing the contact list screen.
-class ContactListScreen extends StatelessWidget {
+class ContactListScreen extends StatefulWidget {
+  // Change to StatefulWidget
   const ContactListScreen({super.key});
+
+  @override
+  State<ContactListScreen> createState() =>
+      _ContactListScreenState(); // Create State
+}
+
+class _ContactListScreenState extends State<ContactListScreen> {
+  // Create State class
+
+  @override
+  void initState() {
+    super.initState();
+    _handleInitialNotification(); // Call the handler
+  }
+
+  void _handleInitialNotification() {
+    // Use addPostFrameCallback to navigate after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (main_app.initialNotificationPayload != null) {
+        contactListScreenLogger.i(
+            '>>> Handling initial notification payload: ${main_app.initialNotificationPayload}');
+        final String payload = main_app.initialNotificationPayload!;
+        int? contactId;
+
+        if (payload.startsWith('contact_id:')) {
+          final String idString = payload.split(':').last;
+          contactId = int.tryParse(idString);
+          contactListScreenLogger.i('>>> Parsed initial contactId: $contactId');
+        }
+
+        // IMPORTANT: Clear the payload *before* navigating
+        // to prevent re-navigation if this screen is revisited
+        main_app.initialNotificationPayload = null;
+
+        if (contactId != null && mounted) {
+          // Check if mounted before navigating
+          contactListScreenLogger.i(
+              '>>> Navigating to /contactDetails from initial launch payload.');
+          Navigator.pushNamed(context, '/contactDetails', arguments: contactId);
+        } else if (contactId == null) {
+          contactListScreenLogger
+              .w('>>> Failed to parse contactId from initial payload.');
+        }
+      } else {
+        contactListScreenLogger
+            .i('>>> No initial notification payload detected.');
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

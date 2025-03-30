@@ -1,5 +1,6 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
 import 'package:recall/repositories/contact_repository.dart';
 import 'package:recall/repositories/usersettings_repository.dart';
@@ -18,6 +19,9 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 late final objectbox_g.Store? store; // Declare the store
 
+String? initialNotificationPayload;  // to hold initial payload
+
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensure Flutter is initialized
 
@@ -26,6 +30,16 @@ void main() async {
   // Initialize NotificationHelper
   final notificationHelper = NotificationHelper();
   await notificationHelper.init();
+
+  // --- CHECK FOR APP LAUNCH DETAILS ---
+  final NotificationAppLaunchDetails? notificationAppLaunchDetails = await
+      flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails(); // Use the plugin instance from helper
+
+  if (notificationAppLaunchDetails?.didNotificationLaunchApp ?? false) {
+    initialNotificationPayload = notificationAppLaunchDetails!.notificationResponse?.payload;
+    logger.i('App launched via notification tap. Payload: $initialNotificationPayload');
+  }
+  // --- END CHECK ---
 
   // Create repositories
   final contactRepository = ContactRepository(store);
