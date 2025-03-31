@@ -207,7 +207,7 @@ Future<void> checkAndRequestNotificationPermission() async {
           priority: Priority.high,
         ),
       ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       payload: payload,
       matchDateTimeComponents:
           null, // Usually null for specific date/time schedules
