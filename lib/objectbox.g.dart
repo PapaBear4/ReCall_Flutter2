@@ -24,7 +24,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
       id: const obx_int.IdUid(11, 4220768979207252381),
       name: 'Contact',
-      lastPropertyId: const obx_int.IdUid(6, 8964901162355723932),
+      lastPropertyId: const obx_int.IdUid(7, 5161319229396791903),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
@@ -55,6 +55,11 @@ final _entities = <obx_int.ModelEntity>[
         obx_int.ModelProperty(
             id: const obx_int.IdUid(6, 8964901162355723932),
             name: 'lastContacted',
+            type: 10,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(7, 5161319229396791903),
+            name: 'anniversary',
             type: 10,
             flags: 0)
       ],
@@ -258,13 +263,14 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final firstNameOffset = fbb.writeString(object.firstName);
           final lastNameOffset = fbb.writeString(object.lastName);
           final frequencyOffset = fbb.writeString(object.frequency);
-          fbb.startTable(7);
+          fbb.startTable(8);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addOffset(1, firstNameOffset);
           fbb.addOffset(2, lastNameOffset);
           fbb.addOffset(3, frequencyOffset);
           fbb.addInt64(4, object.birthday?.millisecondsSinceEpoch);
           fbb.addInt64(5, object.lastContacted?.millisecondsSinceEpoch);
+          fbb.addInt64(6, object.anniversary?.millisecondsSinceEpoch);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -275,6 +281,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
               const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 12);
           final lastContactedValue =
               const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 14);
+          final anniversaryValue =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 16);
           final idParam =
               const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 4);
           final firstNameParam = const fb.StringReader(asciiOptimization: true)
@@ -289,13 +297,17 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final lastContactedParam = lastContactedValue == null
               ? null
               : DateTime.fromMillisecondsSinceEpoch(lastContactedValue);
+          final anniversaryParam = anniversaryValue == null
+              ? null
+              : DateTime.fromMillisecondsSinceEpoch(anniversaryValue);
           final object = Contact(
               id: idParam,
               firstName: firstNameParam,
               lastName: lastNameParam,
               frequency: frequencyParam,
               birthday: birthdayParam,
-              lastContacted: lastContactedParam);
+              lastContacted: lastContactedParam,
+              anniversary: anniversaryParam);
 
           return object;
         }),
@@ -428,6 +440,10 @@ class Contact_ {
   /// See [Contact.lastContacted].
   static final lastContacted =
       obx.QueryDateProperty<Contact>(_entities[0].properties[5]);
+
+  /// See [Contact.anniversary].
+  static final anniversary =
+      obx.QueryDateProperty<Contact>(_entities[0].properties[6]);
 }
 
 /// [Notification] entity fields to define ObjectBox queries.

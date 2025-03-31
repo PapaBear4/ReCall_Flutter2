@@ -5,7 +5,7 @@
   "entities": [
     {
       "id": "11:4220768979207252381",
-      "lastPropertyId": "6:8964901162355723932",
+      "lastPropertyId": "7:5161319229396791903",
       "name": "Contact",
       "properties": [
         {
@@ -37,6 +37,11 @@
         {
           "id": "6:8964901162355723932",
           "name": "lastContacted",
+          "type": 10
+        },
+        {
+          "id": "7:5161319229396791903",
+          "name": "anniversary",
           "type": 10
         }
       ],

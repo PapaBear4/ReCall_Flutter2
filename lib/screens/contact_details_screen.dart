@@ -140,48 +140,50 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             ),
             // Edit/Save Button
             BlocBuilder<ContactDetailsBloc, ContactDetailsState>(
-                // Rebuild button based on state
                 builder: (context, state) {
-              // Determine if editing/saving is allowed based on state
-              // Use maybeMap for robust state checking
               final bool isLoaded =
                   state.maybeMap(loaded: (_) => true, orElse: () => false);
               final bool isNewContactMode =
                   (_localContact.id == 0 && _isEditMode);
               final bool canEditOrSave = isLoaded || isNewContactMode;
-
-              // Disable if state is loading or initial
               final bool isDisabledByState = state.maybeMap(
-                loading: (_) => true,
-                initial: (_) => true,
-                orElse: () => false, // Not loading or initial
-              );
+                  loading: (_) => true,
+                  initial: (_) => true,
+                  orElse: () => false);
+
+              // Determine if the save button should be enabled
+              final bool canSaveChanges = canEditOrSave &&
+                  !isDisabledByState &&
+                  _isEditMode &&
+                  _hasUnsavedChanges;
+              // Determine if the edit button should be enabled
+              final bool canEnterEdit =
+                  canEditOrSave && !isDisabledByState && !_isEditMode;
 
               return IconButton(
                 icon: Icon(_isEditMode ? Icons.save : Icons.edit),
                 tooltip: _isEditMode ? 'Save Changes' : 'Edit Contact',
-                // Disable if cannot edit/save OR if state indicates loading/initial
-                onPressed: (canEditOrSave && !isDisabledByState)
-                    ? () {
-                        if (_isEditMode) {
-                          // If currently in edit mode, attempt to save
-                          _onSaveButtonPressed(context);
-                        } else {
-                          // If currently in view mode, switch to edit mode
-                          // Ensure we switch only if the state is actually loaded
-                          state.mapOrNull(loaded: (loadedState) {
-                            setState(() {
-                              _isEditMode = true;
-                              // Ensure _localContact reflects the loaded state when entering edit mode
-                              _localContact = loadedState.contact;
-                              _firstNameController.text =
-                                  _localContact.firstName;
-                              _lastNameController.text = _localContact.lastName;
+                // Enable Save only if in edit mode with unsaved changes & state allows
+                // Enable Edit only if not in edit mode & state allows
+                onPressed: _isEditMode
+                    ? (canSaveChanges
+                        ? () => _onSaveButtonPressed(context)
+                        : null) // Enable save conditionally
+                    : (canEnterEdit
+                        ? () {
+                            // Enable edit conditionally
+                            state.mapOrNull(loaded: (loadedState) {
+                              setState(() {
+                                _isEditMode = true;
+                                _localContact = loadedState.contact;
+                                _firstNameController.text =
+                                    _localContact.firstName;
+                                _lastNameController.text =
+                                    _localContact.lastName;
+                              });
                             });
-                          });
-                        }
-                      }
-                    : null,
+                          }
+                        : null),
               );
             }),
           ],
@@ -294,18 +296,29 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           children: <Widget>[
             // --- Display Section (Only visible when NOT in Edit Mode) ---
             if (!_isEditMode) ...[
+              Padding(
+                padding: const EdgeInsets.only(
+                    bottom: 24.0), // Add padding below name
+                child: Text(
+                  '${_localContact.firstName} ${_localContact.lastName}',
+                  style: Theme.of(context)
+                      .textTheme
+                      .headlineSmall, // Use a larger style
+                ),
+              ),
               _buildDisplayRow(
-                  Icons.person, 'First Name:', _localContact.firstName),
-              const SizedBox(height: 8.0),
-              _buildDisplayRow(
-                  Icons.person_outline, 'Last Name:', _localContact.lastName),
-              const SizedBox(height: 16.0),
-              _buildDisplayRow(
-                  Icons.calendar_today,
+                  Icons.cake,
                   'Birthday:',
                   _localContact.birthday == null
                       ? 'Not set'
                       : DateFormat.yMd().format(_localContact.birthday!)),
+              const SizedBox(height: 8.0),
+              _buildDisplayRow(
+                  Icons.celebration,
+                  'Anniversary:', // Example Icon
+                  _localContact.anniversary == null
+                      ? 'Not set'
+                      : DateFormat.yMd().format(_localContact.anniversary!)),
               const SizedBox(height: 8.0),
               _buildDisplayRow(Icons.access_time, 'Last Contacted:',
                   formatLastContacted(_localContact.lastContacted)),
@@ -438,6 +451,38 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                     : DateFormat.yMd().format(_localContact.birthday!)),
               ),
               const SizedBox(height: 20),
+              // Anniversary Picker
+              const Text('Anniversary:',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              ElevatedButton(
+                onPressed: _isEditMode
+                    ? () async {
+                        final DateTime? picked = await showDatePicker(
+                          context: context,
+                          initialDate: _localContact.anniversary ??
+                              DateTime.now(), // Use anniversary or now
+                          firstDate: DateTime(1900), // Adjust range as needed
+                          lastDate: DateTime.now().add(const Duration(
+                              days: 365 *
+                                  10)), // Allow future dates? Adjust as needed
+                        );
+                        if (!mounted) return;
+                        if (picked != null &&
+                            picked != _localContact.anniversary) {
+                          setState(() {
+                            // Use copyWith, generated code handles the new field
+                            _localContact =
+                                _localContact.copyWith(anniversary: picked);
+                            _hasUnsavedChanges = true;
+                          });
+                        }
+                      }
+                    : null,
+                child: Text(_localContact.anniversary == null
+                    ? 'Select Anniversary'
+                    : DateFormat.yMd().format(_localContact.anniversary!)),
+              ),
+              const SizedBox(height: 20), // Spacing at the end of the form
             ]
             // --- End Edit Section ---
           ],
@@ -514,62 +559,62 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
   // Handles the save action
   void _onSaveButtonPressed(BuildContext context) {
-    if (_formKey.currentState!.validate()) {
-      final currentState =
-          context.read<ContactDetailsBloc>().state; // Read state once
-      Contact contactToSave = _localContact;
+   // Form validation check
+   if (_formKey.currentState!.validate()) {
+     final currentState = context.read<ContactDetailsBloc>().state;
+     Contact contactToSave = _localContact;
+     bool isExistingContact = contactToSave.id != null && contactToSave.id != 0;
 
-      bool isExistingContact =
-          contactToSave.id != null && contactToSave.id != 0;
+     // Check if state allows saving
+     bool canProceed = currentState.maybeMap(
+         loaded: (_) => true,
+         orElse: () => !isExistingContact
+     );
 
-      // Use maybeMap for safer check if saving is allowed
-      bool canProceed = currentState.maybeMap(
-          loaded: (_) => true, // OK if loaded
-          orElse: () =>
-              !isExistingContact // OK if new contact (state might be initial/loading briefly)
+     if (!canProceed && mounted) { // Add mounted check
+          ScaffoldMessenger.of(context).showSnackBar(
+           const SnackBar(content: Text('Cannot save, contact state is inconsistent.')),
           );
+          return;
+     }
 
-      if (!canProceed) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Cannot save, contact state is inconsistent.')),
-        );
-        return;
+     // --- Dispatch event ---
+     if (!isExistingContact) {
+       context.read<ContactDetailsBloc>().add(ContactDetailsEvent.addContact(contact: contactToSave));
+       if (mounted) { // Add mounted check before showing SnackBar
+         ScaffoldMessenger.of(context).showSnackBar(
+           const SnackBar(content: Text('New contact saved')),
+         );
+       }
+     } else {
+       context.read<ContactDetailsBloc>().add(ContactDetailsEvent.saveContact(contact: contactToSave));
+        if (mounted) { // Add mounted check before showing SnackBar
+         ScaffoldMessenger.of(context).showSnackBar(
+           const SnackBar(content: Text('Changes saved')),
+         );
+       }
+     }
+
+     // --- Update local state and Navigate Back ---
+     // Do this after dispatching the event
+      if (mounted) { // Add mounted check before setState and pop
+         setState(() {
+             _hasUnsavedChanges = false;
+             _isEditMode = false; // Exit edit mode
+         });
+         context.read<ContactListBloc>().add(const ContactListEvent.loadContacts()); // Refresh list
+         Navigator.of(context).pop(); // Go back to the list screen
       }
 
-      if (!isExistingContact) {
-        // Add new contact
-        context
-            .read<ContactDetailsBloc>()
-            .add(ContactDetailsEvent.addContact(contact: contactToSave));
+   } else {
+     // Form validation failed
+      if (mounted) { // Add mounted check before showing SnackBar
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('New contact saved')),
-        );
-      } else {
-        // Update existing contact
-        context
-            .read<ContactDetailsBloc>()
-            .add(ContactDetailsEvent.saveContact(contact: contactToSave));
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Changes saved')),
+         const SnackBar(content: Text('Please correct the errors before saving.')),
         );
       }
-      // Set state after dispatching event
-      setState(() {
-        _hasUnsavedChanges = false;
-        _isEditMode = false;
-      });
-
-      context
-          .read<ContactListBloc>()
-          .add(const ContactListEvent.loadContacts());
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Please correct the errors before saving.')),
-      );
-    }
-  }
+   }
+ }
 
   // Handles the delete action
   void _onDeleteButtonPressed(BuildContext context) {
