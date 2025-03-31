@@ -1,3 +1,4 @@
+// lib/screens/contact_list_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:recall/blocs/contact_details/contact_details_bloc.dart';
@@ -8,34 +9,45 @@ import 'package:recall/utils/last_contacted_utils.dart';
 import 'package:recall/models/contact_frequency.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:recall/screens/help_screen.dart'; // Import HelpScreen
 import 'package:recall/main.dart'
-    as main_app; // Import main to access the global payload variable
+    as main_app;
 
 var contactListScreenLogger = Logger();
 
-// Widget representing the contact list screen.
+// Enum to represent the combined Sort/Filter action
+enum ListAction { sortByDueDateAsc, sortByDueDateDesc, sortByLastNameAsc, sortByLastNameDesc, sortByLastContactedAsc, sortByLastContactedDesc, filterOverdue, filterDueSoon, filterClear }
+
+
 class ContactListScreen extends StatefulWidget {
-  // Change to StatefulWidget
   const ContactListScreen({super.key});
 
   @override
-  State<ContactListScreen> createState() =>
-      _ContactListScreenState(); // Create State
+  State<ContactListScreen> createState() => _ContactListScreenState();
 }
 
 class _ContactListScreenState extends State<ContactListScreen> {
-  // Create State class
+   final TextEditingController _searchController = TextEditingController(); // Controller for search
 
   @override
   void initState() {
     super.initState();
-    _handleInitialNotification(); // Call the handler
+     // Add listener to dispatch search events as user types
+     _searchController.addListener(() {
+        context.read<ContactListBloc>().add(ContactListEvent.applySearch(searchTerm: _searchController.text));
+     });
+    _handleInitialNotification();
   }
 
+   @override
+   void dispose() {
+     _searchController.dispose(); // Dispose controller
+     super.dispose();
+   }
+
   void _handleInitialNotification() {
-    // Use addPostFrameCallback to navigate after the first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (main_app.initialNotificationPayload != null) {
+       if (main_app.initialNotificationPayload != null && mounted) { // Check mounted
         contactListScreenLogger.i(
             '>>> Handling initial notification payload: ${main_app.initialNotificationPayload}');
         final String payload = main_app.initialNotificationPayload!;
@@ -47,119 +59,221 @@ class _ContactListScreenState extends State<ContactListScreen> {
           contactListScreenLogger.i('>>> Parsed initial contactId: $contactId');
         }
 
-        // IMPORTANT: Clear the payload *before* navigating
-        // to prevent re-navigation if this screen is revisited
         main_app.initialNotificationPayload = null;
 
-        if (contactId != null && mounted) {
-          // Check if mounted before navigating
+        if (contactId != null) {
           contactListScreenLogger.i(
               '>>> Navigating to /contactDetails from initial launch payload.');
-          Navigator.pushNamed(context, '/contactDetails', arguments: contactId);
-        } else if (contactId == null) {
+           // Ensure BLoC is ready before pushing route
+           context.read<ContactDetailsBloc>().add(ContactDetailsEvent.loadContact(contactId: contactId));
+           Navigator.pushNamed(context, '/contactDetails', arguments: contactId);
+        } else {
           contactListScreenLogger
               .w('>>> Failed to parse contactId from initial payload.');
         }
       } else {
         contactListScreenLogger
-            .i('>>> No initial notification payload detected.');
+            .i('>>> No initial notification payload detected or widget not mounted.');
       }
     });
   }
 
+  // Helper to dispatch BLoC events from PopupMenuButton
+  void _handleListAction(ListAction action) {
+     switch (action) {
+       // Sorting
+       case ListAction.sortByDueDateAsc:
+         context.read<ContactListBloc>().add(const ContactListEvent.sortContacts(sortField: ContactListSortField.dueDate, ascending: true));
+         break;
+       case ListAction.sortByDueDateDesc:
+          context.read<ContactListBloc>().add(const ContactListEvent.sortContacts(sortField: ContactListSortField.dueDate, ascending: false));
+         break;
+       case ListAction.sortByLastNameAsc:
+          context.read<ContactListBloc>().add(const ContactListEvent.sortContacts(sortField: ContactListSortField.lastName, ascending: true));
+         break;
+        case ListAction.sortByLastNameDesc:
+           context.read<ContactListBloc>().add(const ContactListEvent.sortContacts(sortField: ContactListSortField.lastName, ascending: false));
+          break;
+       case ListAction.sortByLastContactedAsc:
+           context.read<ContactListBloc>().add(const ContactListEvent.sortContacts(sortField: ContactListSortField.lastContacted, ascending: true));
+          break;
+       case ListAction.sortByLastContactedDesc:
+          context.read<ContactListBloc>().add(const ContactListEvent.sortContacts(sortField: ContactListSortField.lastContacted, ascending: false));
+         break;
+       // Filtering
+       case ListAction.filterOverdue:
+          context.read<ContactListBloc>().add(const ContactListEvent.applyFilter(filter: ContactListFilter.overdue));
+         break;
+       case ListAction.filterDueSoon:
+          context.read<ContactListBloc>().add(const ContactListEvent.applyFilter(filter: ContactListFilter.dueSoon));
+         break;
+       case ListAction.filterClear:
+           context.read<ContactListBloc>().add(const ContactListEvent.applyFilter(filter: ContactListFilter.none)); // Apply 'none' filter
+         break;
+     }
+  }
+
+
   @override
   Widget build(BuildContext context) {
-    // Scaffold provides the basic structure of the screen.
     return Scaffold(
       appBar: AppBar(
         title: const Text('Contacts'),
         actions: [
-          //USER HELP button
+          // Sort/Filter Menu
+          PopupMenuButton<ListAction>(
+             icon: const Icon(Icons.sort), // Or Icons.filter_list
+             tooltip: "Sort & Filter",
+             onSelected: _handleListAction, // Call helper function
+             itemBuilder: (BuildContext context) => <PopupMenuEntry<ListAction>>[
+               const PopupMenuItem<ListAction>(
+                 value: ListAction.sortByDueDateAsc,
+                 child: Text('Sort by Due Date (Soonest)'),
+               ),
+                const PopupMenuItem<ListAction>(
+                 value: ListAction.sortByDueDateDesc,
+                 child: Text('Sort by Due Date (Latest)'),
+               ),
+               const PopupMenuItem<ListAction>(
+                 value: ListAction.sortByLastNameAsc,
+                 child: Text('Sort by Last Name (A-Z)'),
+               ),
+                const PopupMenuItem<ListAction>(
+                 value: ListAction.sortByLastNameDesc,
+                 child: Text('Sort by Last Name (Z-A)'),
+               ),
+                 const PopupMenuItem<ListAction>(
+                 value: ListAction.sortByLastContactedAsc,
+                 child: Text('Sort by Last Contacted (Oldest)'),
+               ),
+                const PopupMenuItem<ListAction>(
+                 value: ListAction.sortByLastContactedDesc,
+                 child: Text('Sort by Last Contacted (Newest)'),
+               ),
+               const PopupMenuDivider(), // Separator
+                const PopupMenuItem<ListAction>(
+                 value: ListAction.filterOverdue,
+                 child: Text('Filter: Overdue'),
+               ),
+                 const PopupMenuItem<ListAction>(
+                 value: ListAction.filterDueSoon,
+                 child: Text('Filter: Due Soon'),
+               ),
+                const PopupMenuItem<ListAction>(
+                 value: ListAction.filterClear,
+                 child: Text('Clear Filter'),
+               ),
+             ],
+           ),
+          // Other existing actions
+          // HELP BUTTON
           IconButton(
-            icon: const Icon(Icons.help_outline), // Help icon
+            icon: const Icon(Icons.help_outline),
             tooltip: 'Help',
             onPressed: () {
-              Navigator.pushNamed(context, '/help'); // Navigate to Help screen
+              // Navigate using MaterialPageRoute and pass argument
+              Navigator.push(context, MaterialPageRoute(
+                 builder: (context) => const HelpScreen(initialSection: HelpSection.list), // Pass list section
+              ));
             },
           ),
-          // SETTINGS button
+          // SETTINGS BUTTON
           IconButton(
             icon: const Icon(Icons.settings),
-            tooltip: 'Settings', // Optional: Add tooltip
-            onPressed: () {
-              // Navigate to the settings screen
-              Navigator.pushNamed(context, '/settings');
-            },
+            tooltip: 'Settings',
+            onPressed: () => Navigator.pushNamed(context, '/settings'),
           ),
         ],
+        // Add Search Bar to AppBar bottom
+         bottom: PreferredSize(
+           preferredSize: const Size.fromHeight(kToolbarHeight), // Standard toolbar height
+           child: Padding(
+             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+             child: TextField(
+               controller: _searchController,
+               decoration: InputDecoration(
+                 hintText: 'Search contacts...',
+                 prefixIcon: const Icon(Icons.search),
+                 border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30.0),
+                    borderSide: BorderSide.none, // Hide border line
+                  ),
+                  filled: true, // Fill background
+                  fillColor: Colors.white, // Or Theme.of(context).inputDecorationTheme.fillColor
+                  contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16), // Adjust padding
+                  // Add clear button
+                  suffixIcon: IconButton(
+                     icon: const Icon(Icons.clear),
+                     tooltip: "Clear Search",
+                     onPressed: () {
+                        _searchController.clear(); // Clears text and triggers listener
+                     },
+                  ),
+               ),
+               onChanged: (value) {
+                  // Listener already handles dispatching, but onChanged can be used too
+                  // context.read<ContactListBloc>().add(ContactListEvent.applySearch(searchTerm: value));
+               },
+             ),
+           ),
+         ),
       ),
-      // BlocBuilder listens to changes in ContactListBloc state.
+      // Use BlocBuilder to react to state changes
       body: RefreshIndicator(
         onRefresh: () async {
-          context.read<ContactListBloc>().add(ContactListEvent.loadContacts());
+          // Reloading should clear search/filter and fetch fresh data
+           _searchController.clear(); // Clear search field visually
+           // Dispatch load event which will reset state in BLoC
+           context.read<ContactListBloc>().add(const ContactListEvent.loadContacts());
         },
         child: BlocBuilder<ContactListBloc, ContactListState>(
             builder: (context, state) {
+          // Handle different states
           return state.map(
             initial: (_) => const Center(child: CircularProgressIndicator()),
-            empty: (_) => const Center(child: Text('No contacts available')),
             loading: (_) => const Center(child: CircularProgressIndicator()),
-            loaded: (loadedState) => _contactList(loadedState.contacts),
-            error: (errorState) => Center(child: Text(errorState.message)),
+            empty: (_) => const Center(child: Text('No contacts found.')), // Original list empty
+            // Use loadedState.displayedContacts for the list
+            loaded: (loadedState) => _buildContactList(loadedState.displayedContacts), // Pass displayed list
+            error: (errorState) => Center(child: Text("Error: ${errorState.message}")),
           );
         }),
       ),
-      // Remove the original floatingActionButton property
-
-      // Add the bottomNavigationBar
+      // BottomAppBar remains largely the same
       bottomNavigationBar: BottomAppBar(
         child: Container(
-          // Use Container for padding
           padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
           child: Row(
-            mainAxisAlignment:
-                MainAxisAlignment.spaceBetween, // Space out items
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              // Your static text
-              const Expanded(
-                // Allow text to take available space
-                child: Text(
-                  'Swipe/Tap list item to mark as contacted',
-                  style: TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
-                  overflow: TextOverflow
-                      .ellipsis, // Prevent overflow on small screens
-                ),
-              ),
-              const SizedBox(width: 10), // Add spacing between text and buttons
-              // Keep your FloatingActionButtons here, maybe in a Row or Column
+               // Info text (can be removed if cluttering)
+              // const Expanded(
+              //   child: Text(
+              //     'Swipe/Tap list item to mark as contacted',
+              //     style: TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
+              //     overflow: TextOverflow.ellipsis,
+              //   ),
+              // ),
+              const Spacer(), // Pushes buttons to the right
+              const SizedBox(width: 10),
               Row(
-                // Use a Row for the buttons
-                mainAxisSize: MainAxisSize.min, // Take minimum space
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   FloatingActionButton.small(
-                    // Use .small for less space
-                    heroTag: "btn1", // Add unique heroTags
+                    heroTag: "btn1",
+                    tooltip: "View Scheduled Notifications",
                     onPressed: () => _viewScheduledNotifications(context),
                     child: const Icon(Icons.notifications),
                   ),
-                  const SizedBox(width: 8), // Space between buttons
+                  const SizedBox(width: 8),
                   FloatingActionButton.small(
-                    // Use .small for less space
-                    heroTag: "btn2", // Add unique heroTags
+                    heroTag: "btn2",
+                     tooltip: "Add New Contact",
                     onPressed: () {
-                      context
-                          .read<ContactDetailsBloc>()
-                          .add(ContactDetailsEvent.updateContactLocally(
-                              contact: Contact(
-                            id: 0,
-                            firstName: '',
-                            lastName: '',
-                            frequency: ContactFrequency.never.value,
-                            birthday: null,
-                            lastContacted: null,
-                          )));
-                      Navigator.pushNamed(context, '/contactDetails',
-                          arguments: 0);
+                      // Clear details BLoC for new contact
+                       context.read<ContactDetailsBloc>().add(const ContactDetailsEvent.clearContact());
+                      // Navigate to add new contact (passing 0 or null)
+                      Navigator.pushNamed(context, '/contactDetails', arguments: 0);
                     },
                     child: const Icon(Icons.add),
                   ),
@@ -171,78 +285,85 @@ class _ContactListScreenState extends State<ContactListScreen> {
       ),
     );
   }
-}
+} // End of _ContactListScreenState
 
-Widget _contactList(List<Contact> contacts) {
+
+// --- Widget for building the list ---
+// Takes the list to display as parameter (now the filtered/searched list)
+Widget _buildContactList(List<Contact> contactsToDisplay) {
+   if (contactsToDisplay.isEmpty) {
+     return const Center(child: Text('No contacts match your search/filter.'));
+   }
   return ListView.builder(
-    itemCount: contacts.length,
+    itemCount: contactsToDisplay.length,
     itemBuilder: (context, index) {
-      final contact = contacts[index];
+      final contact = contactsToDisplay[index];
+      final bool isContactOverdue = isOverdue(contact.frequency, contact.lastContacted);
+
       return Column(
         children: [
-          // ListTile displays each contact's information.
           Slidable(
-            key: UniqueKey(),
+            key: ValueKey(contact.id), // Use contact ID for stable key
             endActionPane: ActionPane(motion: const DrawerMotion(), children: [
               SlidableAction(
                 onPressed: (context) {
                   final updatedContact =
                       contact.copyWith(lastContacted: DateTime.now());
+                  // Dispatch event to update contact in BLoC
                   context.read<ContactListBloc>().add(
                       ContactListEvent.updateContactFromList(updatedContact));
                 },
                 backgroundColor: Colors.blue,
                 foregroundColor: Colors.white,
                 icon: Icons.check,
-                label: 'Tap to mark Contacted',
+                label: 'Mark Contacted', // Shorter label
               ),
             ]),
-            startActionPane: ActionPane(
+            startActionPane: ActionPane( // Keep start action pane for consistency
               motion: const DrawerMotion(),
               children: [
-                SlidableAction(
-                  onPressed: (context) {
-                    final updatedContact =
-                        contact.copyWith(lastContacted: DateTime.now());
-                    context.read<ContactListBloc>().add(
-                        ContactListEvent.updateContactFromList(updatedContact));
-                  },
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                  icon: Icons.check,
-                  label: 'Tap to mark Contacted',
-                ),
+                 SlidableAction(
+                   onPressed: (context) {
+                      final updatedContact =
+                         contact.copyWith(lastContacted: DateTime.now());
+                      context.read<ContactListBloc>().add(
+                         ContactListEvent.updateContactFromList(updatedContact));
+                   },
+                   backgroundColor: Colors.blue,
+                   foregroundColor: Colors.white,
+                   icon: Icons.check,
+                   label: 'Mark Contacted',
+                 ),
               ],
             ),
             child: ListTile(
               title: Text('${contact.firstName} ${contact.lastName}'),
               subtitle: Text(
-                  calculateNextDueDateDisplay(
+                  calculateNextDueDateDisplay( // Show next due date
                       contact.lastContacted, contact.frequency),
                   style: const TextStyle(fontSize: 12)),
               trailing: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
+                  Text( // Show last contacted relative time
                     formatLastContacted(contact.lastContacted),
-                    style: isOverdue(contact.frequency, contact.lastContacted)
-                        ? const TextStyle(color: Colors.red)
-                        : null,
+                    style: isContactOverdue // Highlight if overdue
+                        ? const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)
+                        : const TextStyle(fontSize: 12), // Smaller font size for non-overdue
                   ),
-                  Text(
+                   Text( // Show frequency
                       contact.frequency != ContactFrequency.never.value
                           ? contact.frequency
-                          : 'Frequency not set',
-                      style: const TextStyle(fontSize: 12)),
+                          : '', // Don't show 'never' frequency explicitly maybe? Or 'Not Set'?
+                      style: const TextStyle(fontSize: 10, color: Colors.grey)), // Even smaller/greyed out
                 ],
               ),
               onTap: () {
-                // set the state of the detials bloc
+                // Load details for the tapped contact
                 context.read<ContactDetailsBloc>().add(
                     ContactDetailsEvent.loadContact(contactId: contact.id!));
-                // Navigate to the contact details screen with the
-                // arguement being the contact ID
+                // Navigate to details screen
                 Navigator.pushNamed(
                   context,
                   '/contactDetails',
@@ -251,20 +372,14 @@ Widget _contactList(List<Contact> contacts) {
               },
             ),
           ),
-          // Divider separates each contact in the list.
-          const Divider(
-            height: 1,
-            thickness: 1,
-            indent: 16,
-            endIndent: 16,
-            color: Colors.grey,
-          ),
+          const Divider(height: 1, thickness: 1, indent: 16, endIndent: 16), // Keep divider
         ],
       );
     },
   );
 }
 
+// Function to navigate to scheduled notifications screen (no change needed)
 void _viewScheduledNotifications(BuildContext context) {
   Navigator.push(
       context,

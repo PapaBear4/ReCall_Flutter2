@@ -23,6 +23,8 @@ mixin _$ContactListEvent {
     required TResult Function(Contact contact) updateContactFromList,
     required TResult Function(ContactListSortField sortField, bool ascending)
         sortContacts,
+    required TResult Function(String searchTerm) applySearch,
+    required TResult Function(ContactListFilter filter) applyFilter,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -32,6 +34,8 @@ mixin _$ContactListEvent {
     TResult? Function(Contact contact)? updateContactFromList,
     TResult? Function(ContactListSortField sortField, bool ascending)?
         sortContacts,
+    TResult? Function(String searchTerm)? applySearch,
+    TResult? Function(ContactListFilter filter)? applyFilter,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -41,6 +45,8 @@ mixin _$ContactListEvent {
     TResult Function(Contact contact)? updateContactFromList,
     TResult Function(ContactListSortField sortField, bool ascending)?
         sortContacts,
+    TResult Function(String searchTerm)? applySearch,
+    TResult Function(ContactListFilter filter)? applyFilter,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -52,6 +58,8 @@ mixin _$ContactListEvent {
     required TResult Function(_UpdateContactFromList value)
         updateContactFromList,
     required TResult Function(_SortContacts value) sortContacts,
+    required TResult Function(_ApplySearch value) applySearch,
+    required TResult Function(_ApplyFilter value) applyFilter,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -60,6 +68,8 @@ mixin _$ContactListEvent {
     TResult? Function(_DeleteContactFromList value)? deleteContactFromList,
     TResult? Function(_UpdateContactFromList value)? updateContactFromList,
     TResult? Function(_SortContacts value)? sortContacts,
+    TResult? Function(_ApplySearch value)? applySearch,
+    TResult? Function(_ApplyFilter value)? applyFilter,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -68,6 +78,8 @@ mixin _$ContactListEvent {
     TResult Function(_DeleteContactFromList value)? deleteContactFromList,
     TResult Function(_UpdateContactFromList value)? updateContactFromList,
     TResult Function(_SortContacts value)? sortContacts,
+    TResult Function(_ApplySearch value)? applySearch,
+    TResult Function(_ApplyFilter value)? applyFilter,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -140,6 +152,8 @@ class _$LoadContactsImpl implements _LoadContacts {
     required TResult Function(Contact contact) updateContactFromList,
     required TResult Function(ContactListSortField sortField, bool ascending)
         sortContacts,
+    required TResult Function(String searchTerm) applySearch,
+    required TResult Function(ContactListFilter filter) applyFilter,
   }) {
     return loadContacts();
   }
@@ -152,6 +166,8 @@ class _$LoadContactsImpl implements _LoadContacts {
     TResult? Function(Contact contact)? updateContactFromList,
     TResult? Function(ContactListSortField sortField, bool ascending)?
         sortContacts,
+    TResult? Function(String searchTerm)? applySearch,
+    TResult? Function(ContactListFilter filter)? applyFilter,
   }) {
     return loadContacts?.call();
   }
@@ -164,6 +180,8 @@ class _$LoadContactsImpl implements _LoadContacts {
     TResult Function(Contact contact)? updateContactFromList,
     TResult Function(ContactListSortField sortField, bool ascending)?
         sortContacts,
+    TResult Function(String searchTerm)? applySearch,
+    TResult Function(ContactListFilter filter)? applyFilter,
     required TResult orElse(),
   }) {
     if (loadContacts != null) {
@@ -181,6 +199,8 @@ class _$LoadContactsImpl implements _LoadContacts {
     required TResult Function(_UpdateContactFromList value)
         updateContactFromList,
     required TResult Function(_SortContacts value) sortContacts,
+    required TResult Function(_ApplySearch value) applySearch,
+    required TResult Function(_ApplyFilter value) applyFilter,
   }) {
     return loadContacts(this);
   }
@@ -192,6 +212,8 @@ class _$LoadContactsImpl implements _LoadContacts {
     TResult? Function(_DeleteContactFromList value)? deleteContactFromList,
     TResult? Function(_UpdateContactFromList value)? updateContactFromList,
     TResult? Function(_SortContacts value)? sortContacts,
+    TResult? Function(_ApplySearch value)? applySearch,
+    TResult? Function(_ApplyFilter value)? applyFilter,
   }) {
     return loadContacts?.call(this);
   }
@@ -203,6 +225,8 @@ class _$LoadContactsImpl implements _LoadContacts {
     TResult Function(_DeleteContactFromList value)? deleteContactFromList,
     TResult Function(_UpdateContactFromList value)? updateContactFromList,
     TResult Function(_SortContacts value)? sortContacts,
+    TResult Function(_ApplySearch value)? applySearch,
+    TResult Function(_ApplyFilter value)? applyFilter,
     required TResult orElse(),
   }) {
     if (loadContacts != null) {
@@ -292,6 +316,8 @@ class _$DeleteContactFromListImpl implements _DeleteContactFromList {
     required TResult Function(Contact contact) updateContactFromList,
     required TResult Function(ContactListSortField sortField, bool ascending)
         sortContacts,
+    required TResult Function(String searchTerm) applySearch,
+    required TResult Function(ContactListFilter filter) applyFilter,
   }) {
     return deleteContactFromList(contactId);
   }
@@ -304,6 +330,8 @@ class _$DeleteContactFromListImpl implements _DeleteContactFromList {
     TResult? Function(Contact contact)? updateContactFromList,
     TResult? Function(ContactListSortField sortField, bool ascending)?
         sortContacts,
+    TResult? Function(String searchTerm)? applySearch,
+    TResult? Function(ContactListFilter filter)? applyFilter,
   }) {
     return deleteContactFromList?.call(contactId);
   }
@@ -316,6 +344,8 @@ class _$DeleteContactFromListImpl implements _DeleteContactFromList {
     TResult Function(Contact contact)? updateContactFromList,
     TResult Function(ContactListSortField sortField, bool ascending)?
         sortContacts,
+    TResult Function(String searchTerm)? applySearch,
+    TResult Function(ContactListFilter filter)? applyFilter,
     required TResult orElse(),
   }) {
     if (deleteContactFromList != null) {
@@ -333,6 +363,8 @@ class _$DeleteContactFromListImpl implements _DeleteContactFromList {
     required TResult Function(_UpdateContactFromList value)
         updateContactFromList,
     required TResult Function(_SortContacts value) sortContacts,
+    required TResult Function(_ApplySearch value) applySearch,
+    required TResult Function(_ApplyFilter value) applyFilter,
   }) {
     return deleteContactFromList(this);
   }
@@ -344,6 +376,8 @@ class _$DeleteContactFromListImpl implements _DeleteContactFromList {
     TResult? Function(_DeleteContactFromList value)? deleteContactFromList,
     TResult? Function(_UpdateContactFromList value)? updateContactFromList,
     TResult? Function(_SortContacts value)? sortContacts,
+    TResult? Function(_ApplySearch value)? applySearch,
+    TResult? Function(_ApplyFilter value)? applyFilter,
   }) {
     return deleteContactFromList?.call(this);
   }
@@ -355,6 +389,8 @@ class _$DeleteContactFromListImpl implements _DeleteContactFromList {
     TResult Function(_DeleteContactFromList value)? deleteContactFromList,
     TResult Function(_UpdateContactFromList value)? updateContactFromList,
     TResult Function(_SortContacts value)? sortContacts,
+    TResult Function(_ApplySearch value)? applySearch,
+    TResult Function(_ApplyFilter value)? applyFilter,
     required TResult orElse(),
   }) {
     if (deleteContactFromList != null) {
@@ -464,6 +500,8 @@ class _$UpdateContactFromListImpl implements _UpdateContactFromList {
     required TResult Function(Contact contact) updateContactFromList,
     required TResult Function(ContactListSortField sortField, bool ascending)
         sortContacts,
+    required TResult Function(String searchTerm) applySearch,
+    required TResult Function(ContactListFilter filter) applyFilter,
   }) {
     return updateContactFromList(contact);
   }
@@ -476,6 +514,8 @@ class _$UpdateContactFromListImpl implements _UpdateContactFromList {
     TResult? Function(Contact contact)? updateContactFromList,
     TResult? Function(ContactListSortField sortField, bool ascending)?
         sortContacts,
+    TResult? Function(String searchTerm)? applySearch,
+    TResult? Function(ContactListFilter filter)? applyFilter,
   }) {
     return updateContactFromList?.call(contact);
   }
@@ -488,6 +528,8 @@ class _$UpdateContactFromListImpl implements _UpdateContactFromList {
     TResult Function(Contact contact)? updateContactFromList,
     TResult Function(ContactListSortField sortField, bool ascending)?
         sortContacts,
+    TResult Function(String searchTerm)? applySearch,
+    TResult Function(ContactListFilter filter)? applyFilter,
     required TResult orElse(),
   }) {
     if (updateContactFromList != null) {
@@ -505,6 +547,8 @@ class _$UpdateContactFromListImpl implements _UpdateContactFromList {
     required TResult Function(_UpdateContactFromList value)
         updateContactFromList,
     required TResult Function(_SortContacts value) sortContacts,
+    required TResult Function(_ApplySearch value) applySearch,
+    required TResult Function(_ApplyFilter value) applyFilter,
   }) {
     return updateContactFromList(this);
   }
@@ -516,6 +560,8 @@ class _$UpdateContactFromListImpl implements _UpdateContactFromList {
     TResult? Function(_DeleteContactFromList value)? deleteContactFromList,
     TResult? Function(_UpdateContactFromList value)? updateContactFromList,
     TResult? Function(_SortContacts value)? sortContacts,
+    TResult? Function(_ApplySearch value)? applySearch,
+    TResult? Function(_ApplyFilter value)? applyFilter,
   }) {
     return updateContactFromList?.call(this);
   }
@@ -527,6 +573,8 @@ class _$UpdateContactFromListImpl implements _UpdateContactFromList {
     TResult Function(_DeleteContactFromList value)? deleteContactFromList,
     TResult Function(_UpdateContactFromList value)? updateContactFromList,
     TResult Function(_SortContacts value)? sortContacts,
+    TResult Function(_ApplySearch value)? applySearch,
+    TResult Function(_ApplyFilter value)? applyFilter,
     required TResult orElse(),
   }) {
     if (updateContactFromList != null) {
@@ -637,6 +685,8 @@ class _$SortContactsImpl implements _SortContacts {
     required TResult Function(Contact contact) updateContactFromList,
     required TResult Function(ContactListSortField sortField, bool ascending)
         sortContacts,
+    required TResult Function(String searchTerm) applySearch,
+    required TResult Function(ContactListFilter filter) applyFilter,
   }) {
     return sortContacts(sortField, ascending);
   }
@@ -649,6 +699,8 @@ class _$SortContactsImpl implements _SortContacts {
     TResult? Function(Contact contact)? updateContactFromList,
     TResult? Function(ContactListSortField sortField, bool ascending)?
         sortContacts,
+    TResult? Function(String searchTerm)? applySearch,
+    TResult? Function(ContactListFilter filter)? applyFilter,
   }) {
     return sortContacts?.call(sortField, ascending);
   }
@@ -661,6 +713,8 @@ class _$SortContactsImpl implements _SortContacts {
     TResult Function(Contact contact)? updateContactFromList,
     TResult Function(ContactListSortField sortField, bool ascending)?
         sortContacts,
+    TResult Function(String searchTerm)? applySearch,
+    TResult Function(ContactListFilter filter)? applyFilter,
     required TResult orElse(),
   }) {
     if (sortContacts != null) {
@@ -678,6 +732,8 @@ class _$SortContactsImpl implements _SortContacts {
     required TResult Function(_UpdateContactFromList value)
         updateContactFromList,
     required TResult Function(_SortContacts value) sortContacts,
+    required TResult Function(_ApplySearch value) applySearch,
+    required TResult Function(_ApplyFilter value) applyFilter,
   }) {
     return sortContacts(this);
   }
@@ -689,6 +745,8 @@ class _$SortContactsImpl implements _SortContacts {
     TResult? Function(_DeleteContactFromList value)? deleteContactFromList,
     TResult? Function(_UpdateContactFromList value)? updateContactFromList,
     TResult? Function(_SortContacts value)? sortContacts,
+    TResult? Function(_ApplySearch value)? applySearch,
+    TResult? Function(_ApplyFilter value)? applyFilter,
   }) {
     return sortContacts?.call(this);
   }
@@ -700,6 +758,8 @@ class _$SortContactsImpl implements _SortContacts {
     TResult Function(_DeleteContactFromList value)? deleteContactFromList,
     TResult Function(_UpdateContactFromList value)? updateContactFromList,
     TResult Function(_SortContacts value)? sortContacts,
+    TResult Function(_ApplySearch value)? applySearch,
+    TResult Function(_ApplyFilter value)? applyFilter,
     required TResult orElse(),
   }) {
     if (sortContacts != null) {
@@ -727,14 +787,360 @@ abstract class _SortContacts implements ContactListEvent {
 }
 
 /// @nodoc
+abstract class _$$ApplySearchImplCopyWith<$Res> {
+  factory _$$ApplySearchImplCopyWith(
+          _$ApplySearchImpl value, $Res Function(_$ApplySearchImpl) then) =
+      __$$ApplySearchImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({String searchTerm});
+}
+
+/// @nodoc
+class __$$ApplySearchImplCopyWithImpl<$Res>
+    extends _$ContactListEventCopyWithImpl<$Res, _$ApplySearchImpl>
+    implements _$$ApplySearchImplCopyWith<$Res> {
+  __$$ApplySearchImplCopyWithImpl(
+      _$ApplySearchImpl _value, $Res Function(_$ApplySearchImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of ContactListEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? searchTerm = null,
+  }) {
+    return _then(_$ApplySearchImpl(
+      searchTerm: null == searchTerm
+          ? _value.searchTerm
+          : searchTerm // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$ApplySearchImpl implements _ApplySearch {
+  const _$ApplySearchImpl({required this.searchTerm});
+
+  @override
+  final String searchTerm;
+
+  @override
+  String toString() {
+    return 'ContactListEvent.applySearch(searchTerm: $searchTerm)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ApplySearchImpl &&
+            (identical(other.searchTerm, searchTerm) ||
+                other.searchTerm == searchTerm));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, searchTerm);
+
+  /// Create a copy of ContactListEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ApplySearchImplCopyWith<_$ApplySearchImpl> get copyWith =>
+      __$$ApplySearchImplCopyWithImpl<_$ApplySearchImpl>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function() loadContacts,
+    required TResult Function(int contactId) deleteContactFromList,
+    required TResult Function(Contact contact) updateContactFromList,
+    required TResult Function(ContactListSortField sortField, bool ascending)
+        sortContacts,
+    required TResult Function(String searchTerm) applySearch,
+    required TResult Function(ContactListFilter filter) applyFilter,
+  }) {
+    return applySearch(searchTerm);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function()? loadContacts,
+    TResult? Function(int contactId)? deleteContactFromList,
+    TResult? Function(Contact contact)? updateContactFromList,
+    TResult? Function(ContactListSortField sortField, bool ascending)?
+        sortContacts,
+    TResult? Function(String searchTerm)? applySearch,
+    TResult? Function(ContactListFilter filter)? applyFilter,
+  }) {
+    return applySearch?.call(searchTerm);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function()? loadContacts,
+    TResult Function(int contactId)? deleteContactFromList,
+    TResult Function(Contact contact)? updateContactFromList,
+    TResult Function(ContactListSortField sortField, bool ascending)?
+        sortContacts,
+    TResult Function(String searchTerm)? applySearch,
+    TResult Function(ContactListFilter filter)? applyFilter,
+    required TResult orElse(),
+  }) {
+    if (applySearch != null) {
+      return applySearch(searchTerm);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(_LoadContacts value) loadContacts,
+    required TResult Function(_DeleteContactFromList value)
+        deleteContactFromList,
+    required TResult Function(_UpdateContactFromList value)
+        updateContactFromList,
+    required TResult Function(_SortContacts value) sortContacts,
+    required TResult Function(_ApplySearch value) applySearch,
+    required TResult Function(_ApplyFilter value) applyFilter,
+  }) {
+    return applySearch(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(_LoadContacts value)? loadContacts,
+    TResult? Function(_DeleteContactFromList value)? deleteContactFromList,
+    TResult? Function(_UpdateContactFromList value)? updateContactFromList,
+    TResult? Function(_SortContacts value)? sortContacts,
+    TResult? Function(_ApplySearch value)? applySearch,
+    TResult? Function(_ApplyFilter value)? applyFilter,
+  }) {
+    return applySearch?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(_LoadContacts value)? loadContacts,
+    TResult Function(_DeleteContactFromList value)? deleteContactFromList,
+    TResult Function(_UpdateContactFromList value)? updateContactFromList,
+    TResult Function(_SortContacts value)? sortContacts,
+    TResult Function(_ApplySearch value)? applySearch,
+    TResult Function(_ApplyFilter value)? applyFilter,
+    required TResult orElse(),
+  }) {
+    if (applySearch != null) {
+      return applySearch(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class _ApplySearch implements ContactListEvent {
+  const factory _ApplySearch({required final String searchTerm}) =
+      _$ApplySearchImpl;
+
+  String get searchTerm;
+
+  /// Create a copy of ContactListEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$ApplySearchImplCopyWith<_$ApplySearchImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$ApplyFilterImplCopyWith<$Res> {
+  factory _$$ApplyFilterImplCopyWith(
+          _$ApplyFilterImpl value, $Res Function(_$ApplyFilterImpl) then) =
+      __$$ApplyFilterImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({ContactListFilter filter});
+}
+
+/// @nodoc
+class __$$ApplyFilterImplCopyWithImpl<$Res>
+    extends _$ContactListEventCopyWithImpl<$Res, _$ApplyFilterImpl>
+    implements _$$ApplyFilterImplCopyWith<$Res> {
+  __$$ApplyFilterImplCopyWithImpl(
+      _$ApplyFilterImpl _value, $Res Function(_$ApplyFilterImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of ContactListEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? filter = null,
+  }) {
+    return _then(_$ApplyFilterImpl(
+      filter: null == filter
+          ? _value.filter
+          : filter // ignore: cast_nullable_to_non_nullable
+              as ContactListFilter,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$ApplyFilterImpl implements _ApplyFilter {
+  const _$ApplyFilterImpl({required this.filter});
+
+  @override
+  final ContactListFilter filter;
+
+  @override
+  String toString() {
+    return 'ContactListEvent.applyFilter(filter: $filter)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$ApplyFilterImpl &&
+            (identical(other.filter, filter) || other.filter == filter));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, filter);
+
+  /// Create a copy of ContactListEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$ApplyFilterImplCopyWith<_$ApplyFilterImpl> get copyWith =>
+      __$$ApplyFilterImplCopyWithImpl<_$ApplyFilterImpl>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function() loadContacts,
+    required TResult Function(int contactId) deleteContactFromList,
+    required TResult Function(Contact contact) updateContactFromList,
+    required TResult Function(ContactListSortField sortField, bool ascending)
+        sortContacts,
+    required TResult Function(String searchTerm) applySearch,
+    required TResult Function(ContactListFilter filter) applyFilter,
+  }) {
+    return applyFilter(filter);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function()? loadContacts,
+    TResult? Function(int contactId)? deleteContactFromList,
+    TResult? Function(Contact contact)? updateContactFromList,
+    TResult? Function(ContactListSortField sortField, bool ascending)?
+        sortContacts,
+    TResult? Function(String searchTerm)? applySearch,
+    TResult? Function(ContactListFilter filter)? applyFilter,
+  }) {
+    return applyFilter?.call(filter);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function()? loadContacts,
+    TResult Function(int contactId)? deleteContactFromList,
+    TResult Function(Contact contact)? updateContactFromList,
+    TResult Function(ContactListSortField sortField, bool ascending)?
+        sortContacts,
+    TResult Function(String searchTerm)? applySearch,
+    TResult Function(ContactListFilter filter)? applyFilter,
+    required TResult orElse(),
+  }) {
+    if (applyFilter != null) {
+      return applyFilter(filter);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(_LoadContacts value) loadContacts,
+    required TResult Function(_DeleteContactFromList value)
+        deleteContactFromList,
+    required TResult Function(_UpdateContactFromList value)
+        updateContactFromList,
+    required TResult Function(_SortContacts value) sortContacts,
+    required TResult Function(_ApplySearch value) applySearch,
+    required TResult Function(_ApplyFilter value) applyFilter,
+  }) {
+    return applyFilter(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(_LoadContacts value)? loadContacts,
+    TResult? Function(_DeleteContactFromList value)? deleteContactFromList,
+    TResult? Function(_UpdateContactFromList value)? updateContactFromList,
+    TResult? Function(_SortContacts value)? sortContacts,
+    TResult? Function(_ApplySearch value)? applySearch,
+    TResult? Function(_ApplyFilter value)? applyFilter,
+  }) {
+    return applyFilter?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(_LoadContacts value)? loadContacts,
+    TResult Function(_DeleteContactFromList value)? deleteContactFromList,
+    TResult Function(_UpdateContactFromList value)? updateContactFromList,
+    TResult Function(_SortContacts value)? sortContacts,
+    TResult Function(_ApplySearch value)? applySearch,
+    TResult Function(_ApplyFilter value)? applyFilter,
+    required TResult orElse(),
+  }) {
+    if (applyFilter != null) {
+      return applyFilter(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class _ApplyFilter implements ContactListEvent {
+  const factory _ApplyFilter({required final ContactListFilter filter}) =
+      _$ApplyFilterImpl;
+
+  ContactListFilter get filter;
+
+  /// Create a copy of ContactListEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$ApplyFilterImplCopyWith<_$ApplyFilterImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
 mixin _$ContactListState {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function() initial,
     required TResult Function() empty,
     required TResult Function() loading,
-    required TResult Function(List<Contact> contacts,
-            ContactListSortField sortField, bool ascending)
+    required TResult Function(
+            List<Contact> originalContacts,
+            List<Contact> displayedContacts,
+            ContactListSortField sortField,
+            bool ascending,
+            String searchTerm,
+            ContactListFilter currentFilter)
         loaded,
     required TResult Function(String message) error,
   }) =>
@@ -744,8 +1150,13 @@ mixin _$ContactListState {
     TResult? Function()? initial,
     TResult? Function()? empty,
     TResult? Function()? loading,
-    TResult? Function(List<Contact> contacts, ContactListSortField sortField,
-            bool ascending)?
+    TResult? Function(
+            List<Contact> originalContacts,
+            List<Contact> displayedContacts,
+            ContactListSortField sortField,
+            bool ascending,
+            String searchTerm,
+            ContactListFilter currentFilter)?
         loaded,
     TResult? Function(String message)? error,
   }) =>
@@ -755,8 +1166,13 @@ mixin _$ContactListState {
     TResult Function()? initial,
     TResult Function()? empty,
     TResult Function()? loading,
-    TResult Function(List<Contact> contacts, ContactListSortField sortField,
-            bool ascending)?
+    TResult Function(
+            List<Contact> originalContacts,
+            List<Contact> displayedContacts,
+            ContactListSortField sortField,
+            bool ascending,
+            String searchTerm,
+            ContactListFilter currentFilter)?
         loaded,
     TResult Function(String message)? error,
     required TResult orElse(),
@@ -857,8 +1273,13 @@ class _$InitialImpl implements _Initial {
     required TResult Function() initial,
     required TResult Function() empty,
     required TResult Function() loading,
-    required TResult Function(List<Contact> contacts,
-            ContactListSortField sortField, bool ascending)
+    required TResult Function(
+            List<Contact> originalContacts,
+            List<Contact> displayedContacts,
+            ContactListSortField sortField,
+            bool ascending,
+            String searchTerm,
+            ContactListFilter currentFilter)
         loaded,
     required TResult Function(String message) error,
   }) {
@@ -871,8 +1292,13 @@ class _$InitialImpl implements _Initial {
     TResult? Function()? initial,
     TResult? Function()? empty,
     TResult? Function()? loading,
-    TResult? Function(List<Contact> contacts, ContactListSortField sortField,
-            bool ascending)?
+    TResult? Function(
+            List<Contact> originalContacts,
+            List<Contact> displayedContacts,
+            ContactListSortField sortField,
+            bool ascending,
+            String searchTerm,
+            ContactListFilter currentFilter)?
         loaded,
     TResult? Function(String message)? error,
   }) {
@@ -885,8 +1311,13 @@ class _$InitialImpl implements _Initial {
     TResult Function()? initial,
     TResult Function()? empty,
     TResult Function()? loading,
-    TResult Function(List<Contact> contacts, ContactListSortField sortField,
-            bool ascending)?
+    TResult Function(
+            List<Contact> originalContacts,
+            List<Contact> displayedContacts,
+            ContactListSortField sortField,
+            bool ascending,
+            String searchTerm,
+            ContactListFilter currentFilter)?
         loaded,
     TResult Function(String message)? error,
     required TResult orElse(),
@@ -986,8 +1417,13 @@ class _$EmptyImpl implements _Empty {
     required TResult Function() initial,
     required TResult Function() empty,
     required TResult Function() loading,
-    required TResult Function(List<Contact> contacts,
-            ContactListSortField sortField, bool ascending)
+    required TResult Function(
+            List<Contact> originalContacts,
+            List<Contact> displayedContacts,
+            ContactListSortField sortField,
+            bool ascending,
+            String searchTerm,
+            ContactListFilter currentFilter)
         loaded,
     required TResult Function(String message) error,
   }) {
@@ -1000,8 +1436,13 @@ class _$EmptyImpl implements _Empty {
     TResult? Function()? initial,
     TResult? Function()? empty,
     TResult? Function()? loading,
-    TResult? Function(List<Contact> contacts, ContactListSortField sortField,
-            bool ascending)?
+    TResult? Function(
+            List<Contact> originalContacts,
+            List<Contact> displayedContacts,
+            ContactListSortField sortField,
+            bool ascending,
+            String searchTerm,
+            ContactListFilter currentFilter)?
         loaded,
     TResult? Function(String message)? error,
   }) {
@@ -1014,8 +1455,13 @@ class _$EmptyImpl implements _Empty {
     TResult Function()? initial,
     TResult Function()? empty,
     TResult Function()? loading,
-    TResult Function(List<Contact> contacts, ContactListSortField sortField,
-            bool ascending)?
+    TResult Function(
+            List<Contact> originalContacts,
+            List<Contact> displayedContacts,
+            ContactListSortField sortField,
+            bool ascending,
+            String searchTerm,
+            ContactListFilter currentFilter)?
         loaded,
     TResult Function(String message)? error,
     required TResult orElse(),
@@ -1115,8 +1561,13 @@ class _$LoadingImpl implements _Loading {
     required TResult Function() initial,
     required TResult Function() empty,
     required TResult Function() loading,
-    required TResult Function(List<Contact> contacts,
-            ContactListSortField sortField, bool ascending)
+    required TResult Function(
+            List<Contact> originalContacts,
+            List<Contact> displayedContacts,
+            ContactListSortField sortField,
+            bool ascending,
+            String searchTerm,
+            ContactListFilter currentFilter)
         loaded,
     required TResult Function(String message) error,
   }) {
@@ -1129,8 +1580,13 @@ class _$LoadingImpl implements _Loading {
     TResult? Function()? initial,
     TResult? Function()? empty,
     TResult? Function()? loading,
-    TResult? Function(List<Contact> contacts, ContactListSortField sortField,
-            bool ascending)?
+    TResult? Function(
+            List<Contact> originalContacts,
+            List<Contact> displayedContacts,
+            ContactListSortField sortField,
+            bool ascending,
+            String searchTerm,
+            ContactListFilter currentFilter)?
         loaded,
     TResult? Function(String message)? error,
   }) {
@@ -1143,8 +1599,13 @@ class _$LoadingImpl implements _Loading {
     TResult Function()? initial,
     TResult Function()? empty,
     TResult Function()? loading,
-    TResult Function(List<Contact> contacts, ContactListSortField sortField,
-            bool ascending)?
+    TResult Function(
+            List<Contact> originalContacts,
+            List<Contact> displayedContacts,
+            ContactListSortField sortField,
+            bool ascending,
+            String searchTerm,
+            ContactListFilter currentFilter)?
         loaded,
     TResult Function(String message)? error,
     required TResult orElse(),
@@ -1207,7 +1668,12 @@ abstract class _$$LoadedImplCopyWith<$Res> {
       __$$LoadedImplCopyWithImpl<$Res>;
   @useResult
   $Res call(
-      {List<Contact> contacts, ContactListSortField sortField, bool ascending});
+      {List<Contact> originalContacts,
+      List<Contact> displayedContacts,
+      ContactListSortField sortField,
+      bool ascending,
+      String searchTerm,
+      ContactListFilter currentFilter});
 }
 
 /// @nodoc
@@ -1223,14 +1689,21 @@ class __$$LoadedImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? contacts = null,
+    Object? originalContacts = null,
+    Object? displayedContacts = null,
     Object? sortField = null,
     Object? ascending = null,
+    Object? searchTerm = null,
+    Object? currentFilter = null,
   }) {
     return _then(_$LoadedImpl(
-      contacts: null == contacts
-          ? _value._contacts
-          : contacts // ignore: cast_nullable_to_non_nullable
+      originalContacts: null == originalContacts
+          ? _value._originalContacts
+          : originalContacts // ignore: cast_nullable_to_non_nullable
+              as List<Contact>,
+      displayedContacts: null == displayedContacts
+          ? _value._displayedContacts
+          : displayedContacts // ignore: cast_nullable_to_non_nullable
               as List<Contact>,
       sortField: null == sortField
           ? _value.sortField
@@ -1240,6 +1713,14 @@ class __$$LoadedImplCopyWithImpl<$Res>
           ? _value.ascending
           : ascending // ignore: cast_nullable_to_non_nullable
               as bool,
+      searchTerm: null == searchTerm
+          ? _value.searchTerm
+          : searchTerm // ignore: cast_nullable_to_non_nullable
+              as String,
+      currentFilter: null == currentFilter
+          ? _value.currentFilter
+          : currentFilter // ignore: cast_nullable_to_non_nullable
+              as ContactListFilter,
     ));
   }
 }
@@ -1248,29 +1729,53 @@ class __$$LoadedImplCopyWithImpl<$Res>
 
 class _$LoadedImpl implements _Loaded {
   const _$LoadedImpl(
-      {required final List<Contact> contacts,
+      {required final List<Contact> originalContacts,
+      required final List<Contact> displayedContacts,
       this.sortField = ContactListSortField.dueDate,
-      this.ascending = true})
-      : _contacts = contacts;
+      this.ascending = true,
+      this.searchTerm = '',
+      this.currentFilter = ContactListFilter.none})
+      : _originalContacts = originalContacts,
+        _displayedContacts = displayedContacts;
 
-  final List<Contact> _contacts;
+  final List<Contact> _originalContacts;
   @override
-  List<Contact> get contacts {
-    if (_contacts is EqualUnmodifiableListView) return _contacts;
+  List<Contact> get originalContacts {
+    if (_originalContacts is EqualUnmodifiableListView)
+      return _originalContacts;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_contacts);
+    return EqualUnmodifiableListView(_originalContacts);
   }
 
+// Full list from repository
+  final List<Contact> _displayedContacts;
+// Full list from repository
+  @override
+  List<Contact> get displayedContacts {
+    if (_displayedContacts is EqualUnmodifiableListView)
+      return _displayedContacts;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_displayedContacts);
+  }
+
+// Filtered/Searched list for UI
   @override
   @JsonKey()
   final ContactListSortField sortField;
   @override
   @JsonKey()
   final bool ascending;
+  @override
+  @JsonKey()
+  final String searchTerm;
+// Current search term
+  @override
+  @JsonKey()
+  final ContactListFilter currentFilter;
 
   @override
   String toString() {
-    return 'ContactListState.loaded(contacts: $contacts, sortField: $sortField, ascending: $ascending)';
+    return 'ContactListState.loaded(originalContacts: $originalContacts, displayedContacts: $displayedContacts, sortField: $sortField, ascending: $ascending, searchTerm: $searchTerm, currentFilter: $currentFilter)';
   }
 
   @override
@@ -1278,16 +1783,29 @@ class _$LoadedImpl implements _Loaded {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$LoadedImpl &&
-            const DeepCollectionEquality().equals(other._contacts, _contacts) &&
+            const DeepCollectionEquality()
+                .equals(other._originalContacts, _originalContacts) &&
+            const DeepCollectionEquality()
+                .equals(other._displayedContacts, _displayedContacts) &&
             (identical(other.sortField, sortField) ||
                 other.sortField == sortField) &&
             (identical(other.ascending, ascending) ||
-                other.ascending == ascending));
+                other.ascending == ascending) &&
+            (identical(other.searchTerm, searchTerm) ||
+                other.searchTerm == searchTerm) &&
+            (identical(other.currentFilter, currentFilter) ||
+                other.currentFilter == currentFilter));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType,
-      const DeepCollectionEquality().hash(_contacts), sortField, ascending);
+  int get hashCode => Object.hash(
+      runtimeType,
+      const DeepCollectionEquality().hash(_originalContacts),
+      const DeepCollectionEquality().hash(_displayedContacts),
+      sortField,
+      ascending,
+      searchTerm,
+      currentFilter);
 
   /// Create a copy of ContactListState
   /// with the given fields replaced by the non-null parameter values.
@@ -1303,12 +1821,18 @@ class _$LoadedImpl implements _Loaded {
     required TResult Function() initial,
     required TResult Function() empty,
     required TResult Function() loading,
-    required TResult Function(List<Contact> contacts,
-            ContactListSortField sortField, bool ascending)
+    required TResult Function(
+            List<Contact> originalContacts,
+            List<Contact> displayedContacts,
+            ContactListSortField sortField,
+            bool ascending,
+            String searchTerm,
+            ContactListFilter currentFilter)
         loaded,
     required TResult Function(String message) error,
   }) {
-    return loaded(contacts, sortField, ascending);
+    return loaded(originalContacts, displayedContacts, sortField, ascending,
+        searchTerm, currentFilter);
   }
 
   @override
@@ -1317,12 +1841,18 @@ class _$LoadedImpl implements _Loaded {
     TResult? Function()? initial,
     TResult? Function()? empty,
     TResult? Function()? loading,
-    TResult? Function(List<Contact> contacts, ContactListSortField sortField,
-            bool ascending)?
+    TResult? Function(
+            List<Contact> originalContacts,
+            List<Contact> displayedContacts,
+            ContactListSortField sortField,
+            bool ascending,
+            String searchTerm,
+            ContactListFilter currentFilter)?
         loaded,
     TResult? Function(String message)? error,
   }) {
-    return loaded?.call(contacts, sortField, ascending);
+    return loaded?.call(originalContacts, displayedContacts, sortField,
+        ascending, searchTerm, currentFilter);
   }
 
   @override
@@ -1331,14 +1861,20 @@ class _$LoadedImpl implements _Loaded {
     TResult Function()? initial,
     TResult Function()? empty,
     TResult Function()? loading,
-    TResult Function(List<Contact> contacts, ContactListSortField sortField,
-            bool ascending)?
+    TResult Function(
+            List<Contact> originalContacts,
+            List<Contact> displayedContacts,
+            ContactListSortField sortField,
+            bool ascending,
+            String searchTerm,
+            ContactListFilter currentFilter)?
         loaded,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
     if (loaded != null) {
-      return loaded(contacts, sortField, ascending);
+      return loaded(originalContacts, displayedContacts, sortField, ascending,
+          searchTerm, currentFilter);
     }
     return orElse();
   }
@@ -1386,13 +1922,19 @@ class _$LoadedImpl implements _Loaded {
 
 abstract class _Loaded implements ContactListState {
   const factory _Loaded(
-      {required final List<Contact> contacts,
+      {required final List<Contact> originalContacts,
+      required final List<Contact> displayedContacts,
       final ContactListSortField sortField,
-      final bool ascending}) = _$LoadedImpl;
+      final bool ascending,
+      final String searchTerm,
+      final ContactListFilter currentFilter}) = _$LoadedImpl;
 
-  List<Contact> get contacts;
+  List<Contact> get originalContacts; // Full list from repository
+  List<Contact> get displayedContacts; // Filtered/Searched list for UI
   ContactListSortField get sortField;
   bool get ascending;
+  String get searchTerm; // Current search term
+  ContactListFilter get currentFilter;
 
   /// Create a copy of ContactListState
   /// with the given fields replaced by the non-null parameter values.
@@ -1472,8 +2014,13 @@ class _$ErrorImpl implements _Error {
     required TResult Function() initial,
     required TResult Function() empty,
     required TResult Function() loading,
-    required TResult Function(List<Contact> contacts,
-            ContactListSortField sortField, bool ascending)
+    required TResult Function(
+            List<Contact> originalContacts,
+            List<Contact> displayedContacts,
+            ContactListSortField sortField,
+            bool ascending,
+            String searchTerm,
+            ContactListFilter currentFilter)
         loaded,
     required TResult Function(String message) error,
   }) {
@@ -1486,8 +2033,13 @@ class _$ErrorImpl implements _Error {
     TResult? Function()? initial,
     TResult? Function()? empty,
     TResult? Function()? loading,
-    TResult? Function(List<Contact> contacts, ContactListSortField sortField,
-            bool ascending)?
+    TResult? Function(
+            List<Contact> originalContacts,
+            List<Contact> displayedContacts,
+            ContactListSortField sortField,
+            bool ascending,
+            String searchTerm,
+            ContactListFilter currentFilter)?
         loaded,
     TResult? Function(String message)? error,
   }) {
@@ -1500,8 +2052,13 @@ class _$ErrorImpl implements _Error {
     TResult Function()? initial,
     TResult Function()? empty,
     TResult Function()? loading,
-    TResult Function(List<Contact> contacts, ContactListSortField sortField,
-            bool ascending)?
+    TResult Function(
+            List<Contact> originalContacts,
+            List<Contact> displayedContacts,
+            ContactListSortField sortField,
+            bool ascending,
+            String searchTerm,
+            ContactListFilter currentFilter)?
         loaded,
     TResult Function(String message)? error,
     required TResult orElse(),
