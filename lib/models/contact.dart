@@ -20,6 +20,7 @@ abstract class Contact with _$Contact {
     String frequency, // Store the String representation
     @Property(type: PropertyType.date) DateTime? birthday,
     @Property(type: PropertyType.date) DateTime? lastContacted,
+    @Property(type: PropertyType.date) DateTime? anniversary,
   }) = _Contact;
 
   factory Contact.fromJson(Map<String, dynamic> json) =>

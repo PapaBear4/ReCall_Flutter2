@@ -30,6 +30,8 @@ mixin _$Contact {
   DateTime? get birthday => throw _privateConstructorUsedError;
   @Property(type: PropertyType.date)
   DateTime? get lastContacted => throw _privateConstructorUsedError;
+  @Property(type: PropertyType.date)
+  DateTime? get anniversary => throw _privateConstructorUsedError;
 
   /// Serializes this Contact to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -51,7 +53,8 @@ abstract class $ContactCopyWith<$Res> {
       String lastName,
       String frequency,
       @Property(type: PropertyType.date) DateTime? birthday,
-      @Property(type: PropertyType.date) DateTime? lastContacted});
+      @Property(type: PropertyType.date) DateTime? lastContacted,
+      @Property(type: PropertyType.date) DateTime? anniversary});
 }
 
 /// @nodoc
@@ -75,6 +78,7 @@ class _$ContactCopyWithImpl<$Res, $Val extends Contact>
     Object? frequency = null,
     Object? birthday = freezed,
     Object? lastContacted = freezed,
+    Object? anniversary = freezed,
   }) {
     return _then(_value.copyWith(
       id: freezed == id
@@ -101,6 +105,10 @@ class _$ContactCopyWithImpl<$Res, $Val extends Contact>
           ? _value.lastContacted
           : lastContacted // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      anniversary: freezed == anniversary
+          ? _value.anniversary
+          : anniversary // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
     ) as $Val);
   }
 }
@@ -118,7 +126,8 @@ abstract class _$$ContactImplCopyWith<$Res> implements $ContactCopyWith<$Res> {
       String lastName,
       String frequency,
       @Property(type: PropertyType.date) DateTime? birthday,
-      @Property(type: PropertyType.date) DateTime? lastContacted});
+      @Property(type: PropertyType.date) DateTime? lastContacted,
+      @Property(type: PropertyType.date) DateTime? anniversary});
 }
 
 /// @nodoc
@@ -140,6 +149,7 @@ class __$$ContactImplCopyWithImpl<$Res>
     Object? frequency = null,
     Object? birthday = freezed,
     Object? lastContacted = freezed,
+    Object? anniversary = freezed,
   }) {
     return _then(_$ContactImpl(
       id: freezed == id
@@ -166,6 +176,10 @@ class __$$ContactImplCopyWithImpl<$Res>
           ? _value.lastContacted
           : lastContacted // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      anniversary: freezed == anniversary
+          ? _value.anniversary
+          : anniversary // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
     ));
   }
 }
@@ -180,7 +194,8 @@ class _$ContactImpl extends _Contact with DiagnosticableTreeMixin {
       required this.lastName,
       this.frequency = ContactFrequency.defaultValue,
       @Property(type: PropertyType.date) this.birthday,
-      @Property(type: PropertyType.date) this.lastContacted})
+      @Property(type: PropertyType.date) this.lastContacted,
+      @Property(type: PropertyType.date) this.anniversary})
       : super._();
 
   factory _$ContactImpl.fromJson(Map<String, dynamic> json) =>
@@ -203,10 +218,13 @@ class _$ContactImpl extends _Contact with DiagnosticableTreeMixin {
   @override
   @Property(type: PropertyType.date)
   final DateTime? lastContacted;
+  @override
+  @Property(type: PropertyType.date)
+  final DateTime? anniversary;
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'Contact(id: $id, firstName: $firstName, lastName: $lastName, frequency: $frequency, birthday: $birthday, lastContacted: $lastContacted)';
+    return 'Contact(id: $id, firstName: $firstName, lastName: $lastName, frequency: $frequency, birthday: $birthday, lastContacted: $lastContacted, anniversary: $anniversary)';
   }
 
   @override
@@ -219,7 +237,8 @@ class _$ContactImpl extends _Contact with DiagnosticableTreeMixin {
       ..add(DiagnosticsProperty('lastName', lastName))
       ..add(DiagnosticsProperty('frequency', frequency))
       ..add(DiagnosticsProperty('birthday', birthday))
-      ..add(DiagnosticsProperty('lastContacted', lastContacted));
+      ..add(DiagnosticsProperty('lastContacted', lastContacted))
+      ..add(DiagnosticsProperty('anniversary', anniversary));
   }
 
   @override
@@ -237,13 +256,15 @@ class _$ContactImpl extends _Contact with DiagnosticableTreeMixin {
             (identical(other.birthday, birthday) ||
                 other.birthday == birthday) &&
             (identical(other.lastContacted, lastContacted) ||
-                other.lastContacted == lastContacted));
+                other.lastContacted == lastContacted) &&
+            (identical(other.anniversary, anniversary) ||
+                other.anniversary == anniversary));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType, id, firstName, lastName, frequency, birthday, lastContacted);
+  int get hashCode => Object.hash(runtimeType, id, firstName, lastName,
+      frequency, birthday, lastContacted, anniversary);
 
   /// Create a copy of Contact
   /// with the given fields replaced by the non-null parameter values.
@@ -268,7 +289,8 @@ abstract class _Contact extends Contact {
           required final String lastName,
           final String frequency,
           @Property(type: PropertyType.date) final DateTime? birthday,
-          @Property(type: PropertyType.date) final DateTime? lastContacted}) =
+          @Property(type: PropertyType.date) final DateTime? lastContacted,
+          @Property(type: PropertyType.date) final DateTime? anniversary}) =
       _$ContactImpl;
   _Contact._() : super._();
 
@@ -289,6 +311,9 @@ abstract class _Contact extends Contact {
   @override
   @Property(type: PropertyType.date)
   DateTime? get lastContacted;
+  @override
+  @Property(type: PropertyType.date)
+  DateTime? get anniversary;
 
   /// Create a copy of Contact
   /// with the given fields replaced by the non-null parameter values.

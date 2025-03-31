@@ -18,6 +18,9 @@ _$ContactImpl _$$ContactImplFromJson(Map<String, dynamic> json) =>
       lastContacted: json['lastContacted'] == null
           ? null
           : DateTime.parse(json['lastContacted'] as String),
+      anniversary: json['anniversary'] == null
+          ? null
+          : DateTime.parse(json['anniversary'] as String),
     );
 
 Map<String, dynamic> _$$ContactImplToJson(_$ContactImpl instance) =>
@@ -28,4 +31,5 @@ Map<String, dynamic> _$$ContactImplToJson(_$ContactImpl instance) =>
       'frequency': instance.frequency,
       'birthday': instance.birthday?.toIso8601String(),
       'lastContacted': instance.lastContacted?.toIso8601String(),
+      'anniversary': instance.anniversary?.toIso8601String(),
     };
