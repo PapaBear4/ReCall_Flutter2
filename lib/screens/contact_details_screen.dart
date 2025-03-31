@@ -252,19 +252,21 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               IconButton(
                 tooltip: 'Mark Contacted Today',
                 icon: const Icon(Icons.check_circle_outline),
-                onPressed: (_localContact.id != null && _localContact.id != 0)
-                    ? _onContactedButtonPressed
-                    : null,
+                onPressed: _onContactedButtonPressed,
               ),
               TextButton(
-                onPressed: (_localContact.id != null && _localContact.id != 0)
-                    ? () {
-                        if (_localContact.id != null && _localContact.id != 0) {
-                          notificationHelper
-                              .showTestNotification(_localContact);
-                        }
-                      }
-                    : null,
+                onPressed: () {
+                  if (_localContact.id != null && _localContact.id != 0) {
+                    notificationHelper.showTestNotification(_localContact);
+                  } else {
+                    // Optional: Show a message if tapped for an unsaved contact
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text(
+                              'Cannot send test notification for an unsaved contact.')),
+                    );
+                  }
+                },
                 child: const Text('Test Notification'),
               ),
             ],

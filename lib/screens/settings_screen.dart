@@ -68,8 +68,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _pickNotificationTime() async {
-    if (_userSettings == null)
+    if (_userSettings == null) {
       return; // Don't show picker if settings haven't loaded
+    }
 
     final TimeOfDay? newTime = await showTimePicker(
       context: context,

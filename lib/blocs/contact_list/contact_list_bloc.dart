@@ -181,8 +181,9 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
       case ContactListFilter.dueSoon:
         // Define "due soon" (e.g., Today or Tomorrow)
         filteredList = filteredList.where((c) {
-          if (c.frequency == ContactFrequency.never.value)
+          if (c.frequency == ContactFrequency.never.value) {
             return false; // Skip 'never'
+          }
           final dueDateDisplay =
               calculateNextDueDateDisplay(c.lastContacted, c.frequency);
           return dueDateDisplay == 'Today' || dueDateDisplay == 'Tomorrow';
