@@ -7,6 +7,7 @@ import 'package:recall/models/contact.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:recall/models/contact_frequency.dart';
+import 'package:recall/repositories/usersettings_repository.dart';
 import 'package:recall/services/notification_helper.dart';
 import 'package:recall/screens/help_screen.dart'; // Import HelpScreen
 import '../utils/last_contacted_utils.dart';
@@ -47,7 +48,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       lastContacted: null,
     );
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final contactId =
           ModalRoute.of(context)!.settings.arguments as int?; // Allow null
       if (contactId != null && contactId != 0) {
@@ -55,29 +56,53 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             .read<ContactDetailsBloc>()
             .add(ContactDetailsEvent.loadContact(contactId: contactId));
       } else {
-        // Handle adding a new contact - Start in edit mode
-        setState(() {
-          _isEditMode = true;
-          _hasUnsavedChanges = true; // Mark as changed since it's new
-          _localContact = Contact(
-            // Initialize with default new contact structure
-            id: 0,
-            firstName: '',
-            lastName: '',
-            frequency:
-                ContactFrequency.never.value, // Or your preferred default
-            birthday: null,
-            lastContacted: null,
-          );
-          // Update controllers for the new empty contact
-          _firstNameController.text = '';
-          _lastNameController.text = '';
-          _initialized = true; // Mark as initialized since we set it up
-        });
-        // Update BLoC with the initial empty state for a new contact
-        context.read<ContactDetailsBloc>().add(
-            ContactDetailsEvent.updateContactLocally(contact: _localContact));
-      }
+         // --- Logic for NEW contact ---
+
+         // 1. Define a fallback default frequency
+         String fetchedDefaultFrequency = ContactFrequency.never.value; // Fallback
+
+         // 2. Try fetching the actual default from UserSettingsRepository
+         try {
+            // Use read to get repository (ensure it's provided higher up via Provider)
+            final settingsRepo = context.read<UserSettingsRepository>(); //
+            final settingsList = await settingsRepo.getAll();
+            if (settingsList.isNotEmpty) {
+               // Use the defaultFrequency from the fetched settings
+               fetchedDefaultFrequency = settingsList.first.defaultFrequency;
+            }
+         } catch (e) {
+            contactDetailScreenLogger.e("Error fetching default frequency: $e");
+            // Keep using the fallback default if error occurs
+         }
+
+         // 3. Check if the widget is still mounted after the async gap
+         if (!mounted) return;
+
+         // 4. Set state for the new contact using the fetched (or fallback) default frequency
+         setState(() {
+           _isEditMode = true;
+           _hasUnsavedChanges = true;
+           _localContact = Contact( //
+              id: 0,
+              firstName: '',
+              lastName: '',
+              frequency: fetchedDefaultFrequency, // <-- Use the fetched/fallback value
+              birthday: null,
+              lastContacted: null,
+              anniversary: null,
+           );
+           _firstNameController.text = '';
+           _lastNameController.text = '';
+           _initialized = true;
+         });
+
+         // 5. Update BLoC state locally
+          context
+              .read<ContactDetailsBloc>()
+              .add(ContactDetailsEvent.updateContactLocally(contact: _localContact));
+
+         // --- End Logic for NEW contact ---
+       }
     });
   }
 
