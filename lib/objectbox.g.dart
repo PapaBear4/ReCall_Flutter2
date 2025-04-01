@@ -102,7 +102,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
       id: const obx_int.IdUid(13, 5902005222654570482),
       name: 'UserSettings',
-      lastPropertyId: const obx_int.IdUid(5, 6468200214272398994),
+      lastPropertyId: const obx_int.IdUid(6, 5639212798277111052),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
@@ -129,6 +129,11 @@ final _entities = <obx_int.ModelEntity>[
             id: const obx_int.IdUid(5, 6468200214272398994),
             name: 'notificationMinute',
             type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(6, 5639212798277111052),
+            name: 'defaultFrequency',
+            type: 9,
             flags: 0)
       ],
       relations: <obx_int.ModelRelation>[],
@@ -379,12 +384,15 @@ obx_int.ModelDefinition getObjectBoxModel() {
           }
         },
         objectToFB: (UserSettings object, fb.Builder fbb) {
-          fbb.startTable(6);
+          final defaultFrequencyOffset =
+              fbb.writeString(object.defaultFrequency);
+          fbb.startTable(7);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addBool(1, object.remindersEnabled);
           fbb.addBool(2, object.alertsEnabled);
           fbb.addInt64(3, object.notificationHour);
           fbb.addInt64(4, object.notificationMinute);
+          fbb.addOffset(5, defaultFrequencyOffset);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -401,12 +409,16 @@ obx_int.ModelDefinition getObjectBoxModel() {
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 10, 0);
           final notificationMinuteParam =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 12, 0);
+          final defaultFrequencyParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGet(buffer, rootOffset, 14, '');
           final object = UserSettings(
               id: idParam,
               remindersEnabled: remindersEnabledParam,
               alertsEnabled: alertsEnabledParam,
               notificationHour: notificationHourParam,
-              notificationMinute: notificationMinuteParam);
+              notificationMinute: notificationMinuteParam,
+              defaultFrequency: defaultFrequencyParam);
 
           return object;
         })
@@ -490,4 +502,8 @@ class UserSettings_ {
   /// See [UserSettings.notificationMinute].
   static final notificationMinute =
       obx.QueryIntegerProperty<UserSettings>(_entities[2].properties[4]);
+
+  /// See [UserSettings.defaultFrequency].
+  static final defaultFrequency =
+      obx.QueryStringProperty<UserSettings>(_entities[2].properties[5]);
 }

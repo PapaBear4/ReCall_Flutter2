@@ -1,6 +1,7 @@
 // lib/screens/settings_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart'; // Use provider to read repository
+import 'package:recall/models/contact_frequency.dart';
 import 'package:recall/models/usersettings.dart';
 import 'package:recall/repositories/usersettings_repository.dart';
 import 'package:recall/repositories/contact_repository.dart'; // To get contacts
@@ -26,6 +27,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   UserSettings? _userSettings;
   bool _isLoading = true;
   bool _isExporting = false;
+  bool _isBusy = false; // Combined exporting/importing indicator
 
   @override
   void initState() {
@@ -34,6 +36,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _loadSettings() async {
+    if (!mounted) return; // Check mounted before setState
     setState(() {
       _isLoading = true;
     });
@@ -51,7 +54,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
       } else {
         // Load the existing settings (assuming only one settings object)
         settings = settingsList.first;
+        // Ensure loaded settings have a default frequency if migrating from older version
+        if (settings.defaultFrequency.isEmpty) {
+          // Basic check, might need refinement
+          settings =
+              settings.copyWith(defaultFrequency: ContactFrequency.never.value);
+          // Optionally update the repo if loaded settings were incomplete
+          // await repository.update(settings);
+        }
       }
+      if (!mounted) return; // Check mounted again before setState
+
       setState(() {
         _userSettings = settings;
         _isLoading = false;
@@ -105,35 +118,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // Fetches contacts and converts them to a JSON string
   Future<String?> _prepareExportData() async {
-    setState(() => _isExporting = true);
+    if (!mounted) return null;
+    setState(() => _isBusy = true);
     try {
       final contactRepo = context.read<ContactRepository>();
-      final List<Contact> contacts = await contactRepo.getAll();
+      final settingsRepo =
+          context.read<UserSettingsRepository>(); // Get settings repo
 
-      if (contacts.isEmpty) {
+      final List<Contact> contacts = await contactRepo.getAll();
+      // Fetch current settings - assuming ID 1 or load the only one
+      final List<UserSettings> currentSettingsList =
+          await settingsRepo.getAll();
+      final UserSettings? currentSettings =
+          currentSettingsList.isNotEmpty ? currentSettingsList.first : null;
+
+      if (currentSettings == null) {
+        if (!mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No contacts to export.')),
+          const SnackBar(content: Text('Error fetching settings for export.')),
         );
-        setState(() => _isExporting = false);
+        setState(() => _isBusy = false);
         return null;
       }
 
-      List<Map<String, dynamic>> contactsJsonList =
-          contacts.map((contact) => contact.toJson()).toList();
+      // Structure for export (using version 2)
       Map<String, dynamic> exportData = {
-        'version': 1, // Current export version
-        'contacts': contactsJsonList,
+        'version': 2, // Increment version
+        'userSettings': currentSettings.toJson(), // Add settings
+        'contacts': contacts.map((contact) => contact.toJson()).toList(),
       };
-      String jsonString = const JsonEncoder.withIndent('  ')
-          .convert(exportData); // Encode the new map
+      String jsonString =
+          const JsonEncoder.withIndent('  ').convert(exportData);
 
-      setState(() => _isExporting = false);
+      if (!mounted) return null;
+      setState(() => _isBusy = false);
       return jsonString;
     } catch (e) {
+      if (!mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error preparing export data: $e')),
       );
-      setState(() => _isExporting = false);
+      setState(() => _isBusy = false);
       return null;
     }
   }
@@ -249,138 +274,183 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  List<Contact>? _parseAndValidateImportData(String jsonData) {
+  ({UserSettings? settings, List<Contact>? contacts})
+      _parseAndValidateImportData(String jsonData) {
     try {
       final decoded = jsonDecode(jsonData);
 
-      // Basic structure check
       if (decoded is! Map<String, dynamic>) {
         throw const FormatException('Invalid format: Expected a JSON object.');
       }
 
-      // Version check
-      if (decoded['version'] != 1) {
-        throw FormatException('Invalid format: Expected version 1, found ${decoded['version'] ?? 'null'}.');
+      // Check version - handle version 1 (old) and 2 (new)
+      final version = decoded['version'];
+      UserSettings? parsedSettings;
+      List<Contact>? parsedContacts;
+
+      if (version == 2) {
+        // Parse settings (new format)
+        final settingsData = decoded['userSettings'];
+        if (settingsData is! Map<String, dynamic>) {
+          throw const FormatException(
+              'Invalid format V2: Expected "userSettings" to be an object.');
+        }
+        // Use generated fromJson, ensure ID is handled later during update
+        parsedSettings = UserSettings.fromJson(settingsData);
+
+        // Parse contacts
+        final contactsData = decoded['contacts'];
+        if (contactsData is! List) {
+          throw const FormatException(
+              'Invalid format V2: Expected "contacts" to be a list.');
+        }
+        parsedContacts = contactsData.map((contactMap) {
+          if (contactMap is! Map<String, dynamic>) {
+            throw FormatException(
+                'Invalid format V2: Contact entry is not valid: $contactMap');
+          }
+          return Contact.fromJson(contactMap);
+        }).toList();
+      } else if (version == 1) {
+        final dynamic contactsData = decoded[
+            'contacts']; // Use dynamic or Object? if type is unknown initially
+        // Check if 'contactsData' is actually a List
+        if (contactsData is List) {
+          // It is a list, proceed with parsing contacts
+          parsedContacts = contactsData.map((contactMap) {
+            if (contactMap is! Map<String, dynamic>) {
+              throw FormatException(
+                  'Invalid format V1: Contact entry is not valid: $contactMap');
+            }
+            return Contact.fromJson(contactMap);
+          }).toList();
+          // No settings in V1 format
+          parsedSettings = null;
+        } else {
+          // If 'contactsData' wasn't a List, the V1 format is invalid
+          // No reassignment needed, just throw the error.
+          throw const FormatException(
+              'Invalid format V1: Expected "contacts" key to contain a list.');
+        }
+      } else {
+        throw FormatException('Unsupported export version: $version');
       }
 
-      // Contacts list check
-      final contactsData = decoded['contacts'];
-      if (contactsData is! List) {
-        throw const FormatException('Invalid format: Expected "contacts" to be a list.');
+      return (settings: parsedSettings, contacts: parsedContacts);
+    } on FormatException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Import Error: ${e.message}')),
+        );
       }
-
-      // Try parsing each contact
-      final List<Contact> parsedContacts = [];
-      for (final contactMap in contactsData) {
-        if (contactMap is! Map<String, dynamic>) {
-           throw FormatException('Invalid format: Contact entry is not a valid object: $contactMap');
-        }
-        // The Contact.fromJson factory handles individual contact validation
-        parsedContacts.add(Contact.fromJson(contactMap));
+      return (settings: null, contacts: null); // Indicate failure
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Import Error: $e')),
+        );
       }
-
-      // If all checks pass
-      return parsedContacts;
-
-    } on FormatException catch (e) { // Catch format errors during parsing/validation
-        if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-             SnackBar(content: Text('Import Error: ${e.message}')),
-            );
-        }
-        return null;
-    } catch (e) { // Catch other potential errors (e.g., file read errors passed here)
-        if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-             SnackBar(content: Text('Import Error: $e')),
-            );
-        }
-      return null;
+      return (settings: null, contacts: null); // Indicate failure
     }
   }
 
-
   // Orchestrates the import process
   Future<void> _startImportProcess() async {
-    setState(() => _isExporting = true); // Show loading indicator
-    
-    // --- Get required services/helpers ---
-    // Use NotificationHelper directly for cancelAll
+    if (!mounted) return;
+    setState(() => _isBusy = true);
+
     final notificationHelper = NotificationHelper();
-    // Use NotificationService from Provider for scheduling (accesses repositories)
     final notificationService = context.read<NotificationService>();
     final contactRepo = context.read<ContactRepository>();
-    // --- End Get services ---
+    final settingsRepo =
+        context.read<UserSettingsRepository>(); // Get settings repo
 
     try {
-      // 1. Pick the file
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['json'], // Only allow .json files
+        allowedExtensions: ['json'],
       );
 
-      if (result == null || result.files.single.path == null) {
-        // User canceled the picker
-         if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
-             const SnackBar(content: Text('Import cancelled.')),
-           );
-           setState(() => _isExporting = false);
-         }
+      if (result == null || result.files.single.path == null || !mounted) {
+        if (mounted) {
+          // Check mounted before showing snackbar
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Import cancelled.')),
+          );
+          setState(() => _isBusy = false);
+        }
         return;
       }
 
-      // 2. Read the file
       File file = File(result.files.single.path!);
       String jsonData = await file.readAsString();
 
-      // 3. Parse and Validate
-      List<Contact>? newContacts = _parseAndValidateImportData(jsonData);
+      // Parse and validate using the updated function
+      final parsedData = _parseAndValidateImportData(jsonData);
+      final UserSettings? importedSettings = parsedData.settings;
+      final List<Contact>? newContacts = parsedData.contacts;
 
       if (newContacts == null || !mounted) {
-        // Validation failed, message already shown by the parser function
-        setState(() => _isExporting = false);
+        // Validation/parsing failed, message already shown
+        if (mounted) setState(() => _isBusy = false);
         return;
       }
 
-      // --- 4. Overwrite Data AND Notifications ---
-      // First, cancel all existing scheduled notifications
-      await notificationHelper.cancelAllNotifications(); // <-- ADD THIS
-      notificationLogger.i('LOG: Cancelled all existing notifications.');
-
-      // Delete existing contacts
-      await contactRepo.deleteAll();
-
-      // Add imported contacts
-      // We use the list returned by addMany as it might contain updated IDs/data
-      final List<Contact> addedContacts = await contactRepo.addMany(newContacts);
-      // --- End Overwrite ---
-
-      // --- 5. Schedule NEW Notifications ---
-      for (final contact in addedContacts) { // Iterate over added contacts
-         // Use the service to schedule reminder (respects user settings)
-         await notificationService.scheduleReminder(contact); // <-- ADD THIS
+      // --- Overwrite Data and Notifications ---
+      // Update Settings if present in import file (Overwrite strategy)
+      int currentSettingsId = 1; // Assuming settings always have ID 1
+      if (importedSettings != null) {
+        try {
+          // Ensure imported settings get the correct persistent ID
+          final settingsToSave =
+              importedSettings.copyWith(id: currentSettingsId);
+          await settingsRepo.update(settingsToSave);
+          if (!mounted) return; // Check after await
+          // Update local state to reflect imported settings immediately
+          setState(() {
+            _userSettings = settingsToSave;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Settings imported successfully.')),
+          );
+        } catch (e) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error importing settings: $e')),
+          );
+          // Decide whether to continue contact import if settings fail
+        }
       }
-       notificationLogger.i('LOG: Scheduled notifications for ${addedContacts.length} imported contacts.');
-      // --- End Scheduling ---
 
+      // Proceed with contact import (remains the same)
+      await notificationHelper.cancelAllNotifications();
+      await contactRepo.deleteAll();
+      final List<Contact> addedContacts =
+          await contactRepo.addMany(newContacts);
+      for (final contact in addedContacts) {
+        await notificationService.scheduleReminder(contact);
+      }
+      notificationLogger.i(
+          'LOG: Scheduled notifications for ${addedContacts.length} imported contacts.');
 
-      // 6. Show Success & Refresh List (remains the same)
-       if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
-             SnackBar(content: Text('Successfully imported ${addedContacts.length} contacts and updated notifications.')), // Updated message
-           );
-           context.read<ContactListBloc>().add(const ContactListEvent.loadContacts());
-           setState(() => _isExporting = false);
-       }
-
-    } catch (e) { // Catch potential errors during file picking/reading
-       if (mounted) {
-         ScaffoldMessenger.of(context).showSnackBar(
-           SnackBar(content: Text('Import failed: $e')),
-         );
-         setState(() => _isExporting = false);
-       }
+      // --- Show Final Success & Refresh ---
+      if (!mounted) return; // Final check
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(
+                'Successfully imported ${addedContacts.length} contacts.')),
+      );
+      context
+          .read<ContactListBloc>()
+          .add(const ContactListEvent.loadContacts());
+      setState(() => _isBusy = false);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Import failed: $e')),
+        );
+        setState(() => _isBusy = false);
+      }
     }
   }
 
@@ -400,6 +470,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ListView(
                       padding: const EdgeInsets.all(16.0),
                       children: <Widget>[
+                        // NOTIFICATION TIME
                         ListTile(
                           title: const Text('Notification Time'),
                           subtitle: Text(
@@ -410,6 +481,66 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           onTap: _pickNotificationTime,
                         ),
                         const Divider(),
+                        // CONTACT FREQUENCY
+                        ListTile(
+                          title: const Text('Default New Contact Frequency'),
+                          subtitle: Text(
+                              _userSettings!.defaultFrequency.isNotEmpty
+                                  ? _userSettings!.defaultFrequency
+                                  : 'Not Set'),
+                          trailing: const Icon(
+                              Icons.edit), // Maybe PopupMenuButton is better?
+                        ),
+                        Padding(
+                          // Add padding for dropdown
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0, vertical: 8.0),
+                          child: DropdownButtonFormField<String>(
+                            value: _userSettings!.defaultFrequency,
+                            items: ContactFrequency.values.map((frequency) {
+                              return DropdownMenuItem<String>(
+                                value: frequency.value,
+                                child: Text(
+                                    frequency.name), // Display readable name
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) async {
+                              if (newValue != null &&
+                                  newValue != _userSettings!.defaultFrequency) {
+                                final repository =
+                                    context.read<UserSettingsRepository>();
+                                final updatedSettings = _userSettings!
+                                    .copyWith(defaultFrequency: newValue);
+                                try {
+                                  await repository.update(updatedSettings);
+                                  if (!mounted) return; // Check mounted
+                                  setState(() {
+                                    _userSettings = updatedSettings;
+                                  });
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content:
+                                            Text('Default frequency saved')),
+                                  );
+                                } catch (e) {
+                                  if (!mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content:
+                                            Text('Error saving frequency: $e')),
+                                  );
+                                }
+                              }
+                            },
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(
+                                  vertical: 10.0, horizontal: 12.0),
+                            ),
+                          ),
+                        ),
+                        const Divider(),
+
                         // --- EXPORT TILE ---
                         ListTile(
                           title: const Text('Export Data'),
@@ -424,35 +555,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         const Divider(),
                         // --- IMPORT TILE ---
                         ListTile(
-                           title: const Text('Import Data'),
-                           subtitle: const Text('Replace contacts from JSON file'), // Updated subtitle
-                           trailing: const Icon(Icons.file_download),
-                           enabled: !_isExporting, // Disable while busy
-                           onTap: _isExporting ? null : _startImportProcess, // Call import function
-                         ),
-                         // --- END IMPORT TILE ---
-                         const Divider(),
-                         // --- ABOUT TILE ---
-                         ListTile(
-                            title: const Text('About'),
-                            subtitle: const Text('App description and contact info'),
-                            trailing: const Icon(Icons.info_outline),
-                            onTap: () {
-                               Navigator.pushNamed(context, '/about');
-                            },
-                         ),
-                         const Divider(),
-                         // --- END ABOUT TILE ---
+                          title: const Text('Import Data'),
+                          subtitle: const Text(
+                              'Replace contacts from JSON file'), // Updated subtitle
+                          trailing: const Icon(Icons.file_download),
+                          enabled: !_isExporting, // Disable while busy
+                          onTap: _isExporting
+                              ? null
+                              : _startImportProcess, // Call import function
+                        ),
+                        // --- END IMPORT TILE ---
+                        const Divider(),
+                        // --- ABOUT TILE ---
+                        ListTile(
+                          title: const Text('About'),
+                          subtitle:
+                              const Text('App description and contact info'),
+                          trailing: const Icon(Icons.info_outline),
+                          onTap: () {
+                            Navigator.pushNamed(context, '/about');
+                          },
+                        ),
+                        const Divider(),
+                        // --- END ABOUT TILE ---
                         const Divider(),
                       ],
                     ),
                     // Loading Indicator Overlay
-                    if (_isExporting)
+                    if (_isBusy) // Use combined busy indicator
                       Container(
                         color: Colors.black.withOpacity(0.3),
-                        child: const Center(
-                          child: CircularProgressIndicator(),
-                        ),
+                        child: const Center(child: CircularProgressIndicator()),
                       ),
                   ],
                 ),

@@ -2,6 +2,7 @@
 import 'package:objectbox/objectbox.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:flutter/material.dart';
+import 'package:recall/models/contact_frequency.dart';
 
 part 'usersettings.freezed.dart';
 part 'usersettings.g.dart';
@@ -18,10 +19,12 @@ abstract class UserSettings with _$UserSettings {
     @Default(true) bool alertsEnabled,
     @Default(7) int notificationHour,
     @Default(0) int notificationMinute,
+    @Default(ContactFrequency.defaultValue) String defaultFrequency,
   }) = _UserSettings;
 
   factory UserSettings.fromJson(Map<String, dynamic> json) =>
       _$UserSettingsFromJson(json);
 
-  TimeOfDay get notificationTimeOfDay => TimeOfDay(hour: notificationHour, minute: notificationMinute);
+  TimeOfDay get notificationTimeOfDay =>
+      TimeOfDay(hour: notificationHour, minute: notificationMinute);
 }
