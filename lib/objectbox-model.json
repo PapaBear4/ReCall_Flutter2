@@ -83,7 +83,7 @@
     },
     {
       "id": "13:5902005222654570482",
-      "lastPropertyId": "5:6468200214272398994",
+      "lastPropertyId": "6:5639212798277111052",
       "name": "UserSettings",
       "properties": [
         {
@@ -111,6 +111,11 @@
           "id": "5:6468200214272398994",
           "name": "notificationMinute",
           "type": 6
+        },
+        {
+          "id": "6:5639212798277111052",
+          "name": "defaultFrequency",
+          "type": 9
         }
       ],
       "relations": []

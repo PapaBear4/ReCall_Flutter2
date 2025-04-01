@@ -26,6 +26,7 @@ mixin _$UserSettings {
   bool get alertsEnabled => throw _privateConstructorUsedError;
   int get notificationHour => throw _privateConstructorUsedError;
   int get notificationMinute => throw _privateConstructorUsedError;
+  String get defaultFrequency => throw _privateConstructorUsedError;
 
   /// Serializes this UserSettings to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -48,7 +49,8 @@ abstract class $UserSettingsCopyWith<$Res> {
       bool remindersEnabled,
       bool alertsEnabled,
       int notificationHour,
-      int notificationMinute});
+      int notificationMinute,
+      String defaultFrequency});
 }
 
 /// @nodoc
@@ -71,6 +73,7 @@ class _$UserSettingsCopyWithImpl<$Res, $Val extends UserSettings>
     Object? alertsEnabled = null,
     Object? notificationHour = null,
     Object? notificationMinute = null,
+    Object? defaultFrequency = null,
   }) {
     return _then(_value.copyWith(
       id: freezed == id
@@ -93,6 +96,10 @@ class _$UserSettingsCopyWithImpl<$Res, $Val extends UserSettings>
           ? _value.notificationMinute
           : notificationMinute // ignore: cast_nullable_to_non_nullable
               as int,
+      defaultFrequency: null == defaultFrequency
+          ? _value.defaultFrequency
+          : defaultFrequency // ignore: cast_nullable_to_non_nullable
+              as String,
     ) as $Val);
   }
 }
@@ -110,7 +117,8 @@ abstract class _$$UserSettingsImplCopyWith<$Res>
       bool remindersEnabled,
       bool alertsEnabled,
       int notificationHour,
-      int notificationMinute});
+      int notificationMinute,
+      String defaultFrequency});
 }
 
 /// @nodoc
@@ -131,6 +139,7 @@ class __$$UserSettingsImplCopyWithImpl<$Res>
     Object? alertsEnabled = null,
     Object? notificationHour = null,
     Object? notificationMinute = null,
+    Object? defaultFrequency = null,
   }) {
     return _then(_$UserSettingsImpl(
       id: freezed == id
@@ -153,6 +162,10 @@ class __$$UserSettingsImplCopyWithImpl<$Res>
           ? _value.notificationMinute
           : notificationMinute // ignore: cast_nullable_to_non_nullable
               as int,
+      defaultFrequency: null == defaultFrequency
+          ? _value.defaultFrequency
+          : defaultFrequency // ignore: cast_nullable_to_non_nullable
+              as String,
     ));
   }
 }
@@ -166,7 +179,8 @@ class _$UserSettingsImpl extends _UserSettings {
       this.remindersEnabled = true,
       this.alertsEnabled = true,
       this.notificationHour = 7,
-      this.notificationMinute = 0})
+      this.notificationMinute = 0,
+      this.defaultFrequency = ContactFrequency.defaultValue})
       : super._();
 
   factory _$UserSettingsImpl.fromJson(Map<String, dynamic> json) =>
@@ -187,10 +201,13 @@ class _$UserSettingsImpl extends _UserSettings {
   @override
   @JsonKey()
   final int notificationMinute;
+  @override
+  @JsonKey()
+  final String defaultFrequency;
 
   @override
   String toString() {
-    return 'UserSettings(id: $id, remindersEnabled: $remindersEnabled, alertsEnabled: $alertsEnabled, notificationHour: $notificationHour, notificationMinute: $notificationMinute)';
+    return 'UserSettings(id: $id, remindersEnabled: $remindersEnabled, alertsEnabled: $alertsEnabled, notificationHour: $notificationHour, notificationMinute: $notificationMinute, defaultFrequency: $defaultFrequency)';
   }
 
   @override
@@ -206,13 +223,15 @@ class _$UserSettingsImpl extends _UserSettings {
             (identical(other.notificationHour, notificationHour) ||
                 other.notificationHour == notificationHour) &&
             (identical(other.notificationMinute, notificationMinute) ||
-                other.notificationMinute == notificationMinute));
+                other.notificationMinute == notificationMinute) &&
+            (identical(other.defaultFrequency, defaultFrequency) ||
+                other.defaultFrequency == defaultFrequency));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, id, remindersEnabled,
-      alertsEnabled, notificationHour, notificationMinute);
+      alertsEnabled, notificationHour, notificationMinute, defaultFrequency);
 
   /// Create a copy of UserSettings
   /// with the given fields replaced by the non-null parameter values.
@@ -236,7 +255,8 @@ abstract class _UserSettings extends UserSettings {
       final bool remindersEnabled,
       final bool alertsEnabled,
       final int notificationHour,
-      final int notificationMinute}) = _$UserSettingsImpl;
+      final int notificationMinute,
+      final String defaultFrequency}) = _$UserSettingsImpl;
   _UserSettings._() : super._();
 
   factory _UserSettings.fromJson(Map<String, dynamic> json) =
@@ -253,6 +273,8 @@ abstract class _UserSettings extends UserSettings {
   int get notificationHour;
   @override
   int get notificationMinute;
+  @override
+  String get defaultFrequency;
 
   /// Create a copy of UserSettings
   /// with the given fields replaced by the non-null parameter values.

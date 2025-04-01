@@ -13,6 +13,8 @@ _$UserSettingsImpl _$$UserSettingsImplFromJson(Map<String, dynamic> json) =>
       alertsEnabled: json['alertsEnabled'] as bool? ?? true,
       notificationHour: (json['notificationHour'] as num?)?.toInt() ?? 7,
       notificationMinute: (json['notificationMinute'] as num?)?.toInt() ?? 0,
+      defaultFrequency:
+          json['defaultFrequency'] as String? ?? ContactFrequency.defaultValue,
     );
 
 Map<String, dynamic> _$$UserSettingsImplToJson(_$UserSettingsImpl instance) =>
@@ -22,4 +24,5 @@ Map<String, dynamic> _$$UserSettingsImplToJson(_$UserSettingsImpl instance) =>
       'alertsEnabled': instance.alertsEnabled,
       'notificationHour': instance.notificationHour,
       'notificationMinute': instance.notificationMinute,
+      'defaultFrequency': instance.defaultFrequency,
     };
