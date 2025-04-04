@@ -9,7 +9,7 @@ import 'package:recall/models/contact.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:logger/logger.dart';
-import 'package:flutter_native_timezone/flutter_native_timezone.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 
 var notificationLogger = Logger();
 
@@ -33,7 +33,7 @@ class NotificationHelper {
       tz.initializeTimeZones();
 
       // 2. Get the native device timezone name string
-      final String currentTimeZone = await FlutterNativeTimezone.getLocalTimezone();
+      final String currentTimeZone = await FlutterTimezone.getLocalTimezone();
 
       // 3. Get the Location object for that name
       final tz.Location deviceLocation = tz.getLocation(currentTimeZone);

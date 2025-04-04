@@ -13,7 +13,7 @@ import 'package:path_provider/path_provider.dart'; // Import path_provider
 import 'package:objectbox/objectbox.dart'; // Import core objectbox
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'package:flutter_native_timezone/flutter_native_timezone.dart'; // Import the package
+import 'package:flutter_timezone/flutter_timezone.dart'; // Import the package
 
 
 final bgLogger = Logger();
@@ -45,7 +45,7 @@ void callbackDispatcher() async {
     try {
              // *** Set Dynamic Timezone at start of task execution ***
        try {
-          final String currentTimeZone = await FlutterNativeTimezone.getLocalTimezone();
+          final String currentTimeZone = await FlutterTimezone.getLocalTimezone();
           final tz.Location deviceLocation = tz.getLocation(currentTimeZone);
           tz.setLocalLocation(deviceLocation);
           bgLogger.d("Timezone set for background task using device zone: $currentTimeZone");
