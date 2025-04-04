@@ -10,7 +10,7 @@ import 'package:recall/utils/last_contacted_utils.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:recall/objectbox.g.dart'; // Import generated ObjectBox code
 import 'package:path_provider/path_provider.dart'; // Import path_provider
-import 'package:objectbox/objectbox.dart'; // Import core objectbox
+// Import core objectbox
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart'; // Import the package
