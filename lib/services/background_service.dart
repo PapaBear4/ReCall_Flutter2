@@ -13,23 +13,28 @@ import 'package:path_provider/path_provider.dart'; // Import path_provider
 import 'package:objectbox/objectbox.dart'; // Import core objectbox
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:flutter_timezone/flutter_timezone.dart'; // Import the package
+
 
 final bgLogger = Logger();
 
 @pragma('vm:entry-point')
-void callbackDispatcher() {
+void callbackDispatcher() async {
   bgLogger.i("--- callbackDispatcher Isolate STARTED ---");
     // *** Initialize Timezone right after isolate starts ***
+  // Initialize Timezone right after isolate starts
   try {
+      // 1. Initialize database (still required first)
       tz.initializeTimeZones();
-      // You might optionally call tz.setLocalLocation here if needed,
-      // mirroring main.dart, but often initializeTimeZones is sufficient
-      // for the background isolate to use the system's default correctly.
-      // Example: tz.setLocalLocation(tz.getLocation('America/New_York'));
-      bgLogger.d("Timezone package initialized in background isolate.");
+
+      // 2 & 3. Get and set the device's local location (ASYNC!)
+      // We need to make this part async now, which callbackDispatcher isn't directly.
+      // We'll do it inside the executeTask lambda before it's needed.
+      // Leaving just initializeTimeZones here is fine.
+      bgLogger.d("Timezone database initialized in background isolate.");
+
   } catch(e) {
-      bgLogger.e("Error initializing timezone in background: $e");
-      // Decide if the task should fail if timezone init fails
+      bgLogger.e("Error initializing timezone DB in background: $e");
   }
   // *** End Timezone Initialization ***
 
@@ -38,6 +43,18 @@ void callbackDispatcher() {
     bgLogger.i("Background task '$task' started.");
     Store? store; // Declare store variable
     try {
+             // *** Set Dynamic Timezone at start of task execution ***
+       try {
+          final String currentTimeZone = await FlutterTimezone.getLocalTimezone();
+          final tz.Location deviceLocation = tz.getLocation(currentTimeZone);
+          tz.setLocalLocation(deviceLocation);
+          bgLogger.d("Timezone set for background task using device zone: $currentTimeZone");
+       } catch(e) {
+          bgLogger.e("Error setting dynamic timezone in background task: $e. Falling back to UTC.");
+          // Optionally set tz.setLocalLocation(tz.UTC); or let it potentially use UTC default
+       }
+       // *** End Timezone Setup ***
+
       // --- Get Store Path ---
       bgLogger.d("Getting documents directory for ObjectBox...");
       final docsDir = await getApplicationDocumentsDirectory();
