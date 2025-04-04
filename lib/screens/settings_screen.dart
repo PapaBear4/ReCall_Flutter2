@@ -15,6 +15,10 @@ import 'package:share_plus/share_plus.dart'; // For sharing
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart'; // To refresh list
 import 'package:recall/services/notification_helper.dart';
 import 'package:recall/services/notification_service.dart';
+import 'package:logger/logger.dart';
+
+
+var settingsScreenLogger = Logger();
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -26,8 +30,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   UserSettings? _userSettings;
   bool _isLoading = true;
-  bool _isExporting = false;
-  bool _isBusy = false; // Combined exporting/importing indicator
+  bool _isBusy = false;
 
   @override
   void initState() {
@@ -35,51 +38,59 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _loadSettings();
   }
 
-  Future<void> _loadSettings() async {
-    if (!mounted) return; // Check mounted before setState
-    setState(() {
-      _isLoading = true;
-    });
-    try {
-      final repository = context.read<UserSettingsRepository>();
-      List<UserSettings> settingsList = await repository.getAll();
-      UserSettings settings;
-      if (settingsList.isEmpty) {
-        // Create default settings if none exist (first run)
-        settings = UserSettings(); // Uses defaults defined in the model
-        // Assign an ID (ObjectBox typically manages this, but for the first setting...)
-        // A common pattern is to use a fixed ID like 1 for the single settings object
-        settings = settings.copyWith(id: 1);
-        await repository.add(settings); // Save the default settings
-      } else {
-        // Load the existing settings (assuming only one settings object)
-        settings = settingsList.first;
-        // Ensure loaded settings have a default frequency if migrating from older version
-        if (settings.defaultFrequency.isEmpty) {
-          // Basic check, might need refinement
-          settings =
-              settings.copyWith(defaultFrequency: ContactFrequency.never.value);
-          // Optionally update the repo if loaded settings were incomplete
-          // await repository.update(settings);
-        }
-      }
-      if (!mounted) return; // Check mounted again before setState
+Future<void> _loadSettings() async {
+    if (!mounted) return;
+     setState(() { _isLoading = true; });
+     try {
+       final repository = context.read<UserSettingsRepository>();
+       List<UserSettings> settingsList = await repository.getAll();
+       UserSettings settings;
+       bool settingsWereUpdated = false; // Flag to track if we corrected data
 
-      setState(() {
-        _userSettings = settings;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      // Handle error loading settings (e.g., show a SnackBar)
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading settings: $e')),
-      );
-    }
+       if (settingsList.isEmpty) {
+         settingsScreenLogger.d("No settings found, creating default.");
+         settings = UserSettings(id: 1); // Uses defaults from model constructor
+         await repository.add(settings);
+         settingsWereUpdated = true; // Technically created, counts as updated for consistency
+       } else {
+         settings = settingsList.first;
+         settingsScreenLogger.d("Loaded settings: ID=${settings.id}, Freq='${settings.defaultFrequency}'");
+
+         // --- Robust Validation ---
+         // Get all valid frequency string values
+         final validFrequencies = ContactFrequency.values.map((f) => f.value).toSet();
+
+         // Check if the loaded frequency is NOT in the set of valid values
+         if (!validFrequencies.contains(settings.defaultFrequency)) {
+            settingsScreenLogger.w("Loaded invalid defaultFrequency ('${settings.defaultFrequency}'). Resetting to default ('${ContactFrequency.never.value}').");
+            // Correct it to the 'never' default
+            settings = settings.copyWith(defaultFrequency: ContactFrequency.never.value);
+            // Save the corrected value back immediately
+            await repository.update(settings);
+            settingsWereUpdated = true;
+         }
+         // --- End Validation ---
+       }
+
+       if (!mounted) return;
+       setState(() {
+         _userSettings = settings;
+         _isLoading = false;
+       });
+
+       if (settingsWereUpdated) {
+          settingsScreenLogger.d("Final userSettings state after load/update: $_userSettings");
+       }
+
+     } catch (e) {
+       settingsScreenLogger.e("Error loading/updating settings: $e");
+        if (!mounted) return;
+       setState(() { _isLoading = false; });
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(content: Text('Error loading settings: $e')),
+       );
+     }
   }
-
   Future<void> _pickNotificationTime() async {
     if (_userSettings == null) {
       return; // Don't show picker if settings haven't loaded
@@ -117,7 +128,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   // Fetches contacts and converts them to a JSON string
-  Future<String?> _prepareExportData() async {
+  Future<String?> _prepareBackupData() async {
     if (!mounted) return null;
     setState(() => _isBusy = true);
     try {
@@ -142,13 +153,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
 
       // Structure for export (using version 2)
-      Map<String, dynamic> exportData = {
+      Map<String, dynamic> backupData = {
         'version': 2, // Increment version
         'userSettings': currentSettings.toJson(), // Add settings
         'contacts': contacts.map((contact) => contact.toJson()).toList(),
       };
       String jsonString =
-          const JsonEncoder.withIndent('  ').convert(exportData);
+          const JsonEncoder.withIndent('  ').convert(backupData);
 
       if (!mounted) return null;
       setState(() => _isBusy = false);
@@ -164,78 +175,78 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   // Saves the JSON string using file_picker
-  Future<void> _saveExportFile(String jsonString) async {
-    setState(() => _isExporting = true); // Show loading indicator
+  Future<void> _saveBackupFile(String jsonString) async {
+    setState(() => _isBusy = true); // Show loading indicator
     try {
       // Convert string to bytes
       Uint8List fileBytes = utf8.encode(jsonString);
 
       String? outputPath = await FilePicker.platform.saveFile(
-        dialogTitle: 'Save Contacts Export',
-        fileName: 'recall_contacts.json', // Suggested filename
+        dialogTitle: 'Save Contacts Backup',
+        fileName: 'recall_backup.json', // Suggested filename
         bytes: fileBytes,
       );
 
       if (mounted) {
         // Check if widget is still mounted
-        setState(() => _isExporting = false); // Hide loading indicator
+        setState(() => _isBusy = false); // Hide loading indicator
         if (outputPath != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text('Contacts exported successfully to $outputPath')),
+                content: Text('Contacts successfully backed upto $outputPath')),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Export cancelled.')),
+            const SnackBar(content: Text('Backup cancelled.')),
           );
         }
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isExporting = false);
+        setState(() => _isBusy = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving export file: $e')),
+          SnackBar(content: Text('Error saving backup file: $e')),
         );
       }
     }
   }
 
   // Shares the JSON string using share_plus
-  Future<void> _shareExportFile(String jsonString) async {
-    setState(() => _isExporting = true); // Show loading indicator
+  Future<void> _shareBackupFile(String jsonString) async {
+    setState(() => _isBusy = true); // Show loading indicator
     try {
       final Directory tempDir = await getTemporaryDirectory();
-      final String tempFilePath = '${tempDir.path}/recall_contacts_temp.json';
+      final String tempFilePath = '${tempDir.path}/recall_backup_temp.json';
       final File tempFile = File(tempFilePath);
 
       await tempFile.writeAsString(jsonString);
 
       await Share.shareXFiles(
         [XFile(tempFile.path)],
-        text: 'Recall App Contacts Export',
+        text: 'reCall App Backup Data',
       );
 
-      // Optional: Clean up the temporary file
-      // await tempFile.delete();
+      // Clean up the temporary file
+      await tempFile.delete();
 
       if (mounted) {
         // Check if widget is still mounted
-        setState(() => _isExporting = false); // Hide loading indicator
+        setState(() => _isBusy = false); // Hide loading indicator
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isExporting = false);
+        setState(() => _isBusy = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error sharing export file: $e')),
+          SnackBar(content: Text('Error sharing backup file: $e')),
         );
       }
     }
   }
 
   // Shows the dialog to choose between Save or Share
-  Future<void> _showExportOptions() async {
+  Future<void> _showBackupOptions() async {
     // Prepare data first
-    final String? jsonString = await _prepareExportData();
+    final String? jsonString = await _prepareBackupData();
 
     // If data preparation failed or was cancelled, stop here
     if (jsonString == null || !mounted) return;
@@ -245,21 +256,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Export Contacts As JSON'),
-          content: const Text('Choose how to export the file:'),
+          title: const Text('Backup Contacts & Settings As JSON'),
+          content: const Text('Choose how to save the backup file:'),
           actions: <Widget>[
             TextButton(
-              child: const Text('Save to Device'),
+              child: const Text('Save Backup to Device'),
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
-                _saveExportFile(jsonString); // Call save function
+                _saveBackupFile(jsonString); // Call save function
               },
             ),
             TextButton(
               child: const Text('Share'),
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
-                _shareExportFile(jsonString); // Call share function
+                _shareBackupFile(jsonString); // Call share function
               },
             ),
             TextButton(
@@ -275,7 +286,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   ({UserSettings? settings, List<Contact>? contacts})
-      _parseAndValidateImportData(String jsonData) {
+      _parseAndValidateRestoreData(String jsonData) {
     try {
       final decoded = jsonDecode(jsonData);
 
@@ -333,7 +344,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               'Invalid format V1: Expected "contacts" key to contain a list.');
         }
       } else {
-        throw FormatException('Unsupported export version: $version');
+        throw FormatException('Unsupported backup version: $version');
       }
 
       return (settings: parsedSettings, contacts: parsedContacts);
@@ -355,7 +366,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   // Orchestrates the import process
-  Future<void> _startImportProcess() async {
+  Future<void> _startRestoreProcess() async {
     if (!mounted) return;
     setState(() => _isBusy = true);
 
@@ -375,7 +386,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         if (mounted) {
           // Check mounted before showing snackbar
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Import cancelled.')),
+            const SnackBar(content: Text('Restore cancelled.')),
           );
           setState(() => _isBusy = false);
         }
@@ -386,24 +397,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
       String jsonData = await file.readAsString();
 
       // Parse and validate using the updated function
-      final parsedData = _parseAndValidateImportData(jsonData);
-      final UserSettings? importedSettings = parsedData.settings;
-      final List<Contact>? newContacts = parsedData.contacts;
+      final parsedData = _parseAndValidateRestoreData(jsonData);
+      final UserSettings? settingsFromBackup = parsedData.settings;
+      final List<Contact>? contactsFromBackup = parsedData.contacts;
 
-      if (newContacts == null || !mounted) {
+      if (contactsFromBackup == null || !mounted) {
         // Validation/parsing failed, message already shown
         if (mounted) setState(() => _isBusy = false);
         return;
       }
+            // Show confirmation dialog before overwriting
+       final bool confirmRestore = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false, // User must tap button
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Confirm Restore'),
+              content: const Text('Restoring will replace ALL current contacts and settings with the data from the backup file. This cannot be undone. Are you sure?'),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () { Navigator.of(context).pop(false); },
+                ),
+                TextButton(
+                  child: const Text('Restore', style: TextStyle(color: Colors.red)),
+                  onPressed: () { Navigator.of(context).pop(true); },
+                ),
+              ],
+            );
+          },
+       ) ?? false; // Default to false if dialog dismissed
+
+       if (!confirmRestore || !mounted) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar( const SnackBar(content: Text('Restore cancelled.')), );
+            setState(() => _isBusy = false);
+          }
+          return;
+       }
+
 
       // --- Overwrite Data and Notifications ---
       // Update Settings if present in import file (Overwrite strategy)
       int currentSettingsId = 1; // Assuming settings always have ID 1
-      if (importedSettings != null) {
+      if (settingsFromBackup != null) {
         try {
           // Ensure imported settings get the correct persistent ID
           final settingsToSave =
-              importedSettings.copyWith(id: currentSettingsId);
+              settingsFromBackup.copyWith(id: currentSettingsId);
           await settingsRepo.update(settingsToSave);
           if (!mounted) return; // Check after await
           // Update local state to reflect imported settings immediately
@@ -411,12 +452,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _userSettings = settingsToSave;
           });
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Settings imported successfully.')),
+            const SnackBar(content: Text('Settings restored successfully.')),
           );
         } catch (e) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error importing settings: $e')),
+            SnackBar(content: Text('Error restoring settings: $e')),
           );
           // Decide whether to continue contact import if settings fail
         }
@@ -426,19 +467,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await notificationHelper.cancelAllNotifications();
       await contactRepo.deleteAll();
       final List<Contact> addedContacts =
-          await contactRepo.addMany(newContacts);
+          await contactRepo.addMany(contactsFromBackup);
       for (final contact in addedContacts) {
         await notificationService.scheduleReminder(contact);
       }
       notificationLogger.i(
-          'LOG: Scheduled notifications for ${addedContacts.length} imported contacts.');
+          'LOG: Scheduled notifications for ${addedContacts.length} restored contacts.');
 
       // --- Show Final Success & Refresh ---
       if (!mounted) return; // Final check
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(
-                'Successfully imported ${addedContacts.length} contacts.')),
+                'Successfully restored ${addedContacts.length} contacts.')),
       );
       context
           .read<ContactListBloc>()
@@ -447,7 +488,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Import failed: $e')),
+          SnackBar(content: Text('Restore failed: $e')),
         );
         setState(() => _isBusy = false);
       }
@@ -456,6 +497,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+        if (!_isLoading && _userSettings != null) {
+      settingsScreenLogger.d("SettingsScreen build: Using defaultFrequency '${_userSettings!.defaultFrequency}' for Dropdown.");
+       // Optional: Log available values too if needed for comparison
+       // settingsLogger.d("Available item values: ${ContactFrequency.values.map((f) => f.value).toList()}");
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
@@ -543,26 +590,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                         // --- EXPORT TILE ---
                         ListTile(
-                          title: const Text('Export Data'),
-                          subtitle: const Text('Save contacts to a JSON file'),
+                          title: const Text('Backup Data'),
+                          subtitle: const Text('Save contacts & settings to a JSON file'),
                           trailing: const Icon(Icons.file_upload),
-                          enabled: !_isExporting, // Disable while exporting
-                          onTap: _isExporting
+                          enabled: !_isBusy, // Disable while exporting
+                          onTap: _isBusy
                               ? null
-                              : _showExportOptions, // Call options dialog
+                              : _showBackupOptions, // Call options dialog
                         ),
                         // --- END EXPORT TILE ---
                         const Divider(),
                         // --- IMPORT TILE ---
                         ListTile(
-                          title: const Text('Import Data'),
+                          title: const Text('Restore Data'),
                           subtitle: const Text(
-                              'Replace contacts from JSON file'), // Updated subtitle
+                              'Restore (overwrite) contacts & settings from JSON file'), // Updated subtitle
                           trailing: const Icon(Icons.file_download),
-                          enabled: !_isExporting, // Disable while busy
-                          onTap: _isExporting
+                          enabled: !_isBusy, // Disable while busy
+                          onTap: _isBusy
                               ? null
-                              : _startImportProcess, // Call import function
+                              : _startRestoreProcess, // Call import function
                         ),
                         // --- END IMPORT TILE ---
                         const Divider(),
