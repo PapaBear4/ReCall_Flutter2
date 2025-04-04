@@ -15,6 +15,10 @@ import 'package:share_plus/share_plus.dart'; // For sharing
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart'; // To refresh list
 import 'package:recall/services/notification_helper.dart';
 import 'package:recall/services/notification_service.dart';
+import 'package:logger/logger.dart';
+
+
+var settingsScreenLogger = Logger();
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -34,51 +38,59 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _loadSettings();
   }
 
-  Future<void> _loadSettings() async {
-    if (!mounted) return; // Check mounted before setState
-    setState(() {
-      _isLoading = true;
-    });
-    try {
-      final repository = context.read<UserSettingsRepository>();
-      List<UserSettings> settingsList = await repository.getAll();
-      UserSettings settings;
-      if (settingsList.isEmpty) {
-        // Create default settings if none exist (first run)
-        settings = UserSettings(); // Uses defaults defined in the model
-        // Assign an ID (ObjectBox typically manages this, but for the first setting...)
-        // A common pattern is to use a fixed ID like 1 for the single settings object
-        settings = settings.copyWith(id: 1);
-        await repository.add(settings); // Save the default settings
-      } else {
-        // Load the existing settings (assuming only one settings object)
-        settings = settingsList.first;
-        // Ensure loaded settings have a default frequency if migrating from older version
-        if (settings.defaultFrequency.isEmpty) {
-          // Basic check, might need refinement
-          settings =
-              settings.copyWith(defaultFrequency: ContactFrequency.never.value);
-          // Optionally update the repo if loaded settings were incomplete
-          // await repository.update(settings);
-        }
-      }
-      if (!mounted) return; // Check mounted again before setState
+Future<void> _loadSettings() async {
+    if (!mounted) return;
+     setState(() { _isLoading = true; });
+     try {
+       final repository = context.read<UserSettingsRepository>();
+       List<UserSettings> settingsList = await repository.getAll();
+       UserSettings settings;
+       bool settingsWereUpdated = false; // Flag to track if we corrected data
 
-      setState(() {
-        _userSettings = settings;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      // Handle error loading settings (e.g., show a SnackBar)
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading settings: $e')),
-      );
-    }
+       if (settingsList.isEmpty) {
+         settingsScreenLogger.d("No settings found, creating default.");
+         settings = UserSettings(id: 1); // Uses defaults from model constructor
+         await repository.add(settings);
+         settingsWereUpdated = true; // Technically created, counts as updated for consistency
+       } else {
+         settings = settingsList.first;
+         settingsScreenLogger.d("Loaded settings: ID=${settings.id}, Freq='${settings.defaultFrequency}'");
+
+         // --- Robust Validation ---
+         // Get all valid frequency string values
+         final validFrequencies = ContactFrequency.values.map((f) => f.value).toSet();
+
+         // Check if the loaded frequency is NOT in the set of valid values
+         if (!validFrequencies.contains(settings.defaultFrequency)) {
+            settingsScreenLogger.w("Loaded invalid defaultFrequency ('${settings.defaultFrequency}'). Resetting to default ('${ContactFrequency.never.value}').");
+            // Correct it to the 'never' default
+            settings = settings.copyWith(defaultFrequency: ContactFrequency.never.value);
+            // Save the corrected value back immediately
+            await repository.update(settings);
+            settingsWereUpdated = true;
+         }
+         // --- End Validation ---
+       }
+
+       if (!mounted) return;
+       setState(() {
+         _userSettings = settings;
+         _isLoading = false;
+       });
+
+       if (settingsWereUpdated) {
+          settingsScreenLogger.d("Final userSettings state after load/update: $_userSettings");
+       }
+
+     } catch (e) {
+       settingsScreenLogger.e("Error loading/updating settings: $e");
+        if (!mounted) return;
+       setState(() { _isLoading = false; });
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(content: Text('Error loading settings: $e')),
+       );
+     }
   }
-
   Future<void> _pickNotificationTime() async {
     if (_userSettings == null) {
       return; // Don't show picker if settings haven't loaded
@@ -485,6 +497,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+        if (!_isLoading && _userSettings != null) {
+      settingsScreenLogger.d("SettingsScreen build: Using defaultFrequency '${_userSettings!.defaultFrequency}' for Dropdown.");
+       // Optional: Log available values too if needed for comparison
+       // settingsLogger.d("Available item values: ${ContactFrequency.values.map((f) => f.value).toList()}");
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),

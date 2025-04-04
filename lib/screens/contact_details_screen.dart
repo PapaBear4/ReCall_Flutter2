@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:recall/models/contact_frequency.dart';
 import 'package:recall/repositories/usersettings_repository.dart';
+import 'package:recall/screens/settings_screen.dart';
 import 'package:recall/services/notification_helper.dart';
 import 'package:recall/screens/help_screen.dart'; // Import HelpScreen
 import '../utils/last_contacted_utils.dart';
@@ -56,53 +57,55 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             .read<ContactDetailsBloc>()
             .add(ContactDetailsEvent.loadContact(contactId: contactId));
       } else {
-         // --- Logic for NEW contact ---
+        // --- Logic for NEW contact ---
 
-         // 1. Define a fallback default frequency
-         String fetchedDefaultFrequency = ContactFrequency.never.value; // Fallback
+        // 1. Define a fallback default frequency
+        String fetchedDefaultFrequency =
+            ContactFrequency.never.value; // Fallback
 
-         // 2. Try fetching the actual default from UserSettingsRepository
-         try {
-            // Use read to get repository (ensure it's provided higher up via Provider)
-            final settingsRepo = context.read<UserSettingsRepository>(); //
-            final settingsList = await settingsRepo.getAll();
-            if (settingsList.isNotEmpty) {
-               // Use the defaultFrequency from the fetched settings
-               fetchedDefaultFrequency = settingsList.first.defaultFrequency;
-            }
-         } catch (e) {
-            contactDetailScreenLogger.e("Error fetching default frequency: $e");
-            // Keep using the fallback default if error occurs
-         }
+        // 2. Try fetching the actual default from UserSettingsRepository
+        try {
+          // Use read to get repository (ensure it's provided higher up via Provider)
+          final settingsRepo = context.read<UserSettingsRepository>(); //
+          final settingsList = await settingsRepo.getAll();
+          if (settingsList.isNotEmpty) {
+            // Use the defaultFrequency from the fetched settings
+            fetchedDefaultFrequency = settingsList.first.defaultFrequency;
+          }
+        } catch (e) {
+          contactDetailScreenLogger.e("Error fetching default frequency: $e");
+          // Keep using the fallback default if error occurs
+        }
 
-         // 3. Check if the widget is still mounted after the async gap
-         if (!mounted) return;
+        // 3. Check if the widget is still mounted after the async gap
+        if (!mounted) return;
 
-         // 4. Set state for the new contact using the fetched (or fallback) default frequency
-         setState(() {
-           _isEditMode = true;
-           _hasUnsavedChanges = true;
-           _localContact = Contact( //
-              id: 0,
-              firstName: '',
-              lastName: '',
-              frequency: fetchedDefaultFrequency, // <-- Use the fetched/fallback value
-              birthday: null,
-              lastContacted: null,
-              anniversary: null,
-           );
-           _firstNameController.text = '';
-           _lastNameController.text = '';
-           _initialized = true;
-         });
+        // 4. Set state for the new contact using the fetched (or fallback) default frequency
+        setState(() {
+          _isEditMode = true;
+          _hasUnsavedChanges = true;
+          _localContact = Contact(
+            //
+            id: 0,
+            firstName: '',
+            lastName: '',
+            frequency:
+                fetchedDefaultFrequency, // <-- Use the fetched/fallback value
+            birthday: null,
+            lastContacted: null,
+            anniversary: null,
+          );
+          _firstNameController.text = '';
+          _lastNameController.text = '';
+          _initialized = true;
+        });
 
-         // 5. Update BLoC state locally
-          context
-              .read<ContactDetailsBloc>()
-              .add(ContactDetailsEvent.updateContactLocally(contact: _localContact));
+        // 5. Update BLoC state locally
+        context.read<ContactDetailsBloc>().add(
+            ContactDetailsEvent.updateContactLocally(contact: _localContact));
 
-         // --- End Logic for NEW contact ---
-       }
+        // --- End Logic for NEW contact ---
+      }
     });
   }
 
@@ -408,6 +411,12 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                 },
                 onChanged: (value) {
                   if (_isEditMode) {
+                    settingsScreenLogger.d(
+                        "Building Details Dropdown with value: '${_localContact.frequency}'");
+                    // Log the available values for comparison
+                    settingsScreenLogger.d(
+                        "Available item values: ${ContactFrequency.values.map((f) => f.value).toList()}");
+
                     setState(() {
                       _localContact = _localContact.copyWith(lastName: value);
                       _hasUnsavedChanges = true;
@@ -584,62 +593,73 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
   // Handles the save action
   void _onSaveButtonPressed(BuildContext context) {
-   // Form validation check
-   if (_formKey.currentState!.validate()) {
-     final currentState = context.read<ContactDetailsBloc>().state;
-     Contact contactToSave = _localContact;
-     bool isExistingContact = contactToSave.id != null && contactToSave.id != 0;
+    // Form validation check
+    if (_formKey.currentState!.validate()) {
+      final currentState = context.read<ContactDetailsBloc>().state;
+      Contact contactToSave = _localContact;
+      bool isExistingContact =
+          contactToSave.id != null && contactToSave.id != 0;
 
-     // Check if state allows saving
-     bool canProceed = currentState.maybeMap(
-         loaded: (_) => true,
-         orElse: () => !isExistingContact
-     );
+      // Check if state allows saving
+      bool canProceed = currentState.maybeMap(
+          loaded: (_) => true, orElse: () => !isExistingContact);
 
-     if (!canProceed && mounted) { // Add mounted check
-          ScaffoldMessenger.of(context).showSnackBar(
-           const SnackBar(content: Text('Cannot save, contact state is inconsistent.')),
-          );
-          return;
-     }
-
-     // --- Dispatch event ---
-     if (!isExistingContact) {
-       context.read<ContactDetailsBloc>().add(ContactDetailsEvent.addContact(contact: contactToSave));
-       if (mounted) { // Add mounted check before showing SnackBar
-         ScaffoldMessenger.of(context).showSnackBar(
-           const SnackBar(content: Text('New contact saved')),
-         );
-       }
-     } else {
-       context.read<ContactDetailsBloc>().add(ContactDetailsEvent.saveContact(contact: contactToSave));
-        if (mounted) { // Add mounted check before showing SnackBar
-         ScaffoldMessenger.of(context).showSnackBar(
-           const SnackBar(content: Text('Changes saved')),
-         );
-       }
-     }
-
-     // --- Update local state and Navigate Back ---
-     // Do this after dispatching the event
-      if (mounted) { // Add mounted check before setState and pop
-         setState(() {
-             _hasUnsavedChanges = false;
-             _isEditMode = false; // Exit edit mode
-         });
-         context.read<ContactListBloc>().add(const ContactListEvent.loadContacts()); // Refresh list
-         Navigator.of(context).pop(); // Go back to the list screen
+      if (!canProceed && mounted) {
+        // Add mounted check
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Cannot save, contact state is inconsistent.')),
+        );
+        return;
       }
 
-   } else {
-     // Form validation failed
-      if (mounted) { // Add mounted check before showing SnackBar
+      // --- Dispatch event ---
+      if (!isExistingContact) {
+        context
+            .read<ContactDetailsBloc>()
+            .add(ContactDetailsEvent.addContact(contact: contactToSave));
+        if (mounted) {
+          // Add mounted check before showing SnackBar
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('New contact saved')),
+          );
+        }
+      } else {
+        context
+            .read<ContactDetailsBloc>()
+            .add(ContactDetailsEvent.saveContact(contact: contactToSave));
+        if (mounted) {
+          // Add mounted check before showing SnackBar
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Changes saved')),
+          );
+        }
+      }
+
+      // --- Update local state and Navigate Back ---
+      // Do this after dispatching the event
+      if (mounted) {
+        // Add mounted check before setState and pop
+        setState(() {
+          _hasUnsavedChanges = false;
+          _isEditMode = false; // Exit edit mode
+        });
+        context
+            .read<ContactListBloc>()
+            .add(const ContactListEvent.loadContacts()); // Refresh list
+        Navigator.of(context).pop(); // Go back to the list screen
+      }
+    } else {
+      // Form validation failed
+      if (mounted) {
+        // Add mounted check before showing SnackBar
         ScaffoldMessenger.of(context).showSnackBar(
-         const SnackBar(content: Text('Please correct the errors before saving.')),
+          const SnackBar(
+              content: Text('Please correct the errors before saving.')),
         );
       }
-   }
- }
+    }
+  }
 
   // Handles the delete action
   void _onDeleteButtonPressed(BuildContext context) {
