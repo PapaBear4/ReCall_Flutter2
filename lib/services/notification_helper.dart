@@ -6,9 +6,10 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
 import 'package:recall/main.dart';
 import 'package:recall/models/contact.dart';
-import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:logger/logger.dart';
+import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 
 var notificationLogger = Logger();
 
@@ -27,11 +28,25 @@ class NotificationHelper {
   //initialization code
   Future<void> init() async {
     // Initialize Time Zones
-    tz.initializeTimeZones();
-    // TODO: Make this dynamic based on the user's actual time zone
-    // For now it's hardcoded to NY
-    tz.setLocalLocation(
-        tz.getLocation('America/New_York')); // Set your desired timezone
+    try {
+      // 1. Initialize timezone database (required first)
+      tz.initializeTimeZones();
+
+      // 2. Get the native device timezone name string
+      final String currentTimeZone = await FlutterNativeTimezone.getLocalTimezone();
+
+      // 3. Get the Location object for that name
+      final tz.Location deviceLocation = tz.getLocation(currentTimeZone);
+
+      // 4. Set it as the default local location for this isolate
+      tz.setLocalLocation(deviceLocation);
+
+      notificationLogger.i("Timezone initialized for main isolate using device zone: $currentTimeZone");
+
+    } catch (e) {
+       notificationLogger.e("Error initializing/setting timezone: $e. Falling back to UTC for main isolate.");
+       // Optionally set to UTC explicitly on error: tz.setLocalLocation(tz.UTC);
+    }
 
     // Android Initialization
     const AndroidInitializationSettings initializationSettingsAndroid =
