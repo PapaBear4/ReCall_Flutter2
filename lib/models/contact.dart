@@ -21,6 +21,16 @@ abstract class Contact with _$Contact {
     @Property(type: PropertyType.date) DateTime? birthday,
     @Property(type: PropertyType.date) DateTime? lastContacted,
     @Property(type: PropertyType.date) DateTime? anniversary,
+    String? phoneNumber, // Single phone number (optional)
+    List<String>? emails, // List of emails (optional)
+    String? notes, // Notes field (optional)
+    // Specific Social Media Fields (optional Strings)
+    String? youtubeUrl,
+    String? instagramHandle,
+    String? facebookUrl,
+    String? snapchatHandle,
+    String? tikTokHandle,
+
   }) = _Contact;
 
   factory Contact.fromJson(Map<String, dynamic> json) =>

@@ -24,7 +24,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
       id: const obx_int.IdUid(11, 4220768979207252381),
       name: 'Contact',
-      lastPropertyId: const obx_int.IdUid(7, 5161319229396791903),
+      lastPropertyId: const obx_int.IdUid(15, 3234674653212938661),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
@@ -61,6 +61,46 @@ final _entities = <obx_int.ModelEntity>[
             id: const obx_int.IdUid(7, 5161319229396791903),
             name: 'anniversary',
             type: 10,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(8, 6884050473519349685),
+            name: 'phoneNumber',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(9, 6479624137663918254),
+            name: 'notes',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(10, 168171468698879331),
+            name: 'youtubeUrl',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(11, 2225970545082458333),
+            name: 'instagramHandle',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(12, 5856287035502633551),
+            name: 'facebookUrl',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(13, 4096270207426708891),
+            name: 'snapchatHandle',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(14, 6104867249781630791),
+            name: 'tikTokHandle',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(15, 3234674653212938661),
+            name: 'emails',
+            type: 30,
             flags: 0)
       ],
       relations: <obx_int.ModelRelation>[],
@@ -268,7 +308,31 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final firstNameOffset = fbb.writeString(object.firstName);
           final lastNameOffset = fbb.writeString(object.lastName);
           final frequencyOffset = fbb.writeString(object.frequency);
-          fbb.startTable(8);
+          final phoneNumberOffset = object.phoneNumber == null
+              ? null
+              : fbb.writeString(object.phoneNumber!);
+          final notesOffset =
+              object.notes == null ? null : fbb.writeString(object.notes!);
+          final youtubeUrlOffset = object.youtubeUrl == null
+              ? null
+              : fbb.writeString(object.youtubeUrl!);
+          final instagramHandleOffset = object.instagramHandle == null
+              ? null
+              : fbb.writeString(object.instagramHandle!);
+          final facebookUrlOffset = object.facebookUrl == null
+              ? null
+              : fbb.writeString(object.facebookUrl!);
+          final snapchatHandleOffset = object.snapchatHandle == null
+              ? null
+              : fbb.writeString(object.snapchatHandle!);
+          final tikTokHandleOffset = object.tikTokHandle == null
+              ? null
+              : fbb.writeString(object.tikTokHandle!);
+          final emailsOffset = object.emails == null
+              ? null
+              : fbb.writeList(
+                  object.emails!.map(fbb.writeString).toList(growable: false));
+          fbb.startTable(16);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addOffset(1, firstNameOffset);
           fbb.addOffset(2, lastNameOffset);
@@ -276,6 +340,14 @@ obx_int.ModelDefinition getObjectBoxModel() {
           fbb.addInt64(4, object.birthday?.millisecondsSinceEpoch);
           fbb.addInt64(5, object.lastContacted?.millisecondsSinceEpoch);
           fbb.addInt64(6, object.anniversary?.millisecondsSinceEpoch);
+          fbb.addOffset(7, phoneNumberOffset);
+          fbb.addOffset(8, notesOffset);
+          fbb.addOffset(9, youtubeUrlOffset);
+          fbb.addOffset(10, instagramHandleOffset);
+          fbb.addOffset(11, facebookUrlOffset);
+          fbb.addOffset(12, snapchatHandleOffset);
+          fbb.addOffset(13, tikTokHandleOffset);
+          fbb.addOffset(14, emailsOffset);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -305,6 +377,29 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final anniversaryParam = anniversaryValue == null
               ? null
               : DateTime.fromMillisecondsSinceEpoch(anniversaryValue);
+          final phoneNumberParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 18);
+          final emailsParam = const fb.ListReader<String>(
+                  fb.StringReader(asciiOptimization: true),
+                  lazy: false)
+              .vTableGetNullable(buffer, rootOffset, 32);
+          final notesParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 20);
+          final youtubeUrlParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 22);
+          final instagramHandleParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 24);
+          final facebookUrlParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 26);
+          final snapchatHandleParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 28);
+          final tikTokHandleParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 30);
           final object = Contact(
               id: idParam,
               firstName: firstNameParam,
@@ -312,7 +407,15 @@ obx_int.ModelDefinition getObjectBoxModel() {
               frequency: frequencyParam,
               birthday: birthdayParam,
               lastContacted: lastContactedParam,
-              anniversary: anniversaryParam);
+              anniversary: anniversaryParam,
+              phoneNumber: phoneNumberParam,
+              emails: emailsParam,
+              notes: notesParam,
+              youtubeUrl: youtubeUrlParam,
+              instagramHandle: instagramHandleParam,
+              facebookUrl: facebookUrlParam,
+              snapchatHandle: snapchatHandleParam,
+              tikTokHandle: tikTokHandleParam);
 
           return object;
         }),
@@ -456,6 +559,38 @@ class Contact_ {
   /// See [Contact.anniversary].
   static final anniversary =
       obx.QueryDateProperty<Contact>(_entities[0].properties[6]);
+
+  /// See [Contact.phoneNumber].
+  static final phoneNumber =
+      obx.QueryStringProperty<Contact>(_entities[0].properties[7]);
+
+  /// See [Contact.notes].
+  static final notes =
+      obx.QueryStringProperty<Contact>(_entities[0].properties[8]);
+
+  /// See [Contact.youtubeUrl].
+  static final youtubeUrl =
+      obx.QueryStringProperty<Contact>(_entities[0].properties[9]);
+
+  /// See [Contact.instagramHandle].
+  static final instagramHandle =
+      obx.QueryStringProperty<Contact>(_entities[0].properties[10]);
+
+  /// See [Contact.facebookUrl].
+  static final facebookUrl =
+      obx.QueryStringProperty<Contact>(_entities[0].properties[11]);
+
+  /// See [Contact.snapchatHandle].
+  static final snapchatHandle =
+      obx.QueryStringProperty<Contact>(_entities[0].properties[12]);
+
+  /// See [Contact.tikTokHandle].
+  static final tikTokHandle =
+      obx.QueryStringProperty<Contact>(_entities[0].properties[13]);
+
+  /// See [Contact.emails].
+  static final emails =
+      obx.QueryStringVectorProperty<Contact>(_entities[0].properties[14]);
 }
 
 /// [Notification] entity fields to define ObjectBox queries.
