@@ -1,14 +1,12 @@
 // lib/repositories/notification_repository.dart
 import 'package:recall/models/notification.dart';
-import 'package:logger/logger.dart';
+import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:objectbox/objectbox.dart';
 import 'package:recall/sources/notification_ob_source.dart';
 import 'package:recall/sources/notification_sp_source.dart';
 import 'package:recall/sources/data_source.dart';
 import 'repository.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-
-var notificationRepoLogger = Logger();
 
 class NotificationRepository implements Repository<Notification> {
   late final Store? _store;
@@ -22,7 +20,7 @@ class NotificationRepository implements Repository<Notification> {
         _notificationBox = _store!.box<Notification>();
         _source = NotificationObjectBoxSource(_notificationBox!);
       } catch (e) {
-        notificationRepoLogger.i("Error opening ObjectBox store: $e");
+        logger.i("Error opening ObjectBox store: $e");
         _source = _createInMemorySource();
       }
     } else {
@@ -30,7 +28,7 @@ class NotificationRepository implements Repository<Notification> {
       try {
         _source = NotificationSharedPreferencesSource();
       } catch (e) {
-        notificationRepoLogger.i("Error opening shared preferences: $e");
+        logger.i("Error opening shared preferences: $e");
       }
     }
   }
@@ -51,7 +49,7 @@ class NotificationRepository implements Repository<Notification> {
       }
       return notifications;
     } catch (e) {
-      notificationRepoLogger.i("Error getting all notifications: $e");
+      logger.i("Error getting all notifications: $e");
       return _notifications.values.toList();
     }
   }
@@ -64,7 +62,7 @@ class NotificationRepository implements Repository<Notification> {
     try {
       return await _source.getById(id);
     } catch (e) {
-      notificationRepoLogger.i("Error getting notification by id: $e");
+      logger.i("Error getting notification by id: $e");
       return null;
     }
   }
@@ -78,7 +76,7 @@ class NotificationRepository implements Repository<Notification> {
       }
       return notification;
     } catch (e) {
-      notificationRepoLogger.i("Error adding notification: $e");
+      logger.i("Error adding notification: $e");
       return item;
     }
   }
@@ -92,7 +90,7 @@ class NotificationRepository implements Repository<Notification> {
       }
       return notification;
     } catch (e) {
-      notificationRepoLogger.i("Error updating notification: $e");
+      logger.i("Error updating notification: $e");
       return item;
     }
   }
@@ -103,7 +101,7 @@ class NotificationRepository implements Repository<Notification> {
       await _source.delete(id);
       _notifications.remove(id);
     } catch (e) {
-      notificationRepoLogger.i("Error deleting notification: $e");
+      logger.i("Error deleting notification: $e");
     }
   }
 
@@ -119,7 +117,7 @@ class NotificationRepository implements Repository<Notification> {
       }
       return addedItems;
     } catch (e) {
-      notificationRepoLogger.i("Error adding many notifications: $e");
+      logger.i("Error adding many notifications: $e");
       return []; // Or handle error appropriately
     }
   }
@@ -130,7 +128,7 @@ class NotificationRepository implements Repository<Notification> {
       await _source.deleteAll();
       _notifications.clear(); // Clear cache
     } catch (e) {
-      notificationRepoLogger.i("Error deleting all notifications: $e");
+      logger.i("Error deleting all notifications: $e");
     }
   }
 

@@ -6,6 +6,7 @@ import 'package:recall/models/usersettings.dart';
 import 'package:recall/repositories/usersettings_repository.dart';
 import 'package:recall/services/notification_helper.dart';
 import 'package:recall/utils/last_contacted_utils.dart'; // Import the new utils file
+import 'package:recall/utils/logger.dart'; // Adjust path if needed
 
 class NotificationService extends ChangeNotifier {
   final NotificationHelper _notificationHelper;
@@ -16,11 +17,11 @@ class NotificationService extends ChangeNotifier {
   //schedule a notification based on contact.frequency and contact.lastContacted
   Future<void> scheduleReminder(Contact contact) async {
     if (contact.id == null) {
-      notificationLogger.e('LOG: Cannot schedule notification for contact with null ID.');
+      logger.e('LOG: Cannot schedule notification for contact with null ID.');
       return;
     }
     if (contact.frequency == ContactFrequency.never.value) {
-         notificationLogger.i('LOG: Not scheduling notification for contact ${contact.id} with frequency "never". Cancelling any existing.');
+         logger.i('LOG: Not scheduling notification for contact ${contact.id} with frequency "never". Cancelling any existing.');
          await _notificationHelper.cancelNotification(contact.id!); // Cancel if frequency is set to never
          return;
     }
@@ -40,13 +41,13 @@ class NotificationService extends ChangeNotifier {
       nextDueDate = DateTime.now();
       baseTitle = "Contact ${contact.firstName} ${contact.lastName}";
       baseBody = "You haven't contacted ${contact.firstName} yet.";
-       notificationLogger.i('LOG: Contact ${contact.id} never contacted. Due date calculated as now.');
+       logger.i('LOG: Contact ${contact.id} never contacted. Due date calculated as now.');
     } else {
       // Previously contacted: Calculate next due date
       nextDueDate = calculateNextDueDate(contact); // Calculate the ideal date
       baseTitle = "Contact ${contact.firstName} ${contact.lastName}";
       baseBody = "${contact.firstName} is due for contact."; // Simpler body
-       notificationLogger.i('LOG: Contact ${contact.id} previously contacted. Next due date calculated as $nextDueDate.');
+       logger.i('LOG: Contact ${contact.id} previously contacted. Next due date calculated as $nextDueDate.');
     }
 
     // Call the helper, passing the calculated date and the contact

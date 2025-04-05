@@ -1,5 +1,5 @@
 // lib/services/background_service.dart
-import 'package:logger/logger.dart';
+import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:recall/models/contact.dart';
 import 'package:recall/models/contact_frequency.dart';
 import 'package:recall/repositories/contact_repository.dart';
@@ -15,12 +15,9 @@ import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart'; // Import the package
 
-
-final bgLogger = Logger();
-
 @pragma('vm:entry-point')
 void callbackDispatcher() async {
-  bgLogger.i("--- callbackDispatcher Isolate STARTED ---");
+  logger.i("--- callbackDispatcher Isolate STARTED ---");
     // *** Initialize Timezone right after isolate starts ***
   // Initialize Timezone right after isolate starts
   try {
@@ -31,16 +28,16 @@ void callbackDispatcher() async {
       // We need to make this part async now, which callbackDispatcher isn't directly.
       // We'll do it inside the executeTask lambda before it's needed.
       // Leaving just initializeTimeZones here is fine.
-      bgLogger.d("Timezone database initialized in background isolate.");
+      logger.d("Timezone database initialized in background isolate.");
 
   } catch(e) {
-      bgLogger.e("Error initializing timezone DB in background: $e");
+      logger.e("Error initializing timezone DB in background: $e");
   }
   // *** End Timezone Initialization ***
 
 
   Workmanager().executeTask((task, inputData) async {
-    bgLogger.i("Background task '$task' started.");
+    logger.i("Background task '$task' started.");
     Store? store; // Declare store variable
     try {
              // *** Set Dynamic Timezone at start of task execution ***
@@ -48,67 +45,67 @@ void callbackDispatcher() async {
           final String currentTimeZone = await FlutterTimezone.getLocalTimezone();
           final tz.Location deviceLocation = tz.getLocation(currentTimeZone);
           tz.setLocalLocation(deviceLocation);
-          bgLogger.d("Timezone set for background task using device zone: $currentTimeZone");
+          logger.d("Timezone set for background task using device zone: $currentTimeZone");
        } catch(e) {
-          bgLogger.e("Error setting dynamic timezone in background task: $e. Falling back to UTC.");
+          logger.e("Error setting dynamic timezone in background task: $e. Falling back to UTC.");
           // Optionally set tz.setLocalLocation(tz.UTC); or let it potentially use UTC default
        }
        // *** End Timezone Setup ***
 
       // --- Get Store Path ---
-      bgLogger.d("Getting documents directory for ObjectBox...");
+      logger.d("Getting documents directory for ObjectBox...");
       final docsDir = await getApplicationDocumentsDirectory();
       final storePath = '${docsDir.path}/objectbox';
-      bgLogger.d("ObjectBox store path: $storePath");
+      logger.d("ObjectBox store path: $storePath");
 
       // --- Attach or Open ObjectBox Store ---
       if (Store.isOpen(storePath)) {
-         bgLogger.d("Store is already open, attaching...");
+         logger.d("Store is already open, attaching...");
          store = Store.attach(getObjectBoxModel(), storePath);
-         bgLogger.d("Successfully attached to existing ObjectBox store.");
+         logger.d("Successfully attached to existing ObjectBox store.");
       } else {
-         bgLogger.d("Store is not open, attempting to open new instance...");
+         logger.d("Store is not open, attempting to open new instance...");
          // Fallback to opening a new store if not already open
          store = Store(getObjectBoxModel(), directory: storePath);
-         bgLogger.d("New ObjectBox store instance opened successfully.");
+         logger.d("New ObjectBox store instance opened successfully.");
       }
       // --- End Store Attach/Open ---
 
       // --- Create Repositories (remains the same) ---
-      bgLogger.d("Creating repositories and services...");
+      logger.d("Creating repositories and services...");
       final contactRepository = ContactRepository(store);
       final userSettingsRepository = UserSettingsRepository(store);
       final notificationHelper = NotificationHelper();
       final notificationService = NotificationService(notificationHelper, userSettingsRepository);
-      bgLogger.d("Repositories and services created.");
+      logger.d("Repositories and services created.");
       // --- End Repo Creation ---
 
       // --- Task Logic Phase (remains the same) ---
-      bgLogger.d("Fetching all contacts...");
+      logger.d("Fetching all contacts...");
       final List<Contact> allContacts = await contactRepository.getAll();
-      bgLogger.i("Fetched ${allContacts.length} contacts.");
+      logger.i("Fetched ${allContacts.length} contacts.");
 
       // ... (rest of the task logic: finding overdue, scheduling reminders) ...
        final List<Contact> overdueContacts = allContacts.where((contact) {
           if (contact.frequency == ContactFrequency.never.value) return false;
           return isOverdue(contact.frequency, contact.lastContacted);
        }).toList();
-       bgLogger.i("Found ${overdueContacts.length} overdue contacts.");
-       bgLogger.d("Processing ${overdueContacts.length} overdue contacts...");
+       logger.i("Found ${overdueContacts.length} overdue contacts.");
+       logger.d("Processing ${overdueContacts.length} overdue contacts...");
        for (final contact in overdueContacts) {
-         bgLogger.d("Processing overdue contact ID: ${contact.id}");
+         logger.d("Processing overdue contact ID: ${contact.id}");
          await notificationService.scheduleReminder(contact);
        }
       // --- End Task Logic ---
 
-      bgLogger.i("Background task '$task' completed successfully.");
+      logger.i("Background task '$task' completed successfully.");
       return Future.value(true);
     } catch (err, stack) {
-      bgLogger.e("Error executing background task '$task': $err\n$stack");
+      logger.e("Error executing background task '$task': $err\n$stack");
       return Future.value(false);
     } finally {
        // Close / Detach from the store instance used by this isolate
-       bgLogger.d("Closing/Detaching background ObjectBox store reference.");
+       logger.d("Closing/Detaching background ObjectBox store reference.");
        // Calling close() on an attached store should be safe and detach it.
        store?.close();
     }
@@ -132,5 +129,5 @@ void initializeBackgroundService() {
     initialDelay: const Duration(seconds: 10), // Keep testing delay
     existingWorkPolicy: ExistingWorkPolicy.keep, // Keep replace for testing
   );
-   bgLogger.i("Background service initialized and task registered (TESTING MODE).");
+   logger.i("Background service initialized and task registered (TESTING MODE).");
 }

@@ -8,10 +8,9 @@ import 'package:recall/main.dart';
 import 'package:recall/models/contact.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'package:logger/logger.dart';
+import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:flutter_timezone/flutter_timezone.dart';
-
-var notificationLogger = Logger();
+import 'package:permission_handler/permission_handler.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -41,10 +40,10 @@ class NotificationHelper {
       // 4. Set it as the default local location for this isolate
       tz.setLocalLocation(deviceLocation);
 
-      notificationLogger.i("Timezone initialized for main isolate using device zone: $currentTimeZone");
+      logger.i("Timezone initialized for main isolate using device zone: $currentTimeZone");
 
     } catch (e) {
-       notificationLogger.e("Error initializing/setting timezone: $e. Falling back to UTC for main isolate.");
+       logger.e("Error initializing/setting timezone: $e. Falling back to UTC for main isolate.");
        // Optionally set to UTC explicitly on error: tz.setLocalLocation(tz.UTC);
     }
 
@@ -76,9 +75,9 @@ class NotificationHelper {
       onDidReceiveNotificationResponse:
           (NotificationResponse notificationResponse) async {
         // LOGGING START
-        notificationLogger.i(
+        logger.i(
             '>>> Notification Tapped! Type: ${notificationResponse.notificationResponseType}'); // Using logger
-        notificationLogger.i(
+        logger.i(
             '>>> Received payload: ${notificationResponse.payload}'); // Using logger
         // LOGGING END
         // Handle notification tap when app is in foreground/background
@@ -93,48 +92,55 @@ class NotificationHelper {
         }
         // You might want to navigate to a specific screen based on the payload
       },
-      //TODO: This is for later implementation of Notification Actions (background?)
-      //https://pub.dev/packages/flutter_local_notifications#-usage
-      //onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
     );
 
-    await requestPermissions();
+    await requestAndHandlePermissions();
   }
 
-  Future<void> requestPermissions() async {
-    //TODO: expand to include checking permissions
-    /*
-// Add permission_handler to your pubspec.yaml:
-//   permission_handler: ^10.0.0  (or a later version)
+  Future<bool> requestAndHandlePermissions() async {
+    PermissionStatus status = await Permission.notification.status;
+    logger.i('Notification permission status: $status');
 
-import 'package:permission_handler/permission_handler.dart';
+    if (status.isGranted) {
+      logger.i('Notification permission already granted.');
+      return true; // Permission already granted
+    }
 
-// ... inside your NotificationHelper or wherever you schedule ...
+    if (status.isDenied) {
+      // Permission was denied previously but not permanently. Request again.
+      logger.i('Notification permission denied, requesting again...');
+      final PermissionStatus newStatus = await Permission.notification.request();
+      logger.i('Notification permission status after request: $newStatus');
+      return newStatus.isGranted; // Return true if granted after request
+    }
 
-Future<void> checkAndRequestNotificationPermission() async {
-  PermissionStatus status = await Permission.notification.status;
+    if (status.isPermanentlyDenied) {
+      // Permission permanently denied. User needs to go to settings.
+      logger.w('Notification permission permanently denied. Cannot request.');
+      // Optional: Trigger UI to show a message asking user to go to settings.
+      // Example: You might use a global key navigator or a state management solution
+      //          to show a dialog from here, or return false and handle it in the UI layer.
+      // For simplicity now, just log it. You might want to call openAppSettings():
+      // await openAppSettings(); // Requires user interaction in UI ideally
+      return false;
+    }
 
-  if (status.isDenied) {
-    // The user has denied the permission.
-    // You might want to show a dialog explaining why you need it.
-    status = await Permission.notification.request(); // Request again
-  }
+     if (status.isRestricted) {
+       // Typically on iOS - parental controls etc.
+       logger.w('Notification permission is restricted.');
+       return false;
+     }
 
-  if (status.isPermanentlyDenied) {
-    // The user has permanently denied the permission.
-    // You might want to direct them to the app settings.
-    openAppSettings(); // From the permission_handler package
-  }
+     // Handle other potential states like 'limited' (new on iOS 14+) if applicable
+     // For now, assume isGranted is the goal.
 
-  if (status.isGranted) {
-    // Permission is granted, proceed with scheduling.
-  }
-}
-    */
-    await flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.requestNotificationsPermission();
+     // Default case (shouldn't typically be reached if logic above is sound)
+     // If status wasn't granted, denied, or permanently denied, request it.
+     // This covers potential initial states where status might not be determined yet.
+     logger.i('Notification permission status unknown or requires request, requesting...');
+     final PermissionStatus finalStatus = await Permission.notification.request();
+     logger.i('Notification permission status after final request: $finalStatus');
+     return finalStatus.isGranted;
   }
 
   Future<void> scheduleNotification({
@@ -173,12 +179,12 @@ Future<void> checkAndRequestNotificationPermission() async {
       notificationTitle = "OVERDUE: ${contact.firstName} ${contact.lastName}";
       notificationBody =
           "Contact was due on ${DateFormat.yMd().format(calculatedDueDate)}.";
-      notificationLogger.i(
+      logger.i(
           'LOG: Contact $id overdue (due $calculatedDueDate). Scheduling for $scheduledDate');
     } else {
       // It's due in the future. Schedule for the calculated date.
       scheduledDate = targetTimeOnDate(tzCalculatedDueDate); // Use user's time
-      notificationLogger
+      logger
           .i('LOG: Contact $id due in future. Scheduling for $scheduledDate');
     }
 
@@ -194,7 +200,7 @@ Future<void> checkAndRequestNotificationPermission() async {
         scheduledDate =
             now.add(const Duration(seconds: 5)); // Fallback: 5 seconds from now
       }
-      notificationLogger.w(
+      logger.w(
           'LOG: Adjusted schedule time for contact $id to be in the future: $scheduledDate');
     }
 
@@ -227,7 +233,7 @@ Future<void> checkAndRequestNotificationPermission() async {
       matchDateTimeComponents:
           null, // Usually null for specific date/time schedules
     );
-    notificationLogger.i(
+    logger.i(
         'LOG: Notification $id scheduled for $scheduledDate with payload $payload');
   }
 
@@ -242,7 +248,7 @@ Future<void> checkAndRequestNotificationPermission() async {
   Future<void> showTestNotification(Contact contact) async {
     // Ensure contact ID is not null before creating payload
     if (contact.id == null) {
-      notificationLogger
+      logger
           .e("Cannot show test notification for contact with null ID.");
       return;
     }
@@ -271,21 +277,21 @@ Future<void> checkAndRequestNotificationPermission() async {
       payload: payload, // Pass the payload here
       // --- END ADD ---
     );
-    notificationLogger
+    logger
         .i('LOG: Displayed test notification $notifyId with payload $payload');
   }
 
   Future<List<PendingNotificationRequest>> getPendingNotifications() async {
     final List<PendingNotificationRequest> pendingNotificationRequests =
         await flutterLocalNotificationsPlugin.pendingNotificationRequests();
-    notificationLogger
+    logger
         .i("Pending Notifications: ${pendingNotificationRequests.toString()}");
     return pendingNotificationRequests;
   }
 
   void _handleNotificationTap(String? payload) {
     // --- ADD LOGGING HERE ---
-    notificationLogger.i(
+    logger.i(
         '>>> _handleNotificationTap called with payload: $payload'); // Using logger
     // --- END LOGGING ---
 
@@ -293,26 +299,26 @@ Future<void> checkAndRequestNotificationPermission() async {
         payload.isNotEmpty &&
         payload.startsWith('contact_id:')) {
       final String idString = payload.split(':').last;
-      notificationLogger
+      logger
           .i('>>> Extracted ID string: $idString'); // Using logger
       final contactId = int.tryParse(idString);
-      notificationLogger.i('>>> Parsed contactId: $contactId'); // Using logger
+      logger.i('>>> Parsed contactId: $contactId'); // Using logger
 
       if (contactId != null) {
         // --- ADD LOGGING HERE ---
-        notificationLogger.i(
+        logger.i(
             '>>> Attempting navigation to /contactDetails with argument: $contactId'); // Using logger
-        notificationLogger.i(
+        logger.i(
             '>>> navigatorKey.currentState is null? ${navigatorKey.currentState == null}'); // Using logger
         // --- END LOGGING ---
         navigatorKey.currentState
             ?.pushNamed('/contactDetails', arguments: contactId);
       } else {
-        notificationLogger
+        logger
             .w('>>> Failed to parse contactId from payload.'); // Using logger
       }
     } else {
-      notificationLogger
+      logger
           .w('>>> Payload is null, empty, or invalid format.'); // Using logger
     }
   }

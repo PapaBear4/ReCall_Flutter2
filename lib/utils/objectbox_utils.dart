@@ -2,9 +2,7 @@
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:recall/objectbox.g.dart';
-import 'package:logger/logger.dart';
-
-final logger = Logger();
+import 'package:recall/utils/logger.dart'; // Adjust path if needed
 
 Future<Store?> openStore() async {
   if (kIsWeb) {

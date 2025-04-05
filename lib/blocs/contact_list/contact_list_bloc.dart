@@ -3,17 +3,14 @@ import 'package:bloc/bloc.dart';
 import 'package:recall/models/contact.dart';
 import 'package:recall/models/contact_frequency.dart';
 import 'package:recall/repositories/contact_repository.dart';
-import 'package:logger/logger.dart';
+import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:recall/services/notification_helper.dart';
 import 'package:recall/services/notification_service.dart';
 import 'package:recall/utils/last_contacted_utils.dart';
 
 part 'contact_list_event.dart';
 part 'contact_list_state.dart';
 part 'contact_list_bloc.freezed.dart';
-
-var contactListLogger = Logger();
 
 class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
   final ContactRepository _contactRepository;
@@ -50,7 +47,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           }
         } catch (e) {
           emit(ContactListState.error(e.toString()));
-          contactListLogger.e("Error loading contacts: $e");
+          logger.e("Error loading contacts: $e");
         }
 
         // DELETE CONTACT FROM LIST
@@ -63,42 +60,56 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
         // Get current state details before updating
         final currentState = state;
         if (currentState is! _Loaded) {
+          logger
+              .w("Attempted to update contact from non-loaded state.");
           return;
         } // Can only update from loaded state
 
         emit(
             const ContactListState.loading()); // Indicate loading during update
-        try {
-          // Update in repository
-          final updatedContact = await _contactRepository.update(e.contact);
-          // Reschedule notification
-          await _notificationService.scheduleReminder(updatedContact);
-          notificationLogger
-              .i('LOG: Updated contact and rescheduled notification.');
+          try {
+            // 1. Update in repository
+            // Use e.contact as the input for the update
+            final updatedContact = await _contactRepository.update(e.contact);
 
-          // Get the full updated list
-          // In a real app, ideally the repo update would return the updated list
-          // or we'd update the single item in the existing list to avoid a full fetch.
-          // For simplicity here, we refetch.
-          final allContacts = await _contactRepository.getAll();
+            // 2. Reschedule notification
+            await _notificationService.scheduleReminder(updatedContact);
+            logger.i('LOG: Updated contact ${updatedContact.id} and rescheduled notification.');
 
-          // Re-apply filter, search, and sort using previous state values
-          final newDisplayedContacts = _applyFilterAndSearch(
-              allContacts, currentState.searchTerm, currentState.currentFilter);
-          final newSortedContacts = _sortContacts(newDisplayedContacts,
-              currentState.sortField, currentState.ascending);
+            // 3. Update state lists immutably
+            // Create a new list by mapping over the old one
+            final newOriginalContacts = currentState.originalContacts.map((c) {
+              // If the contact ID matches, return the updated contact, otherwise return the original
+              return c.id == updatedContact.id ? updatedContact : c;
+            }).toList();
 
-          emit(currentState.copyWith(
-              // Use copyWith on the previous loaded state
-              originalContacts: allContacts,
-              displayedContacts: newSortedContacts
-              // Keep sortField, ascending, searchTerm, currentFilter from previous state
-              ));
-        } catch (e) {
-          emit(ContactListState.error(e.toString()));
-          contactListLogger.e("Error updating contact from list: $e");
-          // Optionally, emit the previous state back on error: emit(currentState);
-        }
+            // 4. Re-apply filter and search to the *updated* original list
+            final newlyFilteredContacts = _applyFilterAndSearch(
+                 newOriginalContacts, // Use the updated originals
+                 currentState.searchTerm,
+                 currentState.currentFilter);
+
+            // 5. Re-apply sort to the *newly filtered* list
+            final newlySortedContacts = _sortContacts(
+                 newlyFilteredContacts,
+                 currentState.sortField,
+                 currentState.ascending);
+
+            // 6. Emit the new loaded state
+            emit(currentState.copyWith(
+              originalContacts: newOriginalContacts,
+              displayedContacts: newlySortedContacts,
+              // sortField, ascending, searchTerm, currentFilter remain the same
+            ));
+             logger.i("Successfully updated contact ${updatedContact.id} in list state.");
+
+          } catch (err) { // Catch specific error
+             emit(ContactListState.error(err.toString()));
+             // Log the specific contact ID if available in the error or event context
+             logger.e("Error updating contact ID ${e.contact.id} from list: $err");
+             // Optionally emit the previous state back on error
+             // emit(currentState);
+          }
 
         // SORT CONTACTS
       }, sortContacts: (e) async {
@@ -246,7 +257,6 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           break;
         case ContactListSortField.lastContacted:
           // Handle nulls: Never contacted go last when ascending.
-          DateTime now = DateTime.now();
           // Treat null as very far in the past for descending, future for ascending
           DateTime lastA =
               a.lastContacted ?? (ascending ? DateTime(9999) : DateTime(1900));

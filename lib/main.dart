@@ -4,7 +4,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
 import 'package:recall/repositories/contact_repository.dart';
 import 'package:recall/repositories/usersettings_repository.dart';
-import 'package:logger/logger.dart';
+import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:recall/utils/objectbox_utils.dart' as objectbox_utils;
 import 'package:recall/app.dart';
 import 'package:recall/services/notification_service.dart';
@@ -12,8 +12,6 @@ import 'package:recall/services/notification_helper.dart';
 import 'objectbox.g.dart' as objectbox_g;
 import 'package:workmanager/workmanager.dart';
 import 'package:recall/services/background_service.dart';
-
-final logger = Logger();
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
