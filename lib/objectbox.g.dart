@@ -24,7 +24,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
       id: const obx_int.IdUid(11, 4220768979207252381),
       name: 'Contact',
-      lastPropertyId: const obx_int.IdUid(15, 3234674653212938661),
+      lastPropertyId: const obx_int.IdUid(18, 88906437565863251),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
@@ -93,14 +93,24 @@ final _entities = <obx_int.ModelEntity>[
             type: 9,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(14, 6104867249781630791),
-            name: 'tikTokHandle',
-            type: 9,
-            flags: 0),
-        obx_int.ModelProperty(
             id: const obx_int.IdUid(15, 3234674653212938661),
             name: 'emails',
             type: 30,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(16, 4834080480440694104),
+            name: 'nickname',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(17, 6488074692037186861),
+            name: 'xHandle',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(18, 88906437565863251),
+            name: 'linkedInUrl',
+            type: 9,
             flags: 0)
       ],
       relations: <obx_int.ModelRelation>[],
@@ -282,7 +292,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
         3979434219446780961,
         8793448275874487525,
         6432866865444641207,
-        449191454545520003
+        449191454545520003,
+        6104867249781630791
       ],
       retiredRelationUids: const [],
       modelVersion: 5,
@@ -325,14 +336,19 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final snapchatHandleOffset = object.snapchatHandle == null
               ? null
               : fbb.writeString(object.snapchatHandle!);
-          final tikTokHandleOffset = object.tikTokHandle == null
-              ? null
-              : fbb.writeString(object.tikTokHandle!);
           final emailsOffset = object.emails == null
               ? null
               : fbb.writeList(
                   object.emails!.map(fbb.writeString).toList(growable: false));
-          fbb.startTable(16);
+          final nicknameOffset = object.nickname == null
+              ? null
+              : fbb.writeString(object.nickname!);
+          final xHandleOffset =
+              object.xHandle == null ? null : fbb.writeString(object.xHandle!);
+          final linkedInUrlOffset = object.linkedInUrl == null
+              ? null
+              : fbb.writeString(object.linkedInUrl!);
+          fbb.startTable(19);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addOffset(1, firstNameOffset);
           fbb.addOffset(2, lastNameOffset);
@@ -346,8 +362,10 @@ obx_int.ModelDefinition getObjectBoxModel() {
           fbb.addOffset(10, instagramHandleOffset);
           fbb.addOffset(11, facebookUrlOffset);
           fbb.addOffset(12, snapchatHandleOffset);
-          fbb.addOffset(13, tikTokHandleOffset);
           fbb.addOffset(14, emailsOffset);
+          fbb.addOffset(15, nicknameOffset);
+          fbb.addOffset(16, xHandleOffset);
+          fbb.addOffset(17, linkedInUrlOffset);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -366,6 +384,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
               .vTableGet(buffer, rootOffset, 6, '');
           final lastNameParam = const fb.StringReader(asciiOptimization: true)
               .vTableGet(buffer, rootOffset, 8, '');
+          final nicknameParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 34);
           final frequencyParam = const fb.StringReader(asciiOptimization: true)
               .vTableGet(buffer, rootOffset, 10, '');
           final birthdayParam = birthdayValue == null
@@ -397,13 +417,16 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final snapchatHandleParam =
               const fb.StringReader(asciiOptimization: true)
                   .vTableGetNullable(buffer, rootOffset, 28);
-          final tikTokHandleParam =
+          final xHandleParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 36);
+          final linkedInUrlParam =
               const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 30);
+                  .vTableGetNullable(buffer, rootOffset, 38);
           final object = Contact(
               id: idParam,
               firstName: firstNameParam,
               lastName: lastNameParam,
+              nickname: nicknameParam,
               frequency: frequencyParam,
               birthday: birthdayParam,
               lastContacted: lastContactedParam,
@@ -415,7 +438,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
               instagramHandle: instagramHandleParam,
               facebookUrl: facebookUrlParam,
               snapchatHandle: snapchatHandleParam,
-              tikTokHandle: tikTokHandleParam);
+              xHandle: xHandleParam,
+              linkedInUrl: linkedInUrlParam);
 
           return object;
         }),
@@ -584,13 +608,21 @@ class Contact_ {
   static final snapchatHandle =
       obx.QueryStringProperty<Contact>(_entities[0].properties[12]);
 
-  /// See [Contact.tikTokHandle].
-  static final tikTokHandle =
-      obx.QueryStringProperty<Contact>(_entities[0].properties[13]);
-
   /// See [Contact.emails].
   static final emails =
-      obx.QueryStringVectorProperty<Contact>(_entities[0].properties[14]);
+      obx.QueryStringVectorProperty<Contact>(_entities[0].properties[13]);
+
+  /// See [Contact.nickname].
+  static final nickname =
+      obx.QueryStringProperty<Contact>(_entities[0].properties[14]);
+
+  /// See [Contact.xHandle].
+  static final xHandle =
+      obx.QueryStringProperty<Contact>(_entities[0].properties[15]);
+
+  /// See [Contact.linkedInUrl].
+  static final linkedInUrl =
+      obx.QueryStringProperty<Contact>(_entities[0].properties[16]);
 }
 
 /// [Notification] entity fields to define ObjectBox queries.

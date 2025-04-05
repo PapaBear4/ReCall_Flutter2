@@ -18,17 +18,20 @@ class ContactListItem extends StatelessWidget {
   });
 
   // Helper function to dispatch the update event
+  // Helper function to dispatch the update event
   void _markContacted(BuildContext context, Contact contact) {
      final updatedContact = contact.copyWith(lastContacted: DateTime.now());
      // Dispatch event to update contact in BLoC
      context.read<ContactListBloc>().add(
-        ContactListEvent.updateContactFromList(updatedContact)); // Pass the updated contact
-      // Optional: Show a quick confirmation SnackBar
-      // Clear previous snackbars to avoid buildup if user swipes rapidly
+        ContactListEvent.updateContactFromList(updatedContact));
       ScaffoldMessenger.of(context).clearSnackBars();
+      // Determine name for snackbar based on nickname presence
+      final nameForSnackbar = (contact.nickname != null && contact.nickname!.isNotEmpty)
+                              ? contact.nickname!
+                              : contact.firstName;
       ScaffoldMessenger.of(context).showSnackBar(
          SnackBar(
-             content: Text('Marked ${contact.firstName} as contacted.'),
+             content: Text('Marked $nameForSnackbar as contacted.'), // Use dynamic name
              duration: const Duration(seconds: 2),
          ),
       );
@@ -37,6 +40,15 @@ class ContactListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isContactOverdue = isOverdue(contact.frequency, contact.lastContacted);
+    // Determine the primary display name based on nickname presence
+    final String displayName = (contact.nickname != null && contact.nickname!.isNotEmpty)
+                             ? contact.nickname! // Use nickname if available
+                             : '${contact.firstName} ${contact.lastName}'; // Fallback to first + last
+
+    // Determine the secondary name display (full name if nickname was used, or empty)
+    final String secondaryName = (contact.nickname != null && contact.nickname!.isNotEmpty)
+                               ? '${contact.firstName} ${contact.lastName}' // Show full name below if nickname used
+                               : ''; // Empty if nickname wasn't used
 
     return Column(
       children: [
@@ -66,11 +78,18 @@ class ContactListItem extends StatelessWidget {
              ],
           ),
           child: ListTile(
-             title: Text('${contact.firstName} ${contact.lastName}'),
-             subtitle: Text(
-                calculateNextDueDateDisplay(
-                   contact.lastContacted, contact.frequency),
-                style: const TextStyle(fontSize: 12)),
+             title: Text(displayName),
+             subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (secondaryName.isNotEmpty) // Only show if there's a secondary name
+                    Text(secondaryName, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                  Text(
+                     calculateNextDueDateDisplay(
+                        contact.lastContacted, contact.frequency),
+                     style: const TextStyle(fontSize: 12)),
+                ],
+             ),
              trailing: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.end,

@@ -16,6 +16,7 @@ abstract class Contact with _$Contact {
     @Id(assignable: true) int? id,
     required String firstName,
     required String lastName,
+    String? nickname,
     @Default(ContactFrequency.defaultValue)
     String frequency, // Store the String representation
     @Property(type: PropertyType.date) DateTime? birthday,
@@ -29,7 +30,8 @@ abstract class Contact with _$Contact {
     String? instagramHandle,
     String? facebookUrl,
     String? snapchatHandle,
-    String? tikTokHandle,
+    String? xHandle,
+    String? linkedInUrl,
 
   }) = _Contact;
 

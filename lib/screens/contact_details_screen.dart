@@ -27,13 +27,15 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
+  late TextEditingController _nicknameController;
   late TextEditingController _phoneNumberController;
   late TextEditingController _notesController;
   late TextEditingController _youtubeController;
   late TextEditingController _instagramController;
   late TextEditingController _facebookController;
   late TextEditingController _snapchatController;
-  late TextEditingController _tiktokController;
+  late TextEditingController _xHandleController;
+  late TextEditingController _linkedInController;
   final List<TextEditingController> _emailControllers = [];
 
   late Contact _localContact;
@@ -54,18 +56,21 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     super.initState();
     _firstNameController = TextEditingController();
     _lastNameController = TextEditingController();
+    _nicknameController = TextEditingController();
     _phoneNumberController = TextEditingController();
     _notesController = TextEditingController();
     _youtubeController = TextEditingController();
     _instagramController = TextEditingController();
     _facebookController = TextEditingController();
     _snapchatController = TextEditingController();
-    _tiktokController = TextEditingController();
+    _xHandleController = TextEditingController();
+    _linkedInController = TextEditingController();
 
     _localContact = Contact(
       id: 0,
       firstName: '',
       lastName: '',
+      nickname: null,
       frequency: ContactFrequency.never.value,
       birthday: null,
       lastContacted: null,
@@ -76,7 +81,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       instagramHandle: null,
       facebookUrl: null,
       snapchatHandle: null,
-      tikTokHandle: null,
+      xHandle: null, // Added
+      linkedInUrl: null, // Added
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -119,13 +125,15 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   void _updateControllersFromLocalContact() {
     _firstNameController.text = _localContact.firstName;
     _lastNameController.text = _localContact.lastName;
+    _nicknameController.text = _localContact.nickname ?? '';
     _phoneNumberController.text = _localContact.phoneNumber ?? '';
     _notesController.text = _localContact.notes ?? '';
     _youtubeController.text = _localContact.youtubeUrl ?? '';
     _instagramController.text = _localContact.instagramHandle ?? '';
     _facebookController.text = _localContact.facebookUrl ?? '';
     _snapchatController.text = _localContact.snapchatHandle ?? '';
-    _tiktokController.text = _localContact.tikTokHandle ?? '';
+    _xHandleController.text = _localContact.xHandle ?? '';
+    _linkedInController.text = _localContact.linkedInUrl ?? '';
     _updateEmailControllers(); // Update email controllers specifically
   }
 
@@ -148,19 +156,18 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   void dispose() {
     _firstNameController.dispose();
     _lastNameController.dispose();
-    // --- Dispose New Controllers ---
+    _nicknameController.dispose();
     _phoneNumberController.dispose();
     _notesController.dispose();
     _youtubeController.dispose();
     _instagramController.dispose();
     _facebookController.dispose();
     _snapchatController.dispose();
-    _tiktokController.dispose();
-    // Dispose email controllers
+    _xHandleController.dispose();
+    _linkedInController.dispose();
     for (var controller in _emailControllers) {
       controller.dispose();
     }
-    // --- End Dispose New Controllers ---
     super.dispose();
   }
 
@@ -169,14 +176,23 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     // Determine title dynamically (remains the same logic)
     final appBarTitle = BlocBuilder<ContactDetailsBloc, ContactDetailsState>(
       builder: (context, state) {
-        return Text(state.maybeMap(
-          loaded: (loadedState) => _isEditMode
-              ? 'Edit Contact'
-              : '${loadedState.contact.firstName} ${loadedState.contact.lastName}',
-          // Handle cleared state specifically for new contact title
-          cleared: (_) => 'Add Contact',
-          orElse: () => _isEditMode ? 'Add Contact' : 'Contact Details',
-        ));
+        // Decide title based on nickname presence
+        String nameToShow = '';
+        state.mapOrNull(
+          loaded: (loadedState) {
+            nameToShow = (loadedState.contact.nickname != null &&
+                    loadedState.contact.nickname!.isNotEmpty)
+                ? loadedState.contact.nickname! // Use nickname if available
+                : '${loadedState.contact.firstName} ${loadedState.contact.lastName}';
+          },
+          cleared: (_) => nameToShow = 'Add Contact',
+        );
+        // If name is still empty (e.g., initial state before load or clear), use defaults
+        if (nameToShow.isEmpty) {
+          nameToShow = _isEditMode ? 'Add/Edit Contact' : 'Contact Details';
+        }
+
+        return Text(_isEditMode ? 'Edit: $nameToShow' : nameToShow);
       },
     );
 
@@ -285,11 +301,23 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                 setState(() {
                   // Reset _localContact to default values (important if user navigated back from edit and then added new)
                   _localContact = Contact(
-                      id: 0,
-                      firstName: '',
-                      lastName: '',
-                      frequency: ContactFrequency.defaultValue,
-                      emails: []);
+                    id: 0,
+                    firstName: '',
+                    lastName: '',
+                    nickname: null,
+                    frequency: ContactFrequency.never.value,
+                    birthday: null,
+                    lastContacted: null,
+                    phoneNumber: null,
+                    emails: [], // Initialize with empty list
+                    notes: null,
+                    youtubeUrl: null,
+                    instagramHandle: null,
+                    facebookUrl: null,
+                    snapchatHandle: null,
+                    xHandle: null, // Added
+                    linkedInUrl: null, // Added
+                  );
                   _updateControllersFromLocalContact(); // Update controllers to blank
                   _hasUnsavedChanges = true; // New contact needs saving
                   _initialized = true; // Mark as initialized
@@ -305,14 +333,18 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               loading: (_) => const Center(child: CircularProgressIndicator()),
               cleared: (_) => _isEditMode
                   ? _buildLoadedBody() // Show form for new contact
-                  : const Center(child: Text('Enter new contact details')), // Placeholder if cleared and not editing
-              error: (errorState) => _buildErrorBody(errorState.message), // Delegate
+                  : const Center(
+                      child: Text(
+                          'Enter new contact details')), // Placeholder if cleared and not editing
+              error: (errorState) =>
+                  _buildErrorBody(errorState.message), // Delegate
               orElse: () {
-                 // Fallback logic, check if we are setting up a new contact explicitly
-                 if (_isEditMode && _localContact.id == 0) {
-                    return _buildLoadedBody(); // Show form for new contact
-                 }
-                 return const Center(child: CircularProgressIndicator()); // Default loading
+                // Fallback logic, check if we are setting up a new contact explicitly
+                if (_isEditMode && _localContact.id == 0) {
+                  return _buildLoadedBody(); // Show form for new contact
+                }
+                return const Center(
+                    child: CircularProgressIndicator()); // Default loading
               },
             );
           },
@@ -347,28 +379,32 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       ),
     );
   }
-   // --- Widget Builder for Error State ---
-   Widget _buildErrorBody(String errorMessage) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-             Text("Error: $errorMessage", style: const TextStyle(color: Colors.red)),
-             const SizedBox(height: 20),
-             if (_initialized) // Show last known state if initialized
-                Expanded(child: SingleChildScrollView(child: _buildLoadedBody()))
-             else
-                const Text("Could not load contact details."),
-          ],
-        ),
-     );
-   }
-     // --- Widget Builder for Loaded/Editing State ---
+
+  // --- Widget Builder for Error State ---
+  Widget _buildErrorBody(String errorMessage) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text("Error: $errorMessage",
+              style: const TextStyle(color: Colors.red)),
+          const SizedBox(height: 20),
+          if (_initialized) // Show last known state if initialized
+            Expanded(child: SingleChildScrollView(child: _buildLoadedBody()))
+          else
+            const Text("Could not load contact details."),
+        ],
+      ),
+    );
+  }
+
+  // --- Widget Builder for Loaded/Editing State ---
   Widget _buildLoadedBody() {
     // This replaces the old _buildForm method's core logic
     return Form(
       key: _formKey,
-      child: SingleChildScrollView( // Ensures content scrolls if needed
+      child: SingleChildScrollView(
+        // Ensures content scrolls if needed
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -382,189 +418,378 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       ),
     );
   }
-  // --- NEW: Widget Builder for View Mode ---
+
+  // --- VIEW MODE Section Builder ---
   Widget _buildViewModeSection() {
-      // --- Apply phone mask for display ---
-      String formattedPhoneNumber = 'Not set';
-      String unmaskedPhoneNumber = ''; // Store unmasked for actions
-      if (_localContact.phoneNumber != null && _localContact.phoneNumber!.isNotEmpty) {
-        unmaskedPhoneNumber = _localContact.phoneNumber!;
-         try {
-           formattedPhoneNumber = phoneMaskFormatter.maskText(unmaskedPhoneNumber);
-         } catch (e) {
-             formattedPhoneNumber = unmaskedPhoneNumber; // Fallback
-             logger.e("Error masking phone for display: $e");
-          }
+    // --- Apply phone mask for display ---
+    String formattedPhoneNumber = 'Not set';
+    String unmaskedPhoneNumber = ''; // Store unmasked for actions
+    if (_localContact.phoneNumber != null &&
+        _localContact.phoneNumber!.isNotEmpty) {
+      unmaskedPhoneNumber = _localContact.phoneNumber!;
+      try {
+        formattedPhoneNumber = phoneMaskFormatter.maskText(unmaskedPhoneNumber);
+      } catch (e) {
+        formattedPhoneNumber = unmaskedPhoneNumber; // Fallback
+        logger.e("Error masking phone for display: $e");
       }
+    }
+    // Determine name display based on nickname
+    final String nameDisplay =
+        (_localContact.nickname != null && _localContact.nickname!.isNotEmpty)
+            ? _localContact.nickname!
+            : '${_localContact.firstName} ${_localContact.lastName}';
+    final String fullNameDisplay =
+        '${_localContact.firstName} ${_localContact.lastName}';
 
-     return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-           Padding( // Name
-             padding: const EdgeInsets.only(bottom: 24.0),
-             child: Text(
-                // Use _localContact directly as it's updated by listener/initState
-                '${_localContact.firstName} ${_localContact.lastName}',
-                style: Theme.of(context).textTheme.headlineSmall,
-             ),
-           ),
-            // Basic Date/Time Info
-           _buildDisplayRow(Icons.cake_outlined,'Birthday:',_localContact.birthday == null? 'Not set': DateFormat.yMd().format(_localContact.birthday!)),
-           _buildDisplayRow(Icons.celebration_outlined,'Anniversary:',_localContact.anniversary == null? 'Not set': DateFormat.yMd().format(_localContact.anniversary!)),
-           _buildDisplayRow(Icons.access_time, 'Last Contacted:',formatLastContacted(_localContact.lastContacted)),
-           _buildDisplayRow(Icons.repeat, 'Frequency:', _localContact.frequency),
-           _buildDisplayRow(Icons.next_plan_outlined,'Next Due:',calculateNextDueDateDisplay(_localContact.lastContacted, _localContact.frequency)),
-
-           const Divider(height: 24.0),
-
-           // Actionable Rows (Phone/Email)
-           _buildActionableDisplayRow(
-               icon: Icons.phone_outlined,
-               label: 'Phone:',
-               value: formattedPhoneNumber,
-               onTap: unmaskedPhoneNumber.isNotEmpty? () => _showPhoneActions(unmaskedPhoneNumber): null,
-               actions: unmaskedPhoneNumber.isNotEmpty ? [
-                   IconButton(icon: const Icon(Icons.message),tooltip: 'Send Message',onPressed: () => _launchUniversalLink(Uri(scheme: 'sms', path: unmaskedPhoneNumber)),visualDensity: VisualDensity.compact,padding: EdgeInsets.zero,),
-                   IconButton(icon: const Icon(Icons.call),tooltip: 'Call',onPressed: () => _launchUniversalLink(Uri(scheme: 'tel', path: unmaskedPhoneNumber)),visualDensity: VisualDensity.compact,padding: EdgeInsets.zero,),
-               ] : [],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          // Primary Name Display (Nickname or Full Name)
+          padding: const EdgeInsets.only(bottom: 8.0), // Reduced bottom padding
+          child: Text(
+            nameDisplay,
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+        ),
+        // Conditionally display Full Name if Nickname was used above
+        if (_localContact.nickname != null &&
+            _localContact.nickname!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(
+                bottom: 20.0), // Add padding below full name
+            child: Text(
+              '($fullNameDisplay)', // Show full name in parentheses
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(color: Colors.grey[600]),
             ),
-           Padding( // Email List Section
-              padding: const EdgeInsets.symmetric(vertical: 6.0),
-              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                 Icon(Icons.email_outlined, size: 20.0, color: Colors.grey[700]),
-                 const SizedBox(width: 12.0),
-                 const SizedBox(width: 110, child: Text('Emails:', style: TextStyle(fontWeight: FontWeight.bold))),
-                 Expanded(child: _buildEmailDisplayList(_localContact.emails)) // Use helper
-              ])),
+          )
+        else // Add padding if no nickname was shown
+          const SizedBox(height: 24.0), // Original padding if no nickname
 
-           // Notes
-           _buildDisplayRow(Icons.notes_outlined, 'Notes:',_localContact.notes ?? 'Not set'),
+        // Basic Date/Time Info
+        _buildDisplayRow(
+            Icons.cake_outlined,
+            'Birthday:',
+            _localContact.birthday == null
+                ? 'Not set'
+                : DateFormat.yMd().format(_localContact.birthday!)),
+        _buildDisplayRow(
+            Icons.celebration_outlined,
+            'Anniversary:',
+            _localContact.anniversary == null
+                ? 'Not set'
+                : DateFormat.yMd().format(_localContact.anniversary!)),
+        _buildDisplayRow(Icons.access_time, 'Last Contacted:',
+            formatLastContacted(_localContact.lastContacted)),
+        _buildDisplayRow(Icons.repeat, 'Frequency:', _localContact.frequency),
+        _buildDisplayRow(
+            Icons.next_plan_outlined,
+            'Next Due:',
+            calculateNextDueDateDisplay(
+                _localContact.lastContacted, _localContact.frequency)),
 
-           const Divider(height: 24.0),
+        const Divider(height: 24.0),
 
-            // Social Media
-           _buildDisplayRow(Icons.play_circle_outline, 'YouTube:',_localContact.youtubeUrl ?? 'Not set'),
-           _buildDisplayRow(Icons.photo_camera_outlined, 'Instagram:',_localContact.instagramHandle ?? 'Not set'),
-           _buildDisplayRow(Icons.facebook_outlined, 'Facebook:',_localContact.facebookUrl ?? 'Not set'),
-           _buildDisplayRow(Icons.snapchat_outlined, 'Snapchat:',_localContact.snapchatHandle ?? 'Not set'),
-           _buildDisplayRow(Icons.music_note_outlined, 'TikTok:',_localContact.tikTokHandle ?? 'Not set'),
+        // Actionable Rows (Phone/Email)
+        _buildActionableDisplayRow(
+          icon: Icons.phone_outlined,
+          label: 'Phone:',
+          value: formattedPhoneNumber,
+          onTap: unmaskedPhoneNumber.isNotEmpty
+              ? () => _showPhoneActions(unmaskedPhoneNumber)
+              : null,
+          actions: unmaskedPhoneNumber.isNotEmpty
+              ? [
+                  IconButton(
+                    icon: const Icon(Icons.message),
+                    tooltip: 'Send Message',
+                    onPressed: () => _launchUniversalLink(
+                        Uri(scheme: 'sms', path: unmaskedPhoneNumber)),
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.call),
+                    tooltip: 'Call',
+                    onPressed: () => _launchUniversalLink(
+                        Uri(scheme: 'tel', path: unmaskedPhoneNumber)),
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                  ),
+                ]
+              : [],
+        ),
+        Padding(
+            // Email List Section
+            padding: const EdgeInsets.symmetric(vertical: 6.0),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Icon(Icons.email_outlined, size: 20.0, color: Colors.grey[700]),
+              const SizedBox(width: 12.0),
+              const SizedBox(
+                  width: 110,
+                  child: Text('Emails:',
+                      style: TextStyle(fontWeight: FontWeight.bold))),
+              Expanded(
+                  child: _buildEmailDisplayList(
+                      _localContact.emails)) // Use helper
+            ])),
 
-           const SizedBox(height: 16.0),
-        ],
-     );
+        // Notes
+        _buildDisplayRow(
+            Icons.notes_outlined, 'Notes:', _localContact.notes ?? 'Not set'),
+
+        const Divider(height: 24.0),
+
+        // Social Media
+        _buildDisplayRow(Icons.play_circle_outline, 'YouTube:',
+            _localContact.youtubeUrl ?? 'Not set'),
+        _buildDisplayRow(Icons.photo_camera_outlined, 'Instagram:',
+            _localContact.instagramHandle ?? 'Not set'),
+        _buildDisplayRow(Icons.facebook_outlined, 'Facebook:',
+            _localContact.facebookUrl ?? 'Not set'),
+        _buildDisplayRow(Icons.snapchat_outlined, 'Snapchat:',
+            _localContact.snapchatHandle ?? 'Not set'),
+        _buildDisplayRow(Icons.alternate_email, 'X Handle:',
+            _localContact.xHandle ?? 'Not set'), // Using X icon
+        _buildDisplayRow(Icons.link, 'LinkedIn URL:',
+            _localContact.linkedInUrl ?? 'Not set'), // Using link icon
+
+        const SizedBox(height: 16.0),
+      ],
+    );
   }
 
-  // --- NEW: Widget Builder for Edit Mode ---
+  // --- EDIT MODE Section Builder ---
   Widget _buildEditModeSection() {
-     // Helper for section headers (can be local to this method)
-     Widget buildEditSectionHeader(String title) {
-        return Padding(
-           padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
-           child: Text(title, style: Theme.of(context).textTheme.titleMedium),
-        );
-     }
+    // Helper for section headers (can be local to this method)
+    Widget buildEditSectionHeader(String title) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
+        child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+      );
+    }
 
-     return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-           buildEditSectionHeader('Basic Info'),
-           _buildEditBasicInfo(), // Delegate
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        buildEditSectionHeader('Basic Info'),
+        _buildEditBasicInfo(), // Delegate
 
-           buildEditSectionHeader('Contact Schedule'),
-           _buildEditSchedule(), // Delegate
+        buildEditSectionHeader('Contact Schedule'),
+        _buildEditSchedule(), // Delegate
 
-           buildEditSectionHeader('Emails'),
-            _buildEmailListEditor(), // Keep existing complex editor logic here
+        buildEditSectionHeader('Emails'),
+        _buildEmailListEditor(), // Keep existing complex editor logic here
 
-           buildEditSectionHeader('Social Media'),
-           _buildEditSocialMedia(), // Delegate
+        buildEditSectionHeader('Social Media'),
+        _buildEditSocialMedia(), // Delegate
 
-           buildEditSectionHeader('Notes'),
-           _buildEditNotes(), // Delegate
+        buildEditSectionHeader('Notes'),
+        _buildEditNotes(), // Delegate
 
-           const SizedBox(height: 20), // Spacer at bottom
-        ],
-     );
+        const SizedBox(height: 20), // Spacer at bottom
+      ],
+    );
   }
 
-  // --- NEW: Smaller builders for Edit Mode sections ---
+  // --- Smaller builders for Edit Mode sections ---
   Widget _buildEditBasicInfo() {
     return Column(
-       children: [
-          TextFormField( // First Name
-             controller: _firstNameController,
-             enabled: _isEditMode, // Use _isEditMode from state
-             textCapitalization: TextCapitalization.words,
-             decoration: const InputDecoration(labelText: 'First Name', border: OutlineInputBorder()),
-             validator: (value) => (value == null || value.isEmpty) ? 'Please enter a first name' : null,
-             onChanged: (value) => setState(() { _localContact = _localContact.copyWith(firstName: value); _hasUnsavedChanges = true; }),
-             textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: 16.0),
-          TextFormField( // Last Name
-             controller: _lastNameController,
-             enabled: _isEditMode,
-             textCapitalization: TextCapitalization.words,
-             decoration: const InputDecoration(labelText: 'Last Name', border: OutlineInputBorder()),
-             validator: (value) => (value == null || value.isEmpty) ? 'Please enter a last name' : null,
-             onChanged: (value) => setState(() { _localContact = _localContact.copyWith(lastName: value); _hasUnsavedChanges = true; }),
-             textInputAction: TextInputAction.next,
-          ),
-           const SizedBox(height: 16.0),
-           TextFormField( // Phone Number
-             controller: _phoneNumberController,
-             enabled: _isEditMode,
-             keyboardType: TextInputType.phone,
-             inputFormatters: [phoneMaskFormatter], // Use formatter from state
-             decoration: const InputDecoration(labelText: 'Phone Number', hintText: '(123) 456-7890', border: OutlineInputBorder(), prefixIcon: Icon(Icons.phone)),
-             onChanged: (value) => setState(() { _localContact = _localContact.copyWith(phoneNumber: phoneMaskFormatter.getUnmaskedText()); _hasUnsavedChanges = true; }),
-             textInputAction: TextInputAction.next,
-           ),
-       ],
+      children: [
+        TextFormField(
+          // First Name
+          controller: _firstNameController,
+          enabled: _isEditMode, // Use _isEditMode from state
+          textCapitalization: TextCapitalization.words,
+          decoration: const InputDecoration(
+              labelText: 'First Name', border: OutlineInputBorder()),
+          validator: (value) => (value == null || value.isEmpty)
+              ? 'Please enter a first name'
+              : null,
+          onChanged: (value) => setState(() {
+            _localContact = _localContact.copyWith(firstName: value);
+            _hasUnsavedChanges = true;
+          }),
+          textInputAction: TextInputAction.next,
+        ),
+        const SizedBox(height: 16.0),
+        TextFormField(
+          // Last Name
+          controller: _lastNameController,
+          enabled: _isEditMode,
+          textCapitalization: TextCapitalization.words,
+          decoration: const InputDecoration(
+              labelText: 'Last Name', border: OutlineInputBorder()),
+          validator: (value) => (value == null || value.isEmpty)
+              ? 'Please enter a last name'
+              : null,
+          onChanged: (value) => setState(() {
+            _localContact = _localContact.copyWith(lastName: value);
+            _hasUnsavedChanges = true;
+          }),
+          textInputAction: TextInputAction.next,
+        ),
+        const SizedBox(height: 16.0),
+        TextFormField(
+          // Nickname
+          controller: _nicknameController,
+          enabled: _isEditMode,
+          textCapitalization: TextCapitalization.words,
+          decoration: const InputDecoration(
+              labelText: 'Nickname (Optional)', border: OutlineInputBorder()),
+          // No validator needed for optional field
+          onChanged: (value) => setState(() {
+            _localContact = _localContact.copyWith(
+                nickname: value.isNotEmpty ? value : null);
+            _hasUnsavedChanges = true;
+          }),
+          textInputAction: TextInputAction.next,
+        ),
+        const SizedBox(height: 16.0),
+        TextFormField(
+          // Phone Number
+          controller: _phoneNumberController,
+          enabled: _isEditMode,
+          keyboardType: TextInputType.phone,
+          inputFormatters: [phoneMaskFormatter], // Use formatter from state
+          decoration: const InputDecoration(
+              labelText: 'Phone Number',
+              hintText: '(123) 456-7890',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.phone)),
+          onChanged: (value) => setState(() {
+            _localContact = _localContact.copyWith(
+                phoneNumber: phoneMaskFormatter.getUnmaskedText());
+            _hasUnsavedChanges = true;
+          }),
+          textInputAction: TextInputAction.next,
+        ),
+      ],
     );
   }
 
   Widget _buildEditSchedule() {
-     return Column(
-        children: [
-           DropdownButtonFormField<String>( // Frequency
-             // Ensure value exists in items, use defaultValue if not
-             value: ContactFrequency.values.any((f) => f.value == _localContact.frequency) ? _localContact.frequency : ContactFrequency.defaultValue,
-             onChanged: (String? newValue) { if (newValue != null) { setState(() { _localContact = _localContact.copyWith(frequency: newValue); _hasUnsavedChanges = true; }); } },
-             items: ContactFrequency.values.map((frequency) => DropdownMenuItem<String>(value: frequency.value, child: Text(frequency.name))).toList(),
-             decoration: const InputDecoration(labelText: 'Frequency', border: OutlineInputBorder()),
-           ),
-           const SizedBox(height: 16.0),
-            _buildDatePickerButton('Birthday', _localContact.birthday, (picked) => setState(() { _localContact = _localContact.copyWith(birthday: picked); _hasUnsavedChanges = true; })),
-            _buildDatePickerButton('Anniversary', _localContact.anniversary, (picked) => setState(() { _localContact = _localContact.copyWith(anniversary: picked); _hasUnsavedChanges = true; })),
-        ],
-     );
+    return Column(
+      children: [
+        DropdownButtonFormField<String>(
+          // Frequency
+          // Ensure value exists in items, use defaultValue if not
+          value: ContactFrequency.values
+                  .any((f) => f.value == _localContact.frequency)
+              ? _localContact.frequency
+              : ContactFrequency.defaultValue,
+          onChanged: (String? newValue) {
+            if (newValue != null) {
+              setState(() {
+                _localContact = _localContact.copyWith(frequency: newValue);
+                _hasUnsavedChanges = true;
+              });
+            }
+          },
+          items: ContactFrequency.values
+              .map((frequency) => DropdownMenuItem<String>(
+                  value: frequency.value, child: Text(frequency.name)))
+              .toList(),
+          decoration: const InputDecoration(
+              labelText: 'Frequency', border: OutlineInputBorder()),
+        ),
+        const SizedBox(height: 16.0),
+        _buildDatePickerButton(
+            'Birthday',
+            _localContact.birthday,
+            (picked) => setState(() {
+                  _localContact = _localContact.copyWith(birthday: picked);
+                  _hasUnsavedChanges = true;
+                })),
+        _buildDatePickerButton(
+            'Anniversary',
+            _localContact.anniversary,
+            (picked) => setState(() {
+                  _localContact = _localContact.copyWith(anniversary: picked);
+                  _hasUnsavedChanges = true;
+                })),
+      ],
+    );
   }
 
-   Widget _buildEditSocialMedia() {
-      return Column(
-         children: [
-             _buildSocialMediaInput(Icons.play_circle_outline, 'YouTube URL', _youtubeController, (v) => setState(() {_localContact = _localContact.copyWith(youtubeUrl: v); _hasUnsavedChanges = true;})),
-             _buildSocialMediaInput(Icons.photo_camera_outlined, 'Instagram Handle', _instagramController, (v) => setState(() {_localContact = _localContact.copyWith(instagramHandle: v); _hasUnsavedChanges = true;})),
-             _buildSocialMediaInput(Icons.facebook_outlined, 'Facebook URL', _facebookController, (v) => setState(() {_localContact = _localContact.copyWith(facebookUrl: v); _hasUnsavedChanges = true;})),
-             _buildSocialMediaInput(Icons.snapchat_outlined, 'Snapchat Handle', _snapchatController, (v) => setState(() {_localContact = _localContact.copyWith(snapchatHandle: v); _hasUnsavedChanges = true;})),
-             _buildSocialMediaInput(Icons.music_note_outlined, 'TikTok Handle', _tiktokController, (v) => setState(() {_localContact = _localContact.copyWith(tikTokHandle: v); _hasUnsavedChanges = true;})),
-         ],
-      );
-   }
+  Widget _buildEditSocialMedia() {
+    return Column(
+      children: [
+        _buildSocialMediaInput(
+            Icons.play_circle_outline,
+            'YouTube URL',
+            _youtubeController,
+            (v) => setState(() {
+                  _localContact = _localContact.copyWith(youtubeUrl: v);
+                  _hasUnsavedChanges = true;
+                })),
+        _buildSocialMediaInput(
+            Icons.photo_camera_outlined,
+            'Instagram Handle',
+            _instagramController,
+            (v) => setState(() {
+                  _localContact = _localContact.copyWith(instagramHandle: v);
+                  _hasUnsavedChanges = true;
+                })),
+        _buildSocialMediaInput(
+            Icons.facebook_outlined,
+            'Facebook URL',
+            _facebookController,
+            (v) => setState(() {
+                  _localContact = _localContact.copyWith(facebookUrl: v);
+                  _hasUnsavedChanges = true;
+                })),
+        _buildSocialMediaInput(
+            Icons.snapchat_outlined,
+            'Snapchat Handle',
+            _snapchatController,
+            (v) => setState(() {
+                  _localContact = _localContact.copyWith(snapchatHandle: v);
+                  _hasUnsavedChanges = true;
+                })),
+        _buildSocialMediaInput(
+            Icons.alternate_email,
+            'X Handle',
+            _xHandleController,
+            (v) => setState(() {
+                  _localContact = _localContact.copyWith(xHandle: v);
+                  _hasUnsavedChanges = true;
+                })),
+        _buildSocialMediaInput(
+            Icons.link,
+            'LinkedIn URL',
+            _linkedInController,
+            (v) => setState(() {
+                  _localContact = _localContact.copyWith(linkedInUrl: v);
+                  _hasUnsavedChanges = true;
+                })),
+      ],
+    );
+  }
 
-   Widget _buildEditNotes() {
-     return TextFormField(
-        controller: _notesController,
-        enabled: _isEditMode,
-        decoration: const InputDecoration(labelText: 'Notes', border: OutlineInputBorder(), alignLabelWithHint: true),
-        maxLines: 4,
-        textCapitalization: TextCapitalization.sentences,
-        keyboardType: TextInputType.multiline,
-        onChanged: (value) => setState(() { _localContact = _localContact.copyWith(notes: value.isNotEmpty ? value : null); _hasUnsavedChanges = true; }),
-        textInputAction: TextInputAction.done,
-     );
-   }
+  Widget _buildEditNotes() {
+    return TextFormField(
+      controller: _notesController,
+      enabled: _isEditMode,
+      decoration: const InputDecoration(
+          labelText: 'Notes',
+          border: OutlineInputBorder(),
+          alignLabelWithHint: true),
+      maxLines: 4,
+      textCapitalization: TextCapitalization.sentences,
+      keyboardType: TextInputType.multiline,
+      onChanged: (value) => setState(() {
+        _localContact =
+            _localContact.copyWith(notes: value.isNotEmpty ? value : null);
+        _hasUnsavedChanges = true;
+      }),
+      textInputAction: TextInputAction.done,
+    );
+  }
 
   // Helper for Date Picker Buttons
   Widget _buildDatePickerButton(
@@ -774,15 +999,18 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Discard Changes?'),
-          content: const Text('You have unsaved changes. Are you sure you want to discard them?'),
+          content: const Text(
+              'You have unsaved changes. Are you sure you want to discard them?'),
           actions: <Widget>[
             TextButton(
-              onPressed: () => Navigator.of(context).pop(false), // Return false - Don't discard
+              onPressed: () => Navigator.of(context)
+                  .pop(false), // Return false - Don't discard
               child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              style: TextButton.styleFrom(foregroundColor: Colors.red), // Return true - Discard
+              style: TextButton.styleFrom(
+                  foregroundColor: Colors.red), // Return true - Discard
               child: const Text('Discard'),
             ),
           ],
@@ -797,13 +1025,12 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         Navigator.of(context).pop();
       }
       // If user chose Cancel (discard == false or null), do nothing (stay on screen)
-
     } else {
       // If not editing or no unsaved changes, just pop the screen
       // Check mounted state before popping is good practice, though less critical here
-       if (mounted) {
-           Navigator.of(context).pop();
-       }
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
     }
   }
 
