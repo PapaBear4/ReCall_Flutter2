@@ -13,6 +13,7 @@ import 'package:recall/screens/settings_screen.dart'; // Keep this import if log
 import 'package:recall/services/notification_helper.dart';
 import 'package:recall/screens/help_screen.dart';
 import '../utils/last_contacted_utils.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 var contactDetailScreenLogger = Logger();
 
@@ -175,7 +176,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
+    return WillPopScope( //TODO: Replace WillPopScope with something else
       onWillPop: () => _onBackButtonPressed(context),
       child: Scaffold(
         appBar: AppBar(
@@ -215,7 +216,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   ? () => _onDeleteButtonPressed(context)
                   : null,
             ),
-            BlocBuilder<ContactDetailsBloc, ContactDetailsState>(// EDIT/SAVE
+            // EDIT/SAVE
+            BlocBuilder<ContactDetailsBloc, ContactDetailsState>(
                 builder: (context, state) {
               final bool isLoaded =
                   state.maybeMap(loaded: (_) => true, orElse: () => false);
@@ -362,6 +364,24 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       );
     }
 
+        // --- Apply phone mask for display ---
+    String formattedPhoneNumber = 'Not set';
+    String unmaskedPhoneNumber = ''; // Store unmasked for actions
+    if (_localContact.phoneNumber != null && _localContact.phoneNumber!.isNotEmpty) {
+       unmaskedPhoneNumber = _localContact.phoneNumber!; // Keep unmasked version
+       // Apply the mask for display. Ensure formatter is accessible here.
+       // You might need to access it via `widget.phoneMaskFormatter` if defined in State
+       // or make sure `phoneMaskFormatter` is accessible in this scope.
+       try {
+          // Use the mask defined earlier in the state
+          formattedPhoneNumber = phoneMaskFormatter.maskText(unmaskedPhoneNumber);
+       } catch (e) {
+           formattedPhoneNumber = unmaskedPhoneNumber; // Fallback if masking fails
+           contactDetailScreenLogger.e("Error masking phone for display: $e");
+       }
+    }
+    // --- End Apply phone mask ---
+
     return Form(
       key: _formKey,
       child: SingleChildScrollView(
@@ -403,14 +423,46 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                       _localContact.lastContacted, _localContact.frequency)),
               const Divider(height: 24.0),
               // --- Display New Fields ---
-              _buildDisplayRow(Icons.phone_outlined, 'Phone:',
-                  _localContact.phoneNumber ?? 'Not set'),
-              _buildDisplayRow(
-                  Icons.email_outlined,
-                  'Emails:',
-                  (_localContact.emails?.isEmpty ?? true)
-                      ? 'Not set'
-                      : _localContact.emails!.join(', ')),
+              _buildActionableDisplayRow(
+                icon: Icons.phone_outlined,
+                label: 'Phone:',
+                value: formattedPhoneNumber, // Use the masked number for display
+                onTap: unmaskedPhoneNumber.isNotEmpty
+                    ? () => _showPhoneActions(unmaskedPhoneNumber) // Show action sheet on tap
+                    : null, // Disable tap if no number
+                actions: unmaskedPhoneNumber.isNotEmpty ? [ // Add action icons only if number exists
+                   IconButton(
+                      icon: const Icon(Icons.message),
+                      tooltip: 'Send Message',
+                      onPressed: () => _launchUniversalLink(Uri(scheme: 'sms', path: unmaskedPhoneNumber)),
+                      visualDensity: VisualDensity.compact, // Make icons smaller
+                      padding: EdgeInsets.zero,
+                   ),
+                   IconButton(
+                      icon: const Icon(Icons.call),
+                      tooltip: 'Call',
+                      onPressed: () => _launchUniversalLink(Uri(scheme: 'tel', path: unmaskedPhoneNumber)),
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                   ),
+                ] : [], // Empty list if no number
+              ),
+              Padding(
+                 padding: const EdgeInsets.symmetric(vertical: 6.0), // Match row padding
+                 child: Row(
+                   crossAxisAlignment: CrossAxisAlignment.start,
+                   children: [
+                      Icon(Icons.email_outlined, size: 20.0, color: Colors.grey[700]),
+                      const SizedBox(width: 12.0),
+                      const SizedBox(
+                         width: 110, // Keep label alignment consistent
+                         child: Text('Emails:', style: TextStyle(fontWeight: FontWeight.bold))),
+                      Expanded(
+                         child: _buildEmailDisplayList(_localContact.emails) // Call the new helper
+                      ),
+                   ],
+                 ),
+              ),
               _buildDisplayRow(Icons.notes_outlined, 'Notes:',
                   _localContact.notes ?? 'Not set'),
               const Divider(height: 24.0),
@@ -822,21 +874,44 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     }
   }
 
-  void _onSaveButtonPressed(BuildContext context) {
-    // First, ensure email list in _localContact is synced with controllers
-    if (_isEditMode && _localContact.emails != null) {
-      for (int i = 0; i < _emailControllers.length; i++) {
-        if (i < _localContact.emails!.length) {
-          _localContact.emails![i] = _emailControllers[i].text;
-        }
-      }
-      // Remove any empty email entries before saving
-      _localContact.emails!.removeWhere((email) => email.trim().isEmpty);
+void _onSaveButtonPressed(BuildContext context) {
+    Contact contactToSave = _localContact; // Start with the current local contact
+
+    // --- Create a mutable copy of emails to work with ---
+    List<String> updatedEmails = []; // Default to empty list
+    if (_localContact.emails != null) {
+      // Create a mutable copy from the existing list
+      updatedEmails = List<String>.from(_localContact.emails!);
     }
 
+    // --- Sync controllers to the mutable list ---
+    if (_isEditMode) {
+      // Make sure the updatedEmails list has the same length as controllers
+      // (This handles adding new emails that might not be in _localContact.emails yet)
+      while (updatedEmails.length < _emailControllers.length) {
+         updatedEmails.add(''); // Add placeholders if needed
+      }
+       // Trim excess if controllers were removed but state update lagged (less likely)
+       if (updatedEmails.length > _emailControllers.length) {
+          updatedEmails = updatedEmails.sublist(0, _emailControllers.length);
+       }
+
+      // Sync text from controllers
+      for (int i = 0; i < _emailControllers.length; i++) {
+        updatedEmails[i] = _emailControllers[i].text;
+      }
+
+      // --- Remove empty emails from the mutable list ---
+      updatedEmails.removeWhere((email) => email.trim().isEmpty);
+
+      // --- Update the contactToSave immutably with the final email list ---
+      contactToSave = contactToSave.copyWith(emails: updatedEmails);
+    }
+    // --- End Email List Processing ---
+
+
     if (_formKey.currentState!.validate()) {
-      // Use the _localContact which should have been updated by onChanged handlers
-      Contact contactToSave = _localContact;
+      // Now use the potentially updated contactToSave
       bool isExistingContact =
           contactToSave.id != null && contactToSave.id != 0;
 
@@ -844,7 +919,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       if (!isExistingContact) {
         context
             .read<ContactDetailsBloc>()
-            .add(ContactDetailsEvent.addContact(contact: contactToSave));
+            .add(ContactDetailsEvent.addContact(contact: contactToSave)); // Use contactToSave
         if (mounted) {
           ScaffoldMessenger.of(context)
               .showSnackBar(const SnackBar(content: Text('New contact saved')));
@@ -852,7 +927,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       } else {
         context
             .read<ContactDetailsBloc>()
-            .add(ContactDetailsEvent.saveContact(contact: contactToSave));
+            .add(ContactDetailsEvent.saveContact(contact: contactToSave)); // Use contactToSave
         if (mounted) {
           ScaffoldMessenger.of(context)
               .showSnackBar(const SnackBar(content: Text('Changes saved')));
@@ -861,6 +936,9 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
       if (mounted) {
         setState(() {
+           // Update _localContact AFTER saving if you want the UI to reflect the saved state immediately
+           // If you pop right away, this might not be strictly necessary
+           _localContact = contactToSave;
           _hasUnsavedChanges = false;
           _isEditMode = false;
         });
@@ -945,4 +1023,166 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           .add(const ContactListEvent.loadContacts());
     }
   }
+
+    Future<void> _launchUniversalLink(Uri url) async {
+    try {
+      final bool canLaunch = await canLaunchUrl(url);
+      if (!mounted) return; // Check if widget is still in the tree
+
+      if (canLaunch) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not launch $url')),
+        );
+        contactDetailScreenLogger.w('Could not launch $url');
+      }
+    } catch (e) {
+       if (!mounted) return;
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(content: Text('Error launching link: $e')),
+       );
+       contactDetailScreenLogger.e('Error launching link: $e');
+    }
+  }
+
+  void _showPhoneActions(String unmaskedPhoneNumber) {
+     if (unmaskedPhoneNumber.isEmpty) return;
+
+     final Uri telUri = Uri(scheme: 'tel', path: unmaskedPhoneNumber);
+     final Uri smsUri = Uri(scheme: 'sms', path: unmaskedPhoneNumber);
+
+     showModalBottomSheet(
+        context: context,
+        builder: (context) => SafeArea( // Use SafeArea for bottom sheets
+          child: Wrap(
+            children: <Widget>[
+              ListTile(
+                  leading: const Icon(Icons.call),
+                  title: const Text('Call'),
+                  onTap: () {
+                     Navigator.pop(context); // Close the sheet
+                     _launchUniversalLink(telUri);
+                  },
+              ),
+              ListTile(
+                  leading: const Icon(Icons.message),
+                  title: const Text('Send Message'),
+                  onTap: () {
+                    Navigator.pop(context); // Close the sheet
+                    _launchUniversalLink(smsUri);
+                  },
+              ),
+              ListTile(
+                  leading: const Icon(Icons.cancel),
+                  title: const Text('Cancel'),
+                  onTap: () => Navigator.pop(context), // Close the sheet
+              ),
+            ],
+          ),
+        ),
+     );
+  }
+
+  void _launchEmail(String emailAddress) {
+    if (emailAddress.isEmpty) return;
+    final Uri emailUri = Uri(scheme: 'mailto', path: emailAddress);
+    _launchUniversalLink(emailUri);
+  }
+
+  // Helper to build display rows consistently, now with tap action and trailing icons
+  Widget _buildActionableDisplayRow({
+      required IconData icon,
+      required String label,
+      required String value,
+      VoidCallback? onTap, // Make the value clickable
+      List<Widget> actions = const [], // Optional trailing action icons
+      }) {
+    Widget valueWidget = Text(value);
+
+    // If onTap is provided, wrap the value Text in a GestureDetector/InkWell
+    if (onTap != null && value != 'Not set') { // Only make it tappable if value exists
+        valueWidget = InkWell(
+           onTap: onTap,
+           child: Text(
+              value,
+              style: TextStyle( // Add visual cue for tappable text
+                 color: Theme.of(context).colorScheme.primary,
+                 // decoration: TextDecoration.underline, // Optional underline
+              ),
+           ),
+        );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start, // Align items to the top
+        children: [
+          Icon(icon, size: 20.0, color: Colors.grey[700]),
+          const SizedBox(width: 12.0),
+          SizedBox(
+              width: 110, // Keep consistent label width
+              child: Text('$label ',
+                  style: const TextStyle(fontWeight: FontWeight.bold))),
+          Expanded(child: valueWidget), // Use the potentially wrapped valueWidget
+          // Add trailing action icons if provided
+          if (actions.isNotEmpty) ...[
+             const SizedBox(width: 8), // Spacing before icons
+             Row( // Wrap icons in a Row
+                mainAxisSize: MainAxisSize.min, // Don't take extra space
+                children: actions,
+             ),
+          ]
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmailDisplayList(List<String>? emails) {
+    if (emails == null || emails.isEmpty) {
+      // Use same styling as _buildActionableDisplayRow for consistency
+       return const Padding(
+         padding: EdgeInsets.only(top: 6.0, bottom: 6.0), // Match vertical padding
+         child: Text('Not set'),
+       );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: emails.map((email) {
+        if (email.trim().isEmpty) return const SizedBox.shrink(); // Don't show empty entries
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4.0), // Spacing between emails
+          child: InkWell(
+            onTap: () => _launchEmail(email),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    email,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      // decoration: TextDecoration.underline, // Optional underline
+                    ),
+                  ),
+                ),
+                // Optional: Add an icon button next to each email
+                IconButton(
+                  icon: const Icon(Icons.email_outlined),
+                  tooltip: 'Send Email',
+                  iconSize: 20, // Smaller icon
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  onPressed: () => _launchEmail(email),
+                )
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
 } // End of _ContactDetailsScreenState
