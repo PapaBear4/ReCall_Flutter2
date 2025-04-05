@@ -1,14 +1,12 @@
 // lib/repositories/user_settings_repository.dart
 import 'package:recall/models/usersettings.dart';
-import 'package:logger/logger.dart';
+import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:objectbox/objectbox.dart';
 import 'package:recall/sources/usersettings_ob_source.dart';
 import 'package:recall/sources/usersettings_sp_source.dart';
 import 'package:recall/sources/data_source.dart';
 import 'repository.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-
-var userSettingsRepoLogger = Logger();
 
 class UserSettingsRepository implements Repository<UserSettings> {
   late final Store? _store;
@@ -23,7 +21,7 @@ class UserSettingsRepository implements Repository<UserSettings> {
         _userSettingsBox = _store!.box<UserSettings>();
         _source = UserSettingsObjectBoxSource(_userSettingsBox!);
       } catch (e) {
-        userSettingsRepoLogger.i("Error opening ObjectBox store: $e");
+        logger.i("Error opening ObjectBox store: $e");
         _source = _createInMemorySource();
       }
     } else {
@@ -31,7 +29,7 @@ class UserSettingsRepository implements Repository<UserSettings> {
       try {
         _source = UserSettingsSharedPreferencesSource();
       } catch (e) {
-        userSettingsRepoLogger.i("Error opening shared preferences: $e");
+        logger.i("Error opening shared preferences: $e");
       }
     }
   }
@@ -52,7 +50,7 @@ class UserSettingsRepository implements Repository<UserSettings> {
       }
       return userSettings;
     } catch (e) {
-      userSettingsRepoLogger.i("Error getting all user settings: $e");
+      logger.i("Error getting all user settings: $e");
       return _userSettings.values.toList();
     }
   }
@@ -65,7 +63,7 @@ class UserSettingsRepository implements Repository<UserSettings> {
     try {
       return await _source.getById(id);
     } catch (e) {
-      userSettingsRepoLogger.i("Error getting user settings by id: $e");
+      logger.i("Error getting user settings by id: $e");
       return null;
     }
   }
@@ -79,7 +77,7 @@ class UserSettingsRepository implements Repository<UserSettings> {
       }
       return usersettings;
     } catch (e) {
-      userSettingsRepoLogger.i("Error adding user settings: $e");
+      logger.i("Error adding user settings: $e");
       return item;
     }
   }
@@ -93,7 +91,7 @@ class UserSettingsRepository implements Repository<UserSettings> {
       }
       return usersettings;
     } catch (e) {
-      userSettingsRepoLogger.i("Error updating user settings: $e");
+      logger.i("Error updating user settings: $e");
       return item;
     }
   }
@@ -104,7 +102,7 @@ class UserSettingsRepository implements Repository<UserSettings> {
       await _source.delete(id);
       _userSettings.remove(id);
     } catch (e) {
-      userSettingsRepoLogger.i("Error deleting user settings: $e");
+      logger.i("Error deleting user settings: $e");
     }
   }
 
@@ -120,7 +118,7 @@ class UserSettingsRepository implements Repository<UserSettings> {
       }
       return addedItems;
     } catch (e) {
-      userSettingsRepoLogger.i("Error adding many user settings: $e");
+      logger.i("Error adding many user settings: $e");
       return []; // Or handle error appropriately
     }
   }
@@ -131,7 +129,7 @@ class UserSettingsRepository implements Repository<UserSettings> {
       await _source.deleteAll();
       _userSettings.clear(); // Clear cache
     } catch (e) {
-      userSettingsRepoLogger.i("Error deleting all user settings: $e");
+      logger.i("Error deleting all user settings: $e");
     }
   }
 }

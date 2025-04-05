@@ -1,23 +1,28 @@
 // lib/screens/contact_list_screen.dart
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:recall/blocs/contact_details/contact_details_bloc.dart';
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
 import 'package:recall/models/contact.dart';
 import 'package:recall/screens/scheduled_notifications_screen.dart';
-import 'package:recall/utils/last_contacted_utils.dart';
-import 'package:recall/models/contact_frequency.dart';
-import 'package:logger/logger.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:recall/utils/logger.dart'; // Adjust path if needed
+import 'package:recall/widgets/contact_list_item.dart';
 import 'package:recall/screens/help_screen.dart'; // Import HelpScreen
-import 'package:recall/main.dart'
-    as main_app;
-
-var contactListScreenLogger = Logger();
+import 'package:recall/main.dart' as main_app;
 
 // Enum to represent the combined Sort/Filter action
-enum ListAction { sortByDueDateAsc, sortByDueDateDesc, sortByLastNameAsc, sortByLastNameDesc, sortByLastContactedAsc, sortByLastContactedDesc, filterOverdue, filterDueSoon, filterClear }
-
+enum ListAction {
+  sortByDueDateAsc,
+  sortByDueDateDesc,
+  sortByLastNameAsc,
+  sortByLastNameDesc,
+  sortByLastContactedAsc,
+  sortByLastContactedDesc,
+  filterOverdue,
+  filterDueSoon,
+  filterClear
+}
 
 class ContactListScreen extends StatefulWidget {
   const ContactListScreen({super.key});
@@ -27,28 +32,46 @@ class ContactListScreen extends StatefulWidget {
 }
 
 class _ContactListScreenState extends State<ContactListScreen> {
-   final TextEditingController _searchController = TextEditingController(); // Controller for search
+  final TextEditingController _searchController =
+      TextEditingController(); // Controller for search
+  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
-     // Add listener to dispatch search events as user types
-     _searchController.addListener(() {
-        context.read<ContactListBloc>().add(ContactListEvent.applySearch(searchTerm: _searchController.text));
-     });
+    _searchController.addListener(_onSearchChanged); // Use separate handler
     _handleInitialNotification();
   }
 
-   @override
-   void dispose() {
-     _searchController.dispose(); // Dispose controller
-     super.dispose();
-   }
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged); // Remove listener
+    _searchController.dispose();
+    _debounce?.cancel(); // Cancel timer on dispose
+    super.dispose();
+  }
+
+  // Debounce search handler
+  void _onSearchChanged() {
+    if (_debounce?.isActive ?? false) {
+      _debounce!.cancel(); // Cancel previous timer
+    }
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      // Wait 500ms
+      if (mounted) {
+        // Check if still mounted before dispatching
+        // Dispatch search event after delay
+        context.read<ContactListBloc>().add(
+            ContactListEvent.applySearch(searchTerm: _searchController.text));
+      }
+    });
+  }
 
   void _handleInitialNotification() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-       if (main_app.initialNotificationPayload != null && mounted) { // Check mounted
-        contactListScreenLogger.i(
+      if (main_app.initialNotificationPayload != null && mounted) {
+        // Check mounted
+        logger.i(
             '>>> Handling initial notification payload: ${main_app.initialNotificationPayload}');
         final String payload = main_app.initialNotificationPayload!;
         int? contactId;
@@ -56,63 +79,73 @@ class _ContactListScreenState extends State<ContactListScreen> {
         if (payload.startsWith('contact_id:')) {
           final String idString = payload.split(':').last;
           contactId = int.tryParse(idString);
-          contactListScreenLogger.i('>>> Parsed initial contactId: $contactId');
+          logger.i('>>> Parsed initial contactId: $contactId');
         }
 
         main_app.initialNotificationPayload = null;
 
         if (contactId != null) {
-          contactListScreenLogger.i(
+          logger.i(
               '>>> Navigating to /contactDetails from initial launch payload.');
-           // Ensure BLoC is ready before pushing route
-           context.read<ContactDetailsBloc>().add(ContactDetailsEvent.loadContact(contactId: contactId));
-           Navigator.pushNamed(context, '/contactDetails', arguments: contactId);
+          // Ensure BLoC is ready before pushing route
+          context
+              .read<ContactDetailsBloc>()
+              .add(ContactDetailsEvent.loadContact(contactId: contactId));
+          Navigator.pushNamed(context, '/contactDetails', arguments: contactId);
         } else {
-          contactListScreenLogger
+          logger
               .w('>>> Failed to parse contactId from initial payload.');
         }
       } else {
-        contactListScreenLogger
-            .i('>>> No initial notification payload detected or widget not mounted.');
+        logger.i(
+            '>>> No initial notification payload detected or widget not mounted.');
       }
     });
   }
 
   // Helper to dispatch BLoC events from PopupMenuButton
   void _handleListAction(ListAction action) {
-     switch (action) {
-       // Sorting
-       case ListAction.sortByDueDateAsc:
-         context.read<ContactListBloc>().add(const ContactListEvent.sortContacts(sortField: ContactListSortField.dueDate, ascending: true));
-         break;
-       case ListAction.sortByDueDateDesc:
-          context.read<ContactListBloc>().add(const ContactListEvent.sortContacts(sortField: ContactListSortField.dueDate, ascending: false));
-         break;
-       case ListAction.sortByLastNameAsc:
-          context.read<ContactListBloc>().add(const ContactListEvent.sortContacts(sortField: ContactListSortField.lastName, ascending: true));
-         break;
-        case ListAction.sortByLastNameDesc:
-           context.read<ContactListBloc>().add(const ContactListEvent.sortContacts(sortField: ContactListSortField.lastName, ascending: false));
-          break;
-       case ListAction.sortByLastContactedAsc:
-           context.read<ContactListBloc>().add(const ContactListEvent.sortContacts(sortField: ContactListSortField.lastContacted, ascending: true));
-          break;
-       case ListAction.sortByLastContactedDesc:
-          context.read<ContactListBloc>().add(const ContactListEvent.sortContacts(sortField: ContactListSortField.lastContacted, ascending: false));
-         break;
-       // Filtering
-       case ListAction.filterOverdue:
-          context.read<ContactListBloc>().add(const ContactListEvent.applyFilter(filter: ContactListFilter.overdue));
-         break;
-       case ListAction.filterDueSoon:
-          context.read<ContactListBloc>().add(const ContactListEvent.applyFilter(filter: ContactListFilter.dueSoon));
-         break;
-       case ListAction.filterClear:
-           context.read<ContactListBloc>().add(const ContactListEvent.applyFilter(filter: ContactListFilter.none)); // Apply 'none' filter
-         break;
-     }
+    switch (action) {
+      // Sorting
+      case ListAction.sortByDueDateAsc:
+        context.read<ContactListBloc>().add(const ContactListEvent.sortContacts(
+            sortField: ContactListSortField.dueDate, ascending: true));
+        break;
+      case ListAction.sortByDueDateDesc:
+        context.read<ContactListBloc>().add(const ContactListEvent.sortContacts(
+            sortField: ContactListSortField.dueDate, ascending: false));
+        break;
+      case ListAction.sortByLastNameAsc:
+        context.read<ContactListBloc>().add(const ContactListEvent.sortContacts(
+            sortField: ContactListSortField.lastName, ascending: true));
+        break;
+      case ListAction.sortByLastNameDesc:
+        context.read<ContactListBloc>().add(const ContactListEvent.sortContacts(
+            sortField: ContactListSortField.lastName, ascending: false));
+        break;
+      case ListAction.sortByLastContactedAsc:
+        context.read<ContactListBloc>().add(const ContactListEvent.sortContacts(
+            sortField: ContactListSortField.lastContacted, ascending: true));
+        break;
+      case ListAction.sortByLastContactedDesc:
+        context.read<ContactListBloc>().add(const ContactListEvent.sortContacts(
+            sortField: ContactListSortField.lastContacted, ascending: false));
+        break;
+      // Filtering
+      case ListAction.filterOverdue:
+        context.read<ContactListBloc>().add(const ContactListEvent.applyFilter(
+            filter: ContactListFilter.overdue));
+        break;
+      case ListAction.filterDueSoon:
+        context.read<ContactListBloc>().add(const ContactListEvent.applyFilter(
+            filter: ContactListFilter.dueSoon));
+        break;
+      case ListAction.filterClear:
+        context.read<ContactListBloc>().add(const ContactListEvent.applyFilter(
+            filter: ContactListFilter.none)); // Apply 'none' filter
+        break;
+    }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -122,49 +155,49 @@ class _ContactListScreenState extends State<ContactListScreen> {
         actions: [
           // Sort/Filter Menu
           PopupMenuButton<ListAction>(
-             icon: const Icon(Icons.sort), // Or Icons.filter_list
-             tooltip: "Sort & Filter",
-             onSelected: _handleListAction, // Call helper function
-             itemBuilder: (BuildContext context) => <PopupMenuEntry<ListAction>>[
-               const PopupMenuItem<ListAction>(
-                 value: ListAction.sortByDueDateAsc,
-                 child: Text('Sort by Due Date (Soonest)'),
-               ),
-                const PopupMenuItem<ListAction>(
-                 value: ListAction.sortByDueDateDesc,
-                 child: Text('Sort by Due Date (Latest)'),
-               ),
-               const PopupMenuItem<ListAction>(
-                 value: ListAction.sortByLastNameAsc,
-                 child: Text('Sort by Last Name (A-Z)'),
-               ),
-                const PopupMenuItem<ListAction>(
-                 value: ListAction.sortByLastNameDesc,
-                 child: Text('Sort by Last Name (Z-A)'),
-               ),
-                 const PopupMenuItem<ListAction>(
-                 value: ListAction.sortByLastContactedAsc,
-                 child: Text('Sort by Last Contacted (Oldest)'),
-               ),
-                const PopupMenuItem<ListAction>(
-                 value: ListAction.sortByLastContactedDesc,
-                 child: Text('Sort by Last Contacted (Newest)'),
-               ),
-               const PopupMenuDivider(), // Separator
-                const PopupMenuItem<ListAction>(
-                 value: ListAction.filterOverdue,
-                 child: Text('Filter: Overdue'),
-               ),
-                 const PopupMenuItem<ListAction>(
-                 value: ListAction.filterDueSoon,
-                 child: Text('Filter: Due Soon'),
-               ),
-                const PopupMenuItem<ListAction>(
-                 value: ListAction.filterClear,
-                 child: Text('Clear Filter'),
-               ),
-             ],
-           ),
+            icon: const Icon(Icons.sort), // Or Icons.filter_list
+            tooltip: "Sort & Filter",
+            onSelected: _handleListAction, // Call helper function
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<ListAction>>[
+              const PopupMenuItem<ListAction>(
+                value: ListAction.sortByDueDateAsc,
+                child: Text('Sort by Due Date (Soonest)'),
+              ),
+              const PopupMenuItem<ListAction>(
+                value: ListAction.sortByDueDateDesc,
+                child: Text('Sort by Due Date (Latest)'),
+              ),
+              const PopupMenuItem<ListAction>(
+                value: ListAction.sortByLastNameAsc,
+                child: Text('Sort by Last Name (A-Z)'),
+              ),
+              const PopupMenuItem<ListAction>(
+                value: ListAction.sortByLastNameDesc,
+                child: Text('Sort by Last Name (Z-A)'),
+              ),
+              const PopupMenuItem<ListAction>(
+                value: ListAction.sortByLastContactedAsc,
+                child: Text('Sort by Last Contacted (Oldest)'),
+              ),
+              const PopupMenuItem<ListAction>(
+                value: ListAction.sortByLastContactedDesc,
+                child: Text('Sort by Last Contacted (Newest)'),
+              ),
+              const PopupMenuDivider(), // Separator
+              const PopupMenuItem<ListAction>(
+                value: ListAction.filterOverdue,
+                child: Text('Filter: Overdue'),
+              ),
+              const PopupMenuItem<ListAction>(
+                value: ListAction.filterDueSoon,
+                child: Text('Filter: Due Soon'),
+              ),
+              const PopupMenuItem<ListAction>(
+                value: ListAction.filterClear,
+                child: Text('Clear Filter'),
+              ),
+            ],
+          ),
           // Other existing actions
           // HELP BUTTON
           IconButton(
@@ -172,9 +205,12 @@ class _ContactListScreenState extends State<ContactListScreen> {
             tooltip: 'Help',
             onPressed: () {
               // Navigate using MaterialPageRoute and pass argument
-              Navigator.push(context, MaterialPageRoute(
-                 builder: (context) => const HelpScreen(initialSection: HelpSection.list), // Pass list section
-              ));
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const HelpScreen(
+                        initialSection: HelpSection.list), // Pass list section
+                  ));
             },
           ),
           // SETTINGS BUTTON
@@ -185,46 +221,52 @@ class _ContactListScreenState extends State<ContactListScreen> {
           ),
         ],
         // Add Search Bar to AppBar bottom
-         bottom: PreferredSize(
-           preferredSize: const Size.fromHeight(kToolbarHeight), // Standard toolbar height
-           child: Padding(
-             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-             child: TextField(
-               controller: _searchController,
-               decoration: InputDecoration(
-                 hintText: 'Search contacts...',
-                 prefixIcon: const Icon(Icons.search),
-                 border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30.0),
-                    borderSide: BorderSide.none, // Hide border line
-                  ),
-                  filled: true, // Fill background
-                  fillColor: Colors.white, // Or Theme.of(context).inputDecorationTheme.fillColor
-                  contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16), // Adjust padding
-                  // Add clear button
-                  suffixIcon: IconButton(
-                     icon: const Icon(Icons.clear),
-                     tooltip: "Clear Search",
-                     onPressed: () {
-                        _searchController.clear(); // Clears text and triggers listener
-                     },
-                  ),
-               ),
-               onChanged: (value) {
-                  // Listener already handles dispatching, but onChanged can be used too
-                  // context.read<ContactListBloc>().add(ContactListEvent.applySearch(searchTerm: value));
-               },
-             ),
-           ),
-         ),
+        bottom: PreferredSize(
+          preferredSize:
+              const Size.fromHeight(kToolbarHeight), // Standard toolbar height
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search contacts...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30.0),
+                  borderSide: BorderSide.none, // Hide border line
+                ),
+                filled: true, // Fill background
+                fillColor: Colors
+                    .white, // Or Theme.of(context).inputDecorationTheme.fillColor
+                contentPadding: const EdgeInsets.symmetric(
+                    vertical: 0, horizontal: 16), // Adjust padding
+                // Add clear button
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.clear),
+                  tooltip: "Clear Search",
+                  onPressed: () {
+                    _searchController
+                        .clear(); // Clears text and triggers listener
+                  },
+                ),
+              ),
+              onChanged: (value) {
+                // Listener already handles dispatching, but onChanged can be used too
+                // context.read<ContactListBloc>().add(ContactListEvent.applySearch(searchTerm: value));
+              },
+            ),
+          ),
+        ),
       ),
       // Use BlocBuilder to react to state changes
       body: RefreshIndicator(
         onRefresh: () async {
           // Reloading should clear search/filter and fetch fresh data
-           _searchController.clear(); // Clear search field visually
-           // Dispatch load event which will reset state in BLoC
-           context.read<ContactListBloc>().add(const ContactListEvent.loadContacts());
+          _searchController.clear(); // Clear search field visually
+          // Dispatch load event which will reset state in BLoC
+          context
+              .read<ContactListBloc>()
+              .add(const ContactListEvent.loadContacts());
         },
         child: BlocBuilder<ContactListBloc, ContactListState>(
             builder: (context, state) {
@@ -232,10 +274,13 @@ class _ContactListScreenState extends State<ContactListScreen> {
           return state.map(
             initial: (_) => const Center(child: CircularProgressIndicator()),
             loading: (_) => const Center(child: CircularProgressIndicator()),
-            empty: (_) => const Center(child: Text('No contacts found.')), // Original list empty
+            empty: (_) => const Center(
+                child: Text('No contacts found.')), // Original list empty
             // Use loadedState.displayedContacts for the list
-            loaded: (loadedState) => _buildContactList(loadedState.displayedContacts), // Pass displayed list
-            error: (errorState) => Center(child: Text("Error: ${errorState.message}")),
+            loaded: (loadedState) => _buildContactList(
+                loadedState.displayedContacts), // Pass displayed list
+            error: (errorState) =>
+                Center(child: Text("Error: ${errorState.message}")),
           );
         }),
       ),
@@ -246,7 +291,7 @@ class _ContactListScreenState extends State<ContactListScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-               // Info text (can be removed if cluttering)
+              // Info text (can be removed if cluttering)
               // const Expanded(
               //   child: Text(
               //     'Swipe/Tap list item to mark as contacted',
@@ -268,12 +313,15 @@ class _ContactListScreenState extends State<ContactListScreen> {
                   const SizedBox(width: 8),
                   FloatingActionButton.small(
                     heroTag: "btn2",
-                     tooltip: "Add New Contact",
+                    tooltip: "Add New Contact",
                     onPressed: () {
                       // Clear details BLoC for new contact
-                       context.read<ContactDetailsBloc>().add(const ContactDetailsEvent.clearContact());
+                      context
+                          .read<ContactDetailsBloc>()
+                          .add(const ContactDetailsEvent.clearContact());
                       // Navigate to add new contact (passing 0 or null)
-                      Navigator.pushNamed(context, '/contactDetails', arguments: 0);
+                      Navigator.pushNamed(context, '/contactDetails',
+                          arguments: 0);
                     },
                     child: const Icon(Icons.add),
                   ),
@@ -287,94 +335,18 @@ class _ContactListScreenState extends State<ContactListScreen> {
   }
 } // End of _ContactListScreenState
 
-
 // --- Widget for building the list ---
 // Takes the list to display as parameter (now the filtered/searched list)
 Widget _buildContactList(List<Contact> contactsToDisplay) {
-   if (contactsToDisplay.isEmpty) {
-     return const Center(child: Text('No contacts match your search/filter.'));
-   }
+  if (contactsToDisplay.isEmpty) {
+    return const Center(child: Text('No contacts match your search/filter.'));
+  }
   return ListView.builder(
     itemCount: contactsToDisplay.length,
     itemBuilder: (context, index) {
       final contact = contactsToDisplay[index];
-      final bool isContactOverdue = isOverdue(contact.frequency, contact.lastContacted);
-
-      return Column(
-        children: [
-          Slidable(
-            key: ValueKey(contact.id), // Use contact ID for stable key
-            endActionPane: ActionPane(motion: const DrawerMotion(), children: [
-              SlidableAction(
-                onPressed: (context) {
-                  final updatedContact =
-                      contact.copyWith(lastContacted: DateTime.now());
-                  // Dispatch event to update contact in BLoC
-                  context.read<ContactListBloc>().add(
-                      ContactListEvent.updateContactFromList(updatedContact));
-                },
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                icon: Icons.check,
-                label: 'Mark Contacted', // Shorter label
-              ),
-            ]),
-            startActionPane: ActionPane( // Keep start action pane for consistency
-              motion: const DrawerMotion(),
-              children: [
-                 SlidableAction(
-                   onPressed: (context) {
-                      final updatedContact =
-                         contact.copyWith(lastContacted: DateTime.now());
-                      context.read<ContactListBloc>().add(
-                         ContactListEvent.updateContactFromList(updatedContact));
-                   },
-                   backgroundColor: Colors.blue,
-                   foregroundColor: Colors.white,
-                   icon: Icons.check,
-                   label: 'Mark Contacted',
-                 ),
-              ],
-            ),
-            child: ListTile(
-              title: Text('${contact.firstName} ${contact.lastName}'),
-              subtitle: Text(
-                  calculateNextDueDateDisplay( // Show next due date
-                      contact.lastContacted, contact.frequency),
-                  style: const TextStyle(fontSize: 12)),
-              trailing: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text( // Show last contacted relative time
-                    formatLastContacted(contact.lastContacted),
-                    style: isContactOverdue // Highlight if overdue
-                        ? const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)
-                        : const TextStyle(fontSize: 12), // Smaller font size for non-overdue
-                  ),
-                   Text( // Show frequency
-                      contact.frequency != ContactFrequency.never.value
-                          ? contact.frequency
-                          : '', // Don't show 'never' frequency explicitly maybe? Or 'Not Set'?
-                      style: const TextStyle(fontSize: 10, color: Colors.grey)), // Even smaller/greyed out
-                ],
-              ),
-              onTap: () {
-                // Load details for the tapped contact
-                context.read<ContactDetailsBloc>().add(
-                    ContactDetailsEvent.loadContact(contactId: contact.id!));
-                // Navigate to details screen
-                Navigator.pushNamed(
-                  context,
-                  '/contactDetails',
-                  arguments: contact.id,
-                );
-              },
-            ),
-          ),
-          const Divider(height: 1, thickness: 1, indent: 16, endIndent: 16), // Keep divider
-        ],
-      );
+      return ContactListItem(
+          contact: contact); // Pass contact to the new widget
     },
   );
 }
@@ -385,5 +357,5 @@ void _viewScheduledNotifications(BuildContext context) {
       context,
       MaterialPageRoute(
           builder: (context) => const ScheduledNotificationsScreen()));
-  contactListScreenLogger.i('LOG: Show notifications button pushed');
+  logger.i('LOG: Show notifications button pushed');
 }

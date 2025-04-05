@@ -1,14 +1,12 @@
 // lib/repositories/contact_repository.dart
 import 'package:recall/models/contact.dart'; // Import the Contact model
-import 'package:logger/logger.dart';
+import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:objectbox/objectbox.dart';
 import 'package:recall/sources/contact_ob_source.dart';
 import 'package:recall/sources/contact_sp_source.dart';
 import 'package:recall/sources/data_source.dart';
 import 'repository.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-
-var contactRepoLogger = Logger();
 
 class ContactRepository implements Repository<Contact> {
   late final Store? _store;
@@ -23,7 +21,7 @@ class ContactRepository implements Repository<Contact> {
         _contactBox = _store!.box<Contact>();
         _source = ContactObjectBoxSource(_contactBox!);
       } catch (e) {
-        contactRepoLogger.i("Error opening ObjectBox store: $e");
+        logger.i("Error opening ObjectBox store: $e");
         _source = _createInMemorySource();
       }
     } else {
@@ -31,7 +29,7 @@ class ContactRepository implements Repository<Contact> {
       try {
         _source = ContactsSharedPreferencesSource();
       } catch (e) {
-        contactRepoLogger.i("Error opening shared preferences: $e");
+        logger.i("Error opening shared preferences: $e");
       }
     }
   }
@@ -55,22 +53,20 @@ class ContactRepository implements Repository<Contact> {
   @override
   Future<Contact?> getById(int id) async {
     if (_contacts.containsKey(id)) {
-      //contactRepoLogger.i('LOG: return from local ${_contacts[id]}');
       final foundContact = _contacts[id];
       return foundContact;
     }
-    //contactRepoLogger.i('LOG: return from source ${_contacts[id]}');
     final foundContact = _source.getById(id);
     return foundContact;
   }
 
   @override
   Future<Contact> add(Contact item) async {
-    contactRepoLogger.i('LOG: repo received from call: $item');
+    logger.i('LOG: repo received from call: $item');
     final contact = await _source.add(item);
-    contactRepoLogger.i('LOG: repo got back from source: $contact');
+    logger.i('LOG: repo got back from source: $contact');
     final addedContact = await _source.getById(contact.id!);
-    contactRepoLogger.i('LOG: repo retrieved: $addedContact');
+    logger.i('LOG: repo retrieved: $addedContact');
 
     if (item.id != null) {
       _contacts[item.id!] = item;

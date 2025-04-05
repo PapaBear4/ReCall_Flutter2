@@ -4,10 +4,7 @@ import 'package:recall/models/contact.dart';
 import 'package:recall/models/usersettings.dart';
 import 'package:recall/repositories/contact_repository.dart'; // Import repository
 import 'package:recall/repositories/usersettings_repository.dart'; // Import repository
-import 'package:logger/logger.dart';
-
-// You can keep the logger instance here or pass it in if needed elsewhere
-final backupRestoreLogger = Logger();
+import 'package:recall/utils/logger.dart'; // Adjust path if needed
 
 // Define the return type as a record for clarity
 typedef BackupData = ({UserSettings? settings, List<Contact>? contacts});
@@ -37,10 +34,10 @@ BackupData parseAndMigrateBackupData(String jsonData) {
        if (settingsData is Map<String, dynamic>) {
          parsedSettings = UserSettings.fromJson(settingsData);
        } else {
-          backupRestoreLogger.w('Warning: "userSettings" key present but not a valid object. Settings will not be restored.');
+          logger.w('Warning: "userSettings" key present but not a valid object. Settings will not be restored.');
        }
     } else if (version >= 2) {
-        backupRestoreLogger.w('Warning: Backup version $version expects "userSettings", but key is missing. Settings will not be restored.');
+        logger.w('Warning: Backup version $version expects "userSettings", but key is missing. Settings will not be restored.');
     }
 
     // --- Parse Contacts ---
@@ -52,7 +49,7 @@ BackupData parseAndMigrateBackupData(String jsonData) {
     List<Contact> migratedContacts = [];
     for (final contactMap in contactsData) {
       if (contactMap is! Map<String, dynamic>) {
-        backupRestoreLogger.w('Skipping invalid contact entry: $contactMap');
+        logger.w('Skipping invalid contact entry: $contactMap');
         continue; // Skip invalid entries
       }
 
@@ -81,7 +78,7 @@ BackupData parseAndMigrateBackupData(String jsonData) {
         }
         migratedContacts.add(basicContact);
       } else {
-         backupRestoreLogger.w('Skipping contact due to unsupported backup version: $version');
+         logger.w('Skipping contact due to unsupported backup version: $version');
       }
     }
     parsedContacts = migratedContacts;
@@ -90,12 +87,12 @@ BackupData parseAndMigrateBackupData(String jsonData) {
     return (settings: parsedSettings, contacts: parsedContacts);
 
   } on FormatException catch (e) {
-    backupRestoreLogger.e("Restore Format Error: ${e.message}");
+    logger.e("Restore Format Error: ${e.message}");
     // Consider how to propagate errors - maybe return specific error state or throw?
     // For now, returning nulls as before.
     return (settings: null, contacts: null);
   } catch (e) {
-    backupRestoreLogger.e("Restore Error: $e");
+    logger.e("Restore Error: $e");
     return (settings: null, contacts: null);
   }
 }
@@ -115,7 +112,7 @@ Future<String?> prepareBackupData({
         currentSettingsList.isNotEmpty ? currentSettingsList.first : null;
 
     if (currentSettings == null) {
-       backupRestoreLogger.e('Error preparing backup: Could not fetch UserSettings.');
+       logger.e('Error preparing backup: Could not fetch UserSettings.');
       // Decide how to handle this - throw error or return null? Returning null for now.
       return null;
     }
@@ -131,7 +128,7 @@ Future<String?> prepareBackupData({
     return jsonString;
 
   } catch (e) {
-     backupRestoreLogger.e('Error preparing backup data: $e');
+     logger.e('Error preparing backup data: $e');
     // Propagate error or return null
     return null;
   }

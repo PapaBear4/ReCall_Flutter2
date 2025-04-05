@@ -15,11 +15,9 @@ import 'package:share_plus/share_plus.dart'; // For sharing
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart'; // To refresh list
 import 'package:recall/services/notification_helper.dart';
 import 'package:recall/services/notification_service.dart';
-import 'package:logger/logger.dart';
+import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:recall/utils/backup_restore_utils.dart'; // <-- ADD THIS IMPORT
 
-
-var settingsScreenLogger = Logger();
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -49,13 +47,13 @@ Future<void> _loadSettings() async {
        bool settingsWereUpdated = false; // Flag to track if we corrected data
 
        if (settingsList.isEmpty) {
-         settingsScreenLogger.d("No settings found, creating default.");
+         logger.d("No settings found, creating default.");
          settings = UserSettings(id: 1); // Uses defaults from model constructor
          await repository.add(settings);
          settingsWereUpdated = true; // Technically created, counts as updated for consistency
        } else {
          settings = settingsList.first;
-         settingsScreenLogger.d("Loaded settings: ID=${settings.id}, Freq='${settings.defaultFrequency}'");
+         logger.d("Loaded settings: ID=${settings.id}, Freq='${settings.defaultFrequency}'");
 
          // --- Robust Validation ---
          // Get all valid frequency string values
@@ -63,7 +61,7 @@ Future<void> _loadSettings() async {
 
          // Check if the loaded frequency is NOT in the set of valid values
          if (!validFrequencies.contains(settings.defaultFrequency)) {
-            settingsScreenLogger.w("Loaded invalid defaultFrequency ('${settings.defaultFrequency}'). Resetting to default ('${ContactFrequency.never.value}').");
+            logger.w("Loaded invalid defaultFrequency ('${settings.defaultFrequency}'). Resetting to default ('${ContactFrequency.never.value}').");
             // Correct it to the 'never' default
             settings = settings.copyWith(defaultFrequency: ContactFrequency.never.value);
             // Save the corrected value back immediately
@@ -80,11 +78,11 @@ Future<void> _loadSettings() async {
        });
 
        if (settingsWereUpdated) {
-          settingsScreenLogger.d("Final userSettings state after load/update: $_userSettings");
+          logger.d("Final userSettings state after load/update: $_userSettings");
        }
 
      } catch (e) {
-       settingsScreenLogger.e("Error loading/updating settings: $e");
+       logger.e("Error loading/updating settings: $e");
         if (!mounted) return;
        setState(() { _isLoading = false; });
        ScaffoldMessenger.of(context).showSnackBar(
@@ -262,7 +260,7 @@ Future<void> _loadSettings() async {
     } catch (e) {
       // Catch any unexpected errors during repo access or prepare call
       if (mounted) {
-         settingsScreenLogger.e("Error during backup preparation/dialog show: $e");
+         logger.e("Error during backup preparation/dialog show: $e");
          ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('An error occurred: $e')),
          );
@@ -388,7 +386,7 @@ Future<void> _loadSettings() async {
       for (final contact in addedContacts) {
         await notificationService.scheduleReminder(contact);
       }
-      notificationLogger.i(
+      logger.i(
           'LOG: Scheduled notifications for ${addedContacts.length} restored contacts.');
 
       // --- Show Final Success & Refresh ---
@@ -415,7 +413,7 @@ Future<void> _loadSettings() async {
   @override
   Widget build(BuildContext context) {
         if (!_isLoading && _userSettings != null) {
-      settingsScreenLogger.d("SettingsScreen build: Using defaultFrequency '${_userSettings!.defaultFrequency}' for Dropdown.");
+      logger.d("SettingsScreen build: Using defaultFrequency '${_userSettings!.defaultFrequency}' for Dropdown.");
        // Optional: Log available values too if needed for comparison
        // settingsLogger.d("Available item values: ${ContactFrequency.values.map((f) => f.value).toList()}");
     }
@@ -548,7 +546,8 @@ Future<void> _loadSettings() async {
                     // Loading Indicator Overlay
                     if (_isBusy) // Use combined busy indicator
                       Container(
-                        color: Colors.black.withOpacity(0.3),
+                        // Replace withOpacity with withAlpha
+                        color: Colors.black.withAlpha((255 * 0.3).round()), // Calculates to 77
                         child: const Center(child: CircularProgressIndicator()),
                       ),
                   ],

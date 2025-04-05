@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
-import 'package:logger/logger.dart';
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
 import 'package:recall/main.dart';
 import 'package:recall/repositories/contact_repository.dart';
@@ -14,8 +13,6 @@ import 'package:recall/screens/contact_details_screen.dart';
 import 'package:recall/services/notification_service.dart';
 import 'package:recall/screens/settings_screen.dart';
 import 'package:recall/screens/help_screen.dart'; 
-
-final logger = Logger();
 
 class ReCall extends StatelessWidget {
   final ContactRepository _contactRepository;
