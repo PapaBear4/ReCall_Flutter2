@@ -21,6 +21,15 @@ _$ContactImpl _$$ContactImplFromJson(Map<String, dynamic> json) =>
       anniversary: json['anniversary'] == null
           ? null
           : DateTime.parse(json['anniversary'] as String),
+      phoneNumber: json['phoneNumber'] as String?,
+      emails:
+          (json['emails'] as List<dynamic>?)?.map((e) => e as String).toList(),
+      notes: json['notes'] as String?,
+      youtubeUrl: json['youtubeUrl'] as String?,
+      instagramHandle: json['instagramHandle'] as String?,
+      facebookUrl: json['facebookUrl'] as String?,
+      snapchatHandle: json['snapchatHandle'] as String?,
+      tikTokHandle: json['tikTokHandle'] as String?,
     );
 
 Map<String, dynamic> _$$ContactImplToJson(_$ContactImpl instance) =>
@@ -32,4 +41,12 @@ Map<String, dynamic> _$$ContactImplToJson(_$ContactImpl instance) =>
       'birthday': instance.birthday?.toIso8601String(),
       'lastContacted': instance.lastContacted?.toIso8601String(),
       'anniversary': instance.anniversary?.toIso8601String(),
+      'phoneNumber': instance.phoneNumber,
+      'emails': instance.emails,
+      'notes': instance.notes,
+      'youtubeUrl': instance.youtubeUrl,
+      'instagramHandle': instance.instagramHandle,
+      'facebookUrl': instance.facebookUrl,
+      'snapchatHandle': instance.snapchatHandle,
+      'tikTokHandle': instance.tikTokHandle,
     };

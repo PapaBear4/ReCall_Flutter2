@@ -16,6 +16,7 @@ import 'package:recall/blocs/contact_list/contact_list_bloc.dart'; // To refresh
 import 'package:recall/services/notification_helper.dart';
 import 'package:recall/services/notification_service.dart';
 import 'package:logger/logger.dart';
+import 'package:recall/utils/backup_restore_utils.dart'; // <-- ADD THIS IMPORT
 
 
 var settingsScreenLogger = Logger();
@@ -127,53 +128,6 @@ Future<void> _loadSettings() async {
     }
   }
 
-  // Fetches contacts and converts them to a JSON string
-  Future<String?> _prepareBackupData() async {
-    if (!mounted) return null;
-    setState(() => _isBusy = true);
-    try {
-      final contactRepo = context.read<ContactRepository>();
-      final settingsRepo =
-          context.read<UserSettingsRepository>(); // Get settings repo
-
-      final List<Contact> contacts = await contactRepo.getAll();
-      // Fetch current settings - assuming ID 1 or load the only one
-      final List<UserSettings> currentSettingsList =
-          await settingsRepo.getAll();
-      final UserSettings? currentSettings =
-          currentSettingsList.isNotEmpty ? currentSettingsList.first : null;
-
-      if (currentSettings == null) {
-        if (!mounted) return null;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error fetching settings for export.')),
-        );
-        setState(() => _isBusy = false);
-        return null;
-      }
-
-      // Structure for export (using version 2)
-      Map<String, dynamic> backupData = {
-        'version': 2, // Increment version
-        'userSettings': currentSettings.toJson(), // Add settings
-        'contacts': contacts.map((contact) => contact.toJson()).toList(),
-      };
-      String jsonString =
-          const JsonEncoder.withIndent('  ').convert(backupData);
-
-      if (!mounted) return null;
-      setState(() => _isBusy = false);
-      return jsonString;
-    } catch (e) {
-      if (!mounted) return null;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error preparing export data: $e')),
-      );
-      setState(() => _isBusy = false);
-      return null;
-    }
-  }
-
   // Saves the JSON string using file_picker
   Future<void> _saveBackupFile(String jsonString) async {
     setState(() => _isBusy = true); // Show loading indicator
@@ -245,123 +199,79 @@ Future<void> _loadSettings() async {
 
   // Shows the dialog to choose between Save or Share
   Future<void> _showBackupOptions() async {
-    // Prepare data first
-    final String? jsonString = await _prepareBackupData();
+    // Manage busy state here in the UI layer
+    if (!mounted) return;
+    setState(() => _isBusy = true);
+    String? jsonString; // Initialize to null
 
-    // If data preparation failed or was cancelled, stop here
-    if (jsonString == null || !mounted) return;
-
-    // Show choice dialog
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Backup Contacts & Settings As JSON'),
-          content: const Text('Choose how to save the backup file:'),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Save Backup to Device'),
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-                _saveBackupFile(jsonString); // Call save function
-              },
-            ),
-            TextButton(
-              child: const Text('Share'),
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-                _shareBackupFile(jsonString); // Call share function
-              },
-            ),
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  ({UserSettings? settings, List<Contact>? contacts})
-      _parseAndValidateRestoreData(String jsonData) {
     try {
-      final decoded = jsonDecode(jsonData);
+      // Get repositories using context
+      final contactRepo = context.read<ContactRepository>();
+      final settingsRepo = context.read<UserSettingsRepository>();
 
-      if (decoded is! Map<String, dynamic>) {
-        throw const FormatException('Invalid format: Expected a JSON object.');
+      // Call the utility function, passing repositories
+      jsonString = await prepareBackupData(
+        contactRepo: contactRepo,
+        settingsRepo: settingsRepo,
+      );
+
+      // Check if data preparation failed or widget unmounted
+      if (jsonString == null || !mounted) {
+        if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(
+             const SnackBar(content: Text('Failed to prepare backup data.')),
+           );
+        }
+        setState(() => _isBusy = false); // Ensure busy state is reset
+        return; // Stop if preparation failed
       }
 
-      // Check version - handle version 1 (old) and 2 (new)
-      final version = decoded['version'];
-      UserSettings? parsedSettings;
-      List<Contact>? parsedContacts;
-
-      if (version == 2) {
-        // Parse settings (new format)
-        final settingsData = decoded['userSettings'];
-        if (settingsData is! Map<String, dynamic>) {
-          throw const FormatException(
-              'Invalid format V2: Expected "userSettings" to be an object.');
-        }
-        // Use generated fromJson, ensure ID is handled later during update
-        parsedSettings = UserSettings.fromJson(settingsData);
-
-        // Parse contacts
-        final contactsData = decoded['contacts'];
-        if (contactsData is! List) {
-          throw const FormatException(
-              'Invalid format V2: Expected "contacts" to be a list.');
-        }
-        parsedContacts = contactsData.map((contactMap) {
-          if (contactMap is! Map<String, dynamic>) {
-            throw FormatException(
-                'Invalid format V2: Contact entry is not valid: $contactMap');
-          }
-          return Contact.fromJson(contactMap);
-        }).toList();
-      } else if (version == 1) {
-        final dynamic contactsData = decoded[
-            'contacts']; // Use dynamic or Object? if type is unknown initially
-        // Check if 'contactsData' is actually a List
-        if (contactsData is List) {
-          // It is a list, proceed with parsing contacts
-          parsedContacts = contactsData.map((contactMap) {
-            if (contactMap is! Map<String, dynamic>) {
-              throw FormatException(
-                  'Invalid format V1: Contact entry is not valid: $contactMap');
-            }
-            return Contact.fromJson(contactMap);
-          }).toList();
-          // No settings in V1 format
-          parsedSettings = null;
-        } else {
-          // If 'contactsData' wasn't a List, the V1 format is invalid
-          // No reassignment needed, just throw the error.
-          throw const FormatException(
-              'Invalid format V1: Expected "contacts" key to contain a list.');
-        }
-      } else {
-        throw FormatException('Unsupported backup version: $version');
-      }
-
-      return (settings: parsedSettings, contacts: parsedContacts);
-    } on FormatException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Import Error: ${e.message}')),
-        );
-      }
-      return (settings: null, contacts: null); // Indicate failure
+      // If preparation succeeded, show the dialog (ensure mounted check)
+      if (!mounted) return; // Check again before showing dialog
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Backup Contacts & Settings As JSON'),
+            content: const Text('Choose how to save the backup file:'),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Save Backup to Device'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _saveBackupFile(jsonString!); // Call save function (jsonString is guaranteed non-null here)
+                },
+              ),
+              TextButton(
+                child: const Text('Share'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _shareBackupFile(jsonString!); // Call share function
+                },
+              ),
+              TextButton(
+                child: const Text('Cancel'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
     } catch (e) {
+      // Catch any unexpected errors during repo access or prepare call
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Import Error: $e')),
-        );
+         settingsScreenLogger.e("Error during backup preparation/dialog show: $e");
+         ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('An error occurred: $e')),
+         );
       }
-      return (settings: null, contacts: null); // Indicate failure
+    } finally {
+      // Ensure busy state is always reset, even if errors occur
+      if (mounted) {
+        setState(() => _isBusy = false);
+      }
     }
   }
 
@@ -397,13 +307,20 @@ Future<void> _loadSettings() async {
       String jsonData = await file.readAsString();
 
       // Parse and validate using the updated function
-      final parsedData = _parseAndValidateRestoreData(jsonData);
+      final parsedData = parseAndMigrateBackupData(jsonData); // Use function from utils
       final UserSettings? settingsFromBackup = parsedData.settings;
       final List<Contact>? contactsFromBackup = parsedData.contacts;
 
-      if (contactsFromBackup == null || !mounted) {
-        // Validation/parsing failed, message already shown
-        if (mounted) setState(() => _isBusy = false);
+      // Check if parsing failed (contacts will be null)
+      if (contactsFromBackup == null) {
+        if (mounted) {
+           // Error message likely already shown by the parsing function if using logger/snackbar there
+           // Or show a generic one here if parse function just returns nulls on error
+           ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Failed to parse backup file.')),
+           );
+           setState(() => _isBusy = false);
+        }
         return;
       }
             // Show confirmation dialog before overwriting
