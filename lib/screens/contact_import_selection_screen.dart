@@ -30,6 +30,145 @@ class ContactSelectionInfo {
   ContactSelectionInfo(this.contact, {this.isSelected = false});
 }
 
+class PhoneEmailSelectionDialog extends StatefulWidget {
+  final fc.Contact contact;
+  final fc.Phone? initialPhone;
+  final List<fc.Email> initialEmails;
+  // Callback function to return selected items
+  final Function(fc.Phone? selectedPhone, List<fc.Email> selectedEmails) onSave;
+
+  const PhoneEmailSelectionDialog({
+    super.key,
+    required this.contact,
+    required this.initialPhone,
+    required this.initialEmails,
+    required this.onSave,
+  });
+
+  @override
+  State<PhoneEmailSelectionDialog> createState() =>
+      _PhoneEmailSelectionDialogState();
+}
+
+class _PhoneEmailSelectionDialogState extends State<PhoneEmailSelectionDialog> {
+  fc.Phone? _selectedPhone;
+  late Set<fc.Email> _selectedEmails; // Use a Set for easier add/remove
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedPhone = widget.initialPhone;
+    _selectedEmails = Set<fc.Email>.from(widget.initialEmails);
+
+    // Pre-select the first phone if none was initially selected and phones exist
+    if (_selectedPhone == null && widget.contact.phones.isNotEmpty) {
+      _selectedPhone = widget.contact.phones.first;
+    }
+    // Pre-select all emails if none were initially selected and emails exist
+    if (_selectedEmails.isEmpty && widget.contact.emails.isNotEmpty) {
+      _selectedEmails = Set<fc.Email>.from(widget.contact.emails);
+    }
+  }
+
+   @override
+   Widget build(BuildContext context) {
+     // Get screen height to constrain dialog height
+     final screenHeight = MediaQuery.of(context).size.height;
+
+     return AlertDialog(
+       title: Text('Select for ${widget.contact.displayName}'),
+       // Constrain the content size
+       content: Container( // Wrap content in a Container
+         width: double.maxFinite, // Use maximum width available in dialog
+         // Set a maximum height, e.g., 60% of screen height
+         // Adjust this fraction as needed
+         constraints: BoxConstraints(maxHeight: screenHeight * 0.6),
+         child: SingleChildScrollView( // Content is scrollable
+           child: Column(
+             mainAxisSize: MainAxisSize.min,
+             crossAxisAlignment: CrossAxisAlignment.start,
+             children: [
+               // --- Phone Selection ---
+               if (widget.contact.phones.isNotEmpty) ...[
+                 const Text('Select One Phone Number:', style: TextStyle(fontWeight: FontWeight.bold)),
+                 const SizedBox(height: 8),
+                 // Note: ListView.builder inside a Column needs shrinkWrap and physics
+                 // It should be okay here since the outer Container provides constraints
+                 ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: widget.contact.phones.length,
+                    itemBuilder: (context, index) {
+                       final phone = widget.contact.phones[index];
+                       return RadioListTile<fc.Phone>(
+                         title: Text(phone.number),
+                         subtitle: Text(phone.label.name),
+                         value: phone,
+                         groupValue: _selectedPhone,
+                         onChanged: (fc.Phone? value) {
+                           setState(() { _selectedPhone = value; });
+                         },
+                         dense: true,
+                         contentPadding: EdgeInsets.zero,
+                       );
+                    }
+                 ),
+                 const Divider(),
+               ] else ... [
+                   const Text("No phone numbers found for this contact."),
+                   const Divider(),
+               ],
+
+               // --- Email Selection ---
+               if (widget.contact.emails.isNotEmpty) ...[
+                 const Text('Select Email Addresses:', style: TextStyle(fontWeight: FontWeight.bold)),
+                 const SizedBox(height: 8),
+                 ListView.builder(
+                   shrinkWrap: true,
+                   physics: const NeverScrollableScrollPhysics(),
+                   itemCount: widget.contact.emails.length,
+                   itemBuilder: (context, index){
+                       final email = widget.contact.emails[index];
+                       return CheckboxListTile(
+                         title: Text(email.address),
+                         subtitle: Text(email.label.name),
+                         value: _selectedEmails.contains(email),
+                         onChanged: (bool? value) {
+                           setState(() {
+                             if (value == true) { _selectedEmails.add(email); }
+                             else { _selectedEmails.remove(email); }
+                           });
+                         },
+                         dense: true,
+                         controlAffinity: ListTileControlAffinity.leading,
+                         contentPadding: EdgeInsets.zero,
+                       );
+                   }
+                 ),
+               ] else ... [
+                  const Text("No email addresses found for this contact."),
+               ]
+             ],
+           ),
+         ),
+       ),
+       actions: [
+         TextButton(
+           onPressed: () => Navigator.of(context).pop(),
+           child: const Text('Cancel'),
+         ),
+         TextButton(
+           onPressed: () {
+             widget.onSave(_selectedPhone, _selectedEmails.toList());
+             Navigator.of(context).pop();
+           },
+           child: const Text('Save Selection'),
+         ),
+       ],
+     );
+   }
+}
+
 class _ContactImportSelectionScreenState
     extends State<ContactImportSelectionScreen> {
   final ContactImporter _importer = ContactImporter();
@@ -108,50 +247,67 @@ class _ContactImportSelectionScreenState
       _isSelectAll = newValue;
       for (var item in _selectableContacts) {
         item.isSelected = newValue;
-        // Reset phone/email choices when deselecting all
-        if (!newValue) {
+        // Auto-select/clear phone/email when using Select All
+        if (newValue) {
+          // Auto-select first phone if available, otherwise null
+          item.selectedPhone =
+              item.contact.phones.isNotEmpty ? item.contact.phones.first : null;
+          // Auto-select all emails if available
+          item.selectedEmails = item.contact.emails.toList();
+        } else {
+          // Clear selections when deselecting all
           item.selectedPhone = null;
           item.selectedEmails.clear();
         }
-        // TODO: Auto-select default phone/email if selecting all? (Optional enhancement)
       }
     });
   }
 
-  // --- Placeholder for Phase 3.3: Phone/Email Selection ---
   // This function will be called when a contact row is tapped or expanded
-  void _handlePhoneEmailSelection(ContactSelectionInfo selectionInfo) {
-    // TODO: Implement UI (e.g., showDialog) to select one phone and multiple emails
-    // from selectionInfo.contact.phones and selectionInfo.contact.emails.
-    // Update selectionInfo.selectedPhone and selectionInfo.selectedEmails based on user choice.
-    // This needs careful implementation using Radio buttons for phone, Checkboxes for email.
-    logger.i(
-        "TODO: Implement phone/email selection UI for ${selectionInfo.contact.displayName}");
+  Future<void> _handlePhoneEmailSelection(
+      ContactSelectionInfo selectionInfo) async {
+    // Show the dialog
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return PhoneEmailSelectionDialog(
+          contact: selectionInfo.contact,
+          initialPhone: selectionInfo.selectedPhone,
+          initialEmails: selectionInfo.selectedEmails,
+          onSave: (chosenPhone, chosenEmails) {
+            // Update the state of the specific item in the main list
+            // This needs to be done *outside* the dialog's build context,
+            // hence we do it here after the dialog closes and calls onSave.
+            // Use setState from the main screen's state.
+            if (mounted) {
+              // Ensure the main screen is still mounted
+              setState(() {
+                selectionInfo.selectedPhone = chosenPhone;
+                selectionInfo.selectedEmails = chosenEmails;
+                // Ensure the item remains selected after editing details
+                selectionInfo.isSelected = true;
+                // Update _isSelectAll status
+                _updateSelectAllState();
+              });
+            }
+          },
+        );
+      },
+    );
+    // Optional: Refresh state if needed after dialog closes, though onSave handles it
+    // setState(() {});
+  }
 
-    // Example (Conceptual - requires a dialog widget):
-    /*
-     showDialog(context: context, builder: (context) => PhoneEmailSelectionDialog(
-         contact: selectionInfo.contact,
-         initialPhone: selectionInfo.selectedPhone,
-         initialEmails: selectionInfo.selectedEmails,
-         onSave: (chosenPhone, chosenEmails) {
-             setState(() {
-                 selectionInfo.selectedPhone = chosenPhone;
-                 selectionInfo.selectedEmails = chosenEmails;
-             });
-         }
-     ));
-     */
-
-    // For now, let's just print available phones/emails
-    logger.i("Available Phones for ${selectionInfo.contact.displayName}:");
-    for (var phone in selectionInfo.contact.phones) {
-      logger.i("- ${phone.label}: ${phone.number}");
+  // Helper to update the Select All checkbox state based on item selections
+  void _updateSelectAllState() {
+    final allSelected = _selectableContacts.isNotEmpty &&
+        _selectableContacts.every((i) => i.isSelected);
+    if (_isSelectAll != allSelected) {
+      setState(() {
+        _isSelectAll = allSelected;
+      });
     }
-    logger.i("Available Emails for ${selectionInfo.contact.displayName}:");
-    for (var email in selectionInfo.contact.emails) {
-      logger.i("- ${email.label}: ${email.address}");
-    }
+    // Note: We are not implementing tristate here for simplicity
   }
 
   // --- PHASE 4: Import Action ---
@@ -191,49 +347,49 @@ class _ContactImportSelectionScreenState
         final fcContact = item.contact;
         bool isDuplicate = false;
 
-        // --- 4.1 Duplicate Checking (Placeholder Logic) ---
-        // TODO: Refine duplicate check using item.selectedPhone?.number and item.selectedEmails
-        final String? firstDevicePhone =
-            fcContact.phones.firstOrNull?.number.trim();
-        final String? firstDeviceEmail =
-            fcContact.emails.firstOrNull?.address.trim();
+        // --- 4.1 Duplicate Checking (Refined Logic) ---
+        // Use the selected phone and emails from ContactSelectionInfo
+        final String? selectedPhoneNumber = item.selectedPhone?.number.trim();
+        final List<String> selectedEmailAddresses =
+            item.selectedEmails.map((e) => e.address.trim()).toList();
 
-        if (firstDevicePhone != null && firstDevicePhone.isNotEmpty) {
-          if (existingContacts.any((c) => c.phoneNumber == firstDevicePhone)) {
-            isDuplicate = true;
-          }
-        }
-        // Check email only if not already found duplicate by phone
-        if (!isDuplicate &&
-            firstDeviceEmail != null &&
-            firstDeviceEmail.isNotEmpty) {
+        // Check selected phone first
+        if (selectedPhoneNumber != null && selectedPhoneNumber.isNotEmpty) {
           if (existingContacts
-              .any((c) => c.emails?.contains(firstDeviceEmail) ?? false)) {
+              .any((c) => c.phoneNumber == selectedPhoneNumber)) {
             isDuplicate = true;
           }
         }
-
+        // Check selected emails only if not already found duplicate by phone
+        if (!isDuplicate && selectedEmailAddresses.isNotEmpty) {
+          if (existingContacts.any((c) {
+            // Check if any of the selected emails exist in the contact's email list
+            return selectedEmailAddresses.any(
+                (selectedEmail) => c.emails?.contains(selectedEmail) ?? false);
+          })) {
+            isDuplicate = true;
+          }
+        }
         if (isDuplicate) {
           logger.i(
-              "Skipping duplicate: ${fcContact.displayName} (Phone: $firstDevicePhone, Email: $firstDeviceEmail)");
+              "Skipping duplicate: ${fcContact.displayName} (Selected Phone: $selectedPhoneNumber, Selected Emails: ${selectedEmailAddresses.join(', ')})");
           skippedContactsLog.add(fcContact.displayName);
-          continue; // Skip to the next contact
+          continue;
         }
 
-        // --- 4.2 Data Mapping ---
-        // TODO: Refine phone/email mapping using item.selectedPhone and item.selectedEmails from Phase 3.3 UI
-        final String? mappedPhone = fcContact
-            .phones.firstOrNull?.number; // Placeholder: uses first phone
-        final List<String> mappedEmails = fcContact.emails
-            .map((e) => e.address)
-            .toList(); // Placeholder: uses all emails
+        // --- 4.2 Data Mapping (Refined Logic) ---
+        // Use selected phone/emails from ContactSelectionInfo
+        final String? mappedPhone = item.selectedPhone?.number;
+        final List<String> mappedEmails =
+            item.selectedEmails.map((e) => e.address).toList();
 
-        // Ensure we have at least one identifier (phone or email) to save
+        // Ensure we have at least one identifier (the selected one) to save
         if ((mappedPhone == null || mappedPhone.isEmpty) &&
             mappedEmails.isEmpty) {
           logger.w(
-              "Skipping ${fcContact.displayName}: No phone number or email address found after mapping.");
-          skippedContactsLog.add("${fcContact.displayName} (No phone/email)");
+              "Skipping ${fcContact.displayName}: No phone number or email address was selected for import.");
+          skippedContactsLog
+              .add("${fcContact.displayName} (No phone/email selected)");
           continue;
         }
 
@@ -399,67 +555,55 @@ class _ContactImportSelectionScreenState
                       itemCount: _selectableContacts.length,
                       itemBuilder: (context, index) {
                         final item = _selectableContacts[index];
-                        // Basic display - needs refinement for phone/email choice
+                        // Determine if editing is needed
+                        bool needsEditing = item.contact.phones.length > 1 ||
+                            item.contact.emails.isNotEmpty;
+
                         return CheckboxListTile(
                           title: Text(item.contact.displayName),
-                          // Subtitle can show primary phone/email if available
-                          subtitle: Text(item.contact.phones.isNotEmpty
-                              ? item.contact.phones.first.number
-                              : item.contact.emails.isNotEmpty
-                                  ? item.contact.emails.first.address
-                                  : 'No phone/email'),
+                          // Update subtitle to show selection status
+                          subtitle: Text(item.isSelected
+                              ? 'Phone: ${item.selectedPhone?.number ?? "None"} / Emails: ${item.selectedEmails.length}'
+                              : (item.contact.phones.isNotEmpty
+                                  ? item.contact.phones.first.number
+                                  : (item.contact.emails.isNotEmpty
+                                      ? item.contact.emails.first.address
+                                      : 'No phone/email'))),
                           value: item.isSelected,
                           onChanged: (bool? newValue) {
                             if (newValue == null) return;
                             setState(() {
                               item.isSelected = newValue;
-                              // If newly selected, trigger phone/email choice logic (placeholder)
                               if (newValue) {
-                                // Check if selection is needed
-                                bool needsPhoneSelection =
-                                    item.contact.phones.length > 1;
-                                bool needsEmailSelection = item.contact.emails
-                                    .isNotEmpty; // Always allow email multi-select if emails exist
-                                if (needsPhoneSelection ||
-                                    needsEmailSelection) {
-                                  _handlePhoneEmailSelection(item);
-                                } else {
-                                  // Auto-select if only one or zero phone/email
+                                // If requires selection OR no phone/email pre-selected, show dialog
+                                if (needsEditing ||
+                                    (item.selectedPhone == null &&
+                                        item.selectedEmails.isEmpty)) {
+                                  _handlePhoneEmailSelection(
+                                      item); // Trigger dialog
+                                } else if (item.selectedPhone == null &&
+                                    item.contact.phones.isNotEmpty) {
+                                  // Auto-select first phone if none selected yet & available
                                   item.selectedPhone =
-                                      item.contact.phones.isEmpty
-                                          ? null
-                                          : item.contact.phones.first;
-                                  item.selectedEmails = item.contact.emails
-                                      .toList(); // Select all emails if not choosing
-                                }
+                                      item.contact.phones.first;
+                                } // (Emails are handled in dialog or select all)
                               } else {
                                 // Clear selections if unchecked
                                 item.selectedPhone = null;
                                 item.selectedEmails.clear();
                               }
-
-                              // Update Select All checkbox state
-                              if (_selectableContacts
-                                  .every((i) => i.isSelected)) {
-                                _isSelectAll = true;
-                              } else {
-                                _isSelectAll = false;
-                              }
-                              // TODO: Implement tristate for _isSelectAll if desired
+                              _updateSelectAllState(); // Update Select All checkbox
                             });
                           },
-                          // Add a button/indicator if multiple phone/email need selection
-                          secondary: (_isSaving ||
-                                  (item.contact.phones.length <= 1 &&
-                                      item.contact.emails.length <= 1))
-                              ? null
-                              : IconButton(
-                                  icon: const Icon(
-                                      Icons.edit_note), // Or Icons.more_vert
+                          // Show edit button if needed and not saving
+                          secondary: (needsEditing && !_isSaving)
+                              ? IconButton(
+                                  icon: const Icon(Icons.edit_note),
                                   tooltip: 'Select phone/email',
                                   onPressed: () =>
                                       _handlePhoneEmailSelection(item),
-                                ),
+                                )
+                              : null,
                         );
                       },
                     ),
