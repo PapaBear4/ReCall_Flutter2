@@ -104,6 +104,23 @@ class ContactRepository implements Repository<Contact> {
   }
 
   @override
+  Future<void> deleteMany(List<int> ids) async {
+    try {
+      await _source.deleteMany(ids); // Call the data source's deleteMany
+      // Remove deleted contacts from the cache
+      for (final id in ids) {
+        _contacts.remove(id);
+      }
+      logger.i(
+          "Successfully deleted ${ids.length} contacts from repository and cache.");
+    } catch (e) {
+      logger.e("Error deleting multiple contacts (${ids.join(', ')}): $e");
+      // Optionally re-throw the error if the caller needs to handle it
+      rethrow;
+    }
+  }
+
+  @override
   Future<void> deleteAll() async {
     await _source.deleteAll();
     _contacts.clear(); // Clear the cache

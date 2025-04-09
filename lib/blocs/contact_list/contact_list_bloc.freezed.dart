@@ -25,6 +25,7 @@ mixin _$ContactListEvent {
         sortContacts,
     required TResult Function(String searchTerm) applySearch,
     required TResult Function(ContactListFilter filter) applyFilter,
+    required TResult Function(List<int> contactIds) deleteContacts,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -36,6 +37,7 @@ mixin _$ContactListEvent {
         sortContacts,
     TResult? Function(String searchTerm)? applySearch,
     TResult? Function(ContactListFilter filter)? applyFilter,
+    TResult? Function(List<int> contactIds)? deleteContacts,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -47,6 +49,7 @@ mixin _$ContactListEvent {
         sortContacts,
     TResult Function(String searchTerm)? applySearch,
     TResult Function(ContactListFilter filter)? applyFilter,
+    TResult Function(List<int> contactIds)? deleteContacts,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -60,6 +63,7 @@ mixin _$ContactListEvent {
     required TResult Function(_SortContacts value) sortContacts,
     required TResult Function(_ApplySearch value) applySearch,
     required TResult Function(_ApplyFilter value) applyFilter,
+    required TResult Function(_DeleteContacts value) deleteContacts,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -70,6 +74,7 @@ mixin _$ContactListEvent {
     TResult? Function(_SortContacts value)? sortContacts,
     TResult? Function(_ApplySearch value)? applySearch,
     TResult? Function(_ApplyFilter value)? applyFilter,
+    TResult? Function(_DeleteContacts value)? deleteContacts,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -80,6 +85,7 @@ mixin _$ContactListEvent {
     TResult Function(_SortContacts value)? sortContacts,
     TResult Function(_ApplySearch value)? applySearch,
     TResult Function(_ApplyFilter value)? applyFilter,
+    TResult Function(_DeleteContacts value)? deleteContacts,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -154,6 +160,7 @@ class _$LoadContactsImpl implements _LoadContacts {
         sortContacts,
     required TResult Function(String searchTerm) applySearch,
     required TResult Function(ContactListFilter filter) applyFilter,
+    required TResult Function(List<int> contactIds) deleteContacts,
   }) {
     return loadContacts();
   }
@@ -168,6 +175,7 @@ class _$LoadContactsImpl implements _LoadContacts {
         sortContacts,
     TResult? Function(String searchTerm)? applySearch,
     TResult? Function(ContactListFilter filter)? applyFilter,
+    TResult? Function(List<int> contactIds)? deleteContacts,
   }) {
     return loadContacts?.call();
   }
@@ -182,6 +190,7 @@ class _$LoadContactsImpl implements _LoadContacts {
         sortContacts,
     TResult Function(String searchTerm)? applySearch,
     TResult Function(ContactListFilter filter)? applyFilter,
+    TResult Function(List<int> contactIds)? deleteContacts,
     required TResult orElse(),
   }) {
     if (loadContacts != null) {
@@ -201,6 +210,7 @@ class _$LoadContactsImpl implements _LoadContacts {
     required TResult Function(_SortContacts value) sortContacts,
     required TResult Function(_ApplySearch value) applySearch,
     required TResult Function(_ApplyFilter value) applyFilter,
+    required TResult Function(_DeleteContacts value) deleteContacts,
   }) {
     return loadContacts(this);
   }
@@ -214,6 +224,7 @@ class _$LoadContactsImpl implements _LoadContacts {
     TResult? Function(_SortContacts value)? sortContacts,
     TResult? Function(_ApplySearch value)? applySearch,
     TResult? Function(_ApplyFilter value)? applyFilter,
+    TResult? Function(_DeleteContacts value)? deleteContacts,
   }) {
     return loadContacts?.call(this);
   }
@@ -227,6 +238,7 @@ class _$LoadContactsImpl implements _LoadContacts {
     TResult Function(_SortContacts value)? sortContacts,
     TResult Function(_ApplySearch value)? applySearch,
     TResult Function(_ApplyFilter value)? applyFilter,
+    TResult Function(_DeleteContacts value)? deleteContacts,
     required TResult orElse(),
   }) {
     if (loadContacts != null) {
@@ -318,6 +330,7 @@ class _$DeleteContactFromListImpl implements _DeleteContactFromList {
         sortContacts,
     required TResult Function(String searchTerm) applySearch,
     required TResult Function(ContactListFilter filter) applyFilter,
+    required TResult Function(List<int> contactIds) deleteContacts,
   }) {
     return deleteContactFromList(contactId);
   }
@@ -332,6 +345,7 @@ class _$DeleteContactFromListImpl implements _DeleteContactFromList {
         sortContacts,
     TResult? Function(String searchTerm)? applySearch,
     TResult? Function(ContactListFilter filter)? applyFilter,
+    TResult? Function(List<int> contactIds)? deleteContacts,
   }) {
     return deleteContactFromList?.call(contactId);
   }
@@ -346,6 +360,7 @@ class _$DeleteContactFromListImpl implements _DeleteContactFromList {
         sortContacts,
     TResult Function(String searchTerm)? applySearch,
     TResult Function(ContactListFilter filter)? applyFilter,
+    TResult Function(List<int> contactIds)? deleteContacts,
     required TResult orElse(),
   }) {
     if (deleteContactFromList != null) {
@@ -365,6 +380,7 @@ class _$DeleteContactFromListImpl implements _DeleteContactFromList {
     required TResult Function(_SortContacts value) sortContacts,
     required TResult Function(_ApplySearch value) applySearch,
     required TResult Function(_ApplyFilter value) applyFilter,
+    required TResult Function(_DeleteContacts value) deleteContacts,
   }) {
     return deleteContactFromList(this);
   }
@@ -378,6 +394,7 @@ class _$DeleteContactFromListImpl implements _DeleteContactFromList {
     TResult? Function(_SortContacts value)? sortContacts,
     TResult? Function(_ApplySearch value)? applySearch,
     TResult? Function(_ApplyFilter value)? applyFilter,
+    TResult? Function(_DeleteContacts value)? deleteContacts,
   }) {
     return deleteContactFromList?.call(this);
   }
@@ -391,6 +408,7 @@ class _$DeleteContactFromListImpl implements _DeleteContactFromList {
     TResult Function(_SortContacts value)? sortContacts,
     TResult Function(_ApplySearch value)? applySearch,
     TResult Function(_ApplyFilter value)? applyFilter,
+    TResult Function(_DeleteContacts value)? deleteContacts,
     required TResult orElse(),
   }) {
     if (deleteContactFromList != null) {
@@ -502,6 +520,7 @@ class _$UpdateContactFromListImpl implements _UpdateContactFromList {
         sortContacts,
     required TResult Function(String searchTerm) applySearch,
     required TResult Function(ContactListFilter filter) applyFilter,
+    required TResult Function(List<int> contactIds) deleteContacts,
   }) {
     return updateContactFromList(contact);
   }
@@ -516,6 +535,7 @@ class _$UpdateContactFromListImpl implements _UpdateContactFromList {
         sortContacts,
     TResult? Function(String searchTerm)? applySearch,
     TResult? Function(ContactListFilter filter)? applyFilter,
+    TResult? Function(List<int> contactIds)? deleteContacts,
   }) {
     return updateContactFromList?.call(contact);
   }
@@ -530,6 +550,7 @@ class _$UpdateContactFromListImpl implements _UpdateContactFromList {
         sortContacts,
     TResult Function(String searchTerm)? applySearch,
     TResult Function(ContactListFilter filter)? applyFilter,
+    TResult Function(List<int> contactIds)? deleteContacts,
     required TResult orElse(),
   }) {
     if (updateContactFromList != null) {
@@ -549,6 +570,7 @@ class _$UpdateContactFromListImpl implements _UpdateContactFromList {
     required TResult Function(_SortContacts value) sortContacts,
     required TResult Function(_ApplySearch value) applySearch,
     required TResult Function(_ApplyFilter value) applyFilter,
+    required TResult Function(_DeleteContacts value) deleteContacts,
   }) {
     return updateContactFromList(this);
   }
@@ -562,6 +584,7 @@ class _$UpdateContactFromListImpl implements _UpdateContactFromList {
     TResult? Function(_SortContacts value)? sortContacts,
     TResult? Function(_ApplySearch value)? applySearch,
     TResult? Function(_ApplyFilter value)? applyFilter,
+    TResult? Function(_DeleteContacts value)? deleteContacts,
   }) {
     return updateContactFromList?.call(this);
   }
@@ -575,6 +598,7 @@ class _$UpdateContactFromListImpl implements _UpdateContactFromList {
     TResult Function(_SortContacts value)? sortContacts,
     TResult Function(_ApplySearch value)? applySearch,
     TResult Function(_ApplyFilter value)? applyFilter,
+    TResult Function(_DeleteContacts value)? deleteContacts,
     required TResult orElse(),
   }) {
     if (updateContactFromList != null) {
@@ -687,6 +711,7 @@ class _$SortContactsImpl implements _SortContacts {
         sortContacts,
     required TResult Function(String searchTerm) applySearch,
     required TResult Function(ContactListFilter filter) applyFilter,
+    required TResult Function(List<int> contactIds) deleteContacts,
   }) {
     return sortContacts(sortField, ascending);
   }
@@ -701,6 +726,7 @@ class _$SortContactsImpl implements _SortContacts {
         sortContacts,
     TResult? Function(String searchTerm)? applySearch,
     TResult? Function(ContactListFilter filter)? applyFilter,
+    TResult? Function(List<int> contactIds)? deleteContacts,
   }) {
     return sortContacts?.call(sortField, ascending);
   }
@@ -715,6 +741,7 @@ class _$SortContactsImpl implements _SortContacts {
         sortContacts,
     TResult Function(String searchTerm)? applySearch,
     TResult Function(ContactListFilter filter)? applyFilter,
+    TResult Function(List<int> contactIds)? deleteContacts,
     required TResult orElse(),
   }) {
     if (sortContacts != null) {
@@ -734,6 +761,7 @@ class _$SortContactsImpl implements _SortContacts {
     required TResult Function(_SortContacts value) sortContacts,
     required TResult Function(_ApplySearch value) applySearch,
     required TResult Function(_ApplyFilter value) applyFilter,
+    required TResult Function(_DeleteContacts value) deleteContacts,
   }) {
     return sortContacts(this);
   }
@@ -747,6 +775,7 @@ class _$SortContactsImpl implements _SortContacts {
     TResult? Function(_SortContacts value)? sortContacts,
     TResult? Function(_ApplySearch value)? applySearch,
     TResult? Function(_ApplyFilter value)? applyFilter,
+    TResult? Function(_DeleteContacts value)? deleteContacts,
   }) {
     return sortContacts?.call(this);
   }
@@ -760,6 +789,7 @@ class _$SortContactsImpl implements _SortContacts {
     TResult Function(_SortContacts value)? sortContacts,
     TResult Function(_ApplySearch value)? applySearch,
     TResult Function(_ApplyFilter value)? applyFilter,
+    TResult Function(_DeleteContacts value)? deleteContacts,
     required TResult orElse(),
   }) {
     if (sortContacts != null) {
@@ -862,6 +892,7 @@ class _$ApplySearchImpl implements _ApplySearch {
         sortContacts,
     required TResult Function(String searchTerm) applySearch,
     required TResult Function(ContactListFilter filter) applyFilter,
+    required TResult Function(List<int> contactIds) deleteContacts,
   }) {
     return applySearch(searchTerm);
   }
@@ -876,6 +907,7 @@ class _$ApplySearchImpl implements _ApplySearch {
         sortContacts,
     TResult? Function(String searchTerm)? applySearch,
     TResult? Function(ContactListFilter filter)? applyFilter,
+    TResult? Function(List<int> contactIds)? deleteContacts,
   }) {
     return applySearch?.call(searchTerm);
   }
@@ -890,6 +922,7 @@ class _$ApplySearchImpl implements _ApplySearch {
         sortContacts,
     TResult Function(String searchTerm)? applySearch,
     TResult Function(ContactListFilter filter)? applyFilter,
+    TResult Function(List<int> contactIds)? deleteContacts,
     required TResult orElse(),
   }) {
     if (applySearch != null) {
@@ -909,6 +942,7 @@ class _$ApplySearchImpl implements _ApplySearch {
     required TResult Function(_SortContacts value) sortContacts,
     required TResult Function(_ApplySearch value) applySearch,
     required TResult Function(_ApplyFilter value) applyFilter,
+    required TResult Function(_DeleteContacts value) deleteContacts,
   }) {
     return applySearch(this);
   }
@@ -922,6 +956,7 @@ class _$ApplySearchImpl implements _ApplySearch {
     TResult? Function(_SortContacts value)? sortContacts,
     TResult? Function(_ApplySearch value)? applySearch,
     TResult? Function(_ApplyFilter value)? applyFilter,
+    TResult? Function(_DeleteContacts value)? deleteContacts,
   }) {
     return applySearch?.call(this);
   }
@@ -935,6 +970,7 @@ class _$ApplySearchImpl implements _ApplySearch {
     TResult Function(_SortContacts value)? sortContacts,
     TResult Function(_ApplySearch value)? applySearch,
     TResult Function(_ApplyFilter value)? applyFilter,
+    TResult Function(_DeleteContacts value)? deleteContacts,
     required TResult orElse(),
   }) {
     if (applySearch != null) {
@@ -1032,6 +1068,7 @@ class _$ApplyFilterImpl implements _ApplyFilter {
         sortContacts,
     required TResult Function(String searchTerm) applySearch,
     required TResult Function(ContactListFilter filter) applyFilter,
+    required TResult Function(List<int> contactIds) deleteContacts,
   }) {
     return applyFilter(filter);
   }
@@ -1046,6 +1083,7 @@ class _$ApplyFilterImpl implements _ApplyFilter {
         sortContacts,
     TResult? Function(String searchTerm)? applySearch,
     TResult? Function(ContactListFilter filter)? applyFilter,
+    TResult? Function(List<int> contactIds)? deleteContacts,
   }) {
     return applyFilter?.call(filter);
   }
@@ -1060,6 +1098,7 @@ class _$ApplyFilterImpl implements _ApplyFilter {
         sortContacts,
     TResult Function(String searchTerm)? applySearch,
     TResult Function(ContactListFilter filter)? applyFilter,
+    TResult Function(List<int> contactIds)? deleteContacts,
     required TResult orElse(),
   }) {
     if (applyFilter != null) {
@@ -1079,6 +1118,7 @@ class _$ApplyFilterImpl implements _ApplyFilter {
     required TResult Function(_SortContacts value) sortContacts,
     required TResult Function(_ApplySearch value) applySearch,
     required TResult Function(_ApplyFilter value) applyFilter,
+    required TResult Function(_DeleteContacts value) deleteContacts,
   }) {
     return applyFilter(this);
   }
@@ -1092,6 +1132,7 @@ class _$ApplyFilterImpl implements _ApplyFilter {
     TResult? Function(_SortContacts value)? sortContacts,
     TResult? Function(_ApplySearch value)? applySearch,
     TResult? Function(_ApplyFilter value)? applyFilter,
+    TResult? Function(_DeleteContacts value)? deleteContacts,
   }) {
     return applyFilter?.call(this);
   }
@@ -1105,6 +1146,7 @@ class _$ApplyFilterImpl implements _ApplyFilter {
     TResult Function(_SortContacts value)? sortContacts,
     TResult Function(_ApplySearch value)? applySearch,
     TResult Function(_ApplyFilter value)? applyFilter,
+    TResult Function(_DeleteContacts value)? deleteContacts,
     required TResult orElse(),
   }) {
     if (applyFilter != null) {
@@ -1124,6 +1166,191 @@ abstract class _ApplyFilter implements ContactListEvent {
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$ApplyFilterImplCopyWith<_$ApplyFilterImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$DeleteContactsImplCopyWith<$Res> {
+  factory _$$DeleteContactsImplCopyWith(_$DeleteContactsImpl value,
+          $Res Function(_$DeleteContactsImpl) then) =
+      __$$DeleteContactsImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({List<int> contactIds});
+}
+
+/// @nodoc
+class __$$DeleteContactsImplCopyWithImpl<$Res>
+    extends _$ContactListEventCopyWithImpl<$Res, _$DeleteContactsImpl>
+    implements _$$DeleteContactsImplCopyWith<$Res> {
+  __$$DeleteContactsImplCopyWithImpl(
+      _$DeleteContactsImpl _value, $Res Function(_$DeleteContactsImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of ContactListEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? contactIds = null,
+  }) {
+    return _then(_$DeleteContactsImpl(
+      contactIds: null == contactIds
+          ? _value._contactIds
+          : contactIds // ignore: cast_nullable_to_non_nullable
+              as List<int>,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$DeleteContactsImpl implements _DeleteContacts {
+  const _$DeleteContactsImpl({required final List<int> contactIds})
+      : _contactIds = contactIds;
+
+  final List<int> _contactIds;
+  @override
+  List<int> get contactIds {
+    if (_contactIds is EqualUnmodifiableListView) return _contactIds;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_contactIds);
+  }
+
+  @override
+  String toString() {
+    return 'ContactListEvent.deleteContacts(contactIds: $contactIds)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$DeleteContactsImpl &&
+            const DeepCollectionEquality()
+                .equals(other._contactIds, _contactIds));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      runtimeType, const DeepCollectionEquality().hash(_contactIds));
+
+  /// Create a copy of ContactListEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$DeleteContactsImplCopyWith<_$DeleteContactsImpl> get copyWith =>
+      __$$DeleteContactsImplCopyWithImpl<_$DeleteContactsImpl>(
+          this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function() loadContacts,
+    required TResult Function(int contactId) deleteContactFromList,
+    required TResult Function(Contact contact) updateContactFromList,
+    required TResult Function(ContactListSortField sortField, bool ascending)
+        sortContacts,
+    required TResult Function(String searchTerm) applySearch,
+    required TResult Function(ContactListFilter filter) applyFilter,
+    required TResult Function(List<int> contactIds) deleteContacts,
+  }) {
+    return deleteContacts(contactIds);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function()? loadContacts,
+    TResult? Function(int contactId)? deleteContactFromList,
+    TResult? Function(Contact contact)? updateContactFromList,
+    TResult? Function(ContactListSortField sortField, bool ascending)?
+        sortContacts,
+    TResult? Function(String searchTerm)? applySearch,
+    TResult? Function(ContactListFilter filter)? applyFilter,
+    TResult? Function(List<int> contactIds)? deleteContacts,
+  }) {
+    return deleteContacts?.call(contactIds);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function()? loadContacts,
+    TResult Function(int contactId)? deleteContactFromList,
+    TResult Function(Contact contact)? updateContactFromList,
+    TResult Function(ContactListSortField sortField, bool ascending)?
+        sortContacts,
+    TResult Function(String searchTerm)? applySearch,
+    TResult Function(ContactListFilter filter)? applyFilter,
+    TResult Function(List<int> contactIds)? deleteContacts,
+    required TResult orElse(),
+  }) {
+    if (deleteContacts != null) {
+      return deleteContacts(contactIds);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(_LoadContacts value) loadContacts,
+    required TResult Function(_DeleteContactFromList value)
+        deleteContactFromList,
+    required TResult Function(_UpdateContactFromList value)
+        updateContactFromList,
+    required TResult Function(_SortContacts value) sortContacts,
+    required TResult Function(_ApplySearch value) applySearch,
+    required TResult Function(_ApplyFilter value) applyFilter,
+    required TResult Function(_DeleteContacts value) deleteContacts,
+  }) {
+    return deleteContacts(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(_LoadContacts value)? loadContacts,
+    TResult? Function(_DeleteContactFromList value)? deleteContactFromList,
+    TResult? Function(_UpdateContactFromList value)? updateContactFromList,
+    TResult? Function(_SortContacts value)? sortContacts,
+    TResult? Function(_ApplySearch value)? applySearch,
+    TResult? Function(_ApplyFilter value)? applyFilter,
+    TResult? Function(_DeleteContacts value)? deleteContacts,
+  }) {
+    return deleteContacts?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(_LoadContacts value)? loadContacts,
+    TResult Function(_DeleteContactFromList value)? deleteContactFromList,
+    TResult Function(_UpdateContactFromList value)? updateContactFromList,
+    TResult Function(_SortContacts value)? sortContacts,
+    TResult Function(_ApplySearch value)? applySearch,
+    TResult Function(_ApplyFilter value)? applyFilter,
+    TResult Function(_DeleteContacts value)? deleteContacts,
+    required TResult orElse(),
+  }) {
+    if (deleteContacts != null) {
+      return deleteContacts(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class _DeleteContacts implements ContactListEvent {
+  const factory _DeleteContacts({required final List<int> contactIds}) =
+      _$DeleteContactsImpl;
+
+  List<int> get contactIds;
+
+  /// Create a copy of ContactListEvent
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$DeleteContactsImplCopyWith<_$DeleteContactsImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 

@@ -25,48 +25,50 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
     // BEGIN EVENT HANDLING
     on<ContactListEvent>((event, emit) async {
       // LOAD CONTACTS
-      await event.map(loadContacts: (e) async {
-        emit(const ContactListState.loading());
-        try {
-          final allContacts = await _contactRepository.getAll();
-          if (allContacts.isEmpty) {
-            emit(const ContactListState.empty());
-          } else {
-            // Sort contacts by due date by default when loading
-            final sortedContacts = _sortContacts(
-                List.from(allContacts), ContactListSortField.dueDate, true);
-            emit(ContactListState.loaded(
-              originalContacts: allContacts,
-              displayedContacts: sortedContacts,
-              sortField:
-                  ContactListSortField.dueDate, // Explicitly set default sort
-              ascending: true,
-              searchTerm: '',
-              currentFilter: ContactListFilter.none,
-            ));
+      await event.map(
+        loadContacts: (e) async {
+          emit(const ContactListState.loading());
+          try {
+            final allContacts = await _contactRepository.getAll();
+            if (allContacts.isEmpty) {
+              emit(const ContactListState.empty());
+            } else {
+              // Sort contacts by due date by default when loading
+              final sortedContacts = _sortContacts(
+                  List.from(allContacts), ContactListSortField.dueDate, true);
+              emit(ContactListState.loaded(
+                originalContacts: allContacts,
+                displayedContacts: sortedContacts,
+                sortField:
+                    ContactListSortField.dueDate, // Explicitly set default sort
+                ascending: true,
+                searchTerm: '',
+                currentFilter: ContactListFilter.none,
+              ));
+            }
+          } catch (e) {
+            emit(ContactListState.error(e.toString()));
+            logger.e("Error loading contacts: $e");
           }
-        } catch (e) {
-          emit(ContactListState.error(e.toString()));
-          logger.e("Error loading contacts: $e");
-        }
 
-        // DELETE CONTACT FROM LIST
-      }, deleteContactFromList: (e) async {
-        //TODO: Maybe for later to provide a way to delete contacts
-        //directly from the list
+          // DELETE CONTACT FROM LIST
+        },
+        deleteContactFromList: (e) async {
+          //TODO: Maybe for later to provide a way to delete contacts
+          //directly from the list
 
-        // UPDATE CONTACT FROM LIST
-      }, updateContactFromList: (e) async {
-        // Get current state details before updating
-        final currentState = state;
-        if (currentState is! _Loaded) {
-          logger
-              .w("Attempted to update contact from non-loaded state.");
-          return;
-        } // Can only update from loaded state
+          // UPDATE CONTACT FROM LIST
+        },
+        updateContactFromList: (e) async {
+          // Get current state details before updating
+          final currentState = state;
+          if (currentState is! _Loaded) {
+            logger.w("Attempted to update contact from non-loaded state.");
+            return;
+          } // Can only update from loaded state
 
-        emit(
-            const ContactListState.loading()); // Indicate loading during update
+          emit(const ContactListState
+              .loading()); // Indicate loading during update
           try {
             // 1. Update in repository
             // Use e.contact as the input for the update
@@ -74,7 +76,8 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
 
             // 2. Reschedule notification
             await _notificationService.scheduleReminder(updatedContact);
-            logger.i('LOG: Updated contact ${updatedContact.id} and rescheduled notification.');
+            logger.i(
+                'LOG: Updated contact ${updatedContact.id} and rescheduled notification.');
 
             // 3. Update state lists immutably
             // Create a new list by mapping over the old one
@@ -85,15 +88,13 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
 
             // 4. Re-apply filter and search to the *updated* original list
             final newlyFilteredContacts = _applyFilterAndSearch(
-                 newOriginalContacts, // Use the updated originals
-                 currentState.searchTerm,
-                 currentState.currentFilter);
+                newOriginalContacts, // Use the updated originals
+                currentState.searchTerm,
+                currentState.currentFilter);
 
             // 5. Re-apply sort to the *newly filtered* list
-            final newlySortedContacts = _sortContacts(
-                 newlyFilteredContacts,
-                 currentState.sortField,
-                 currentState.ascending);
+            final newlySortedContacts = _sortContacts(newlyFilteredContacts,
+                currentState.sortField, currentState.ascending);
 
             // 6. Emit the new loaded state
             emit(currentState.copyWith(
@@ -101,70 +102,131 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
               displayedContacts: newlySortedContacts,
               // sortField, ascending, searchTerm, currentFilter remain the same
             ));
-             logger.i("Successfully updated contact ${updatedContact.id} in list state.");
-
-          } catch (err) { // Catch specific error
-             emit(ContactListState.error(err.toString()));
-             // Log the specific contact ID if available in the error or event context
-             logger.e("Error updating contact ID ${e.contact.id} from list: $err");
-             // Optionally emit the previous state back on error
-             // emit(currentState);
+            logger.i(
+                "Successfully updated contact ${updatedContact.id} in list state.");
+          } catch (err) {
+            // Catch specific error
+            emit(ContactListState.error(err.toString()));
+            // Log the specific contact ID if available in the error or event context
+            logger
+                .e("Error updating contact ID ${e.contact.id} from list: $err");
+            // Optionally emit the previous state back on error
+            // emit(currentState);
           }
 
-        // SORT CONTACTS
-      }, sortContacts: (e) async {
-        final currentState = state;
-        if (currentState is _Loaded) {
-          final sortedContacts = _sortContacts(
-              currentState
-                  .displayedContacts, // Sort the ALREADY filtered/searched list
-              e.sortField,
-              e.ascending);
-          emit(currentState.copyWith(
-            // Use copyWith to update only relevant fields
-            displayedContacts: sortedContacts,
-            sortField: e.sortField,
-            ascending: e.ascending,
-          ));
-        }
+          // SORT CONTACTS
+        },
+        sortContacts: (e) async {
+          final currentState = state;
+          if (currentState is _Loaded) {
+            final sortedContacts = _sortContacts(
+                currentState
+                    .displayedContacts, // Sort the ALREADY filtered/searched list
+                e.sortField,
+                e.ascending);
+            emit(currentState.copyWith(
+              // Use copyWith to update only relevant fields
+              displayedContacts: sortedContacts,
+              sortField: e.sortField,
+              ascending: e.ascending,
+            ));
+          }
 
-        // APPLY SEARCH
-      }, applySearch: (e) async {
-        final currentState = state;
-        if (currentState is _Loaded) {
-          final filteredContacts = _applyFilterAndSearch(
-              currentState.originalContacts,
-              e.searchTerm, // Use new search term
-              currentState.currentFilter); // Keep current filter
+          // APPLY SEARCH
+        },
+        applySearch: (e) async {
+          final currentState = state;
+          if (currentState is _Loaded) {
+            final filteredContacts = _applyFilterAndSearch(
+                currentState.originalContacts,
+                e.searchTerm, // Use new search term
+                currentState.currentFilter); // Keep current filter
 
-          final sortedContacts = _sortContacts(
-              filteredContacts, currentState.sortField, currentState.ascending);
+            final sortedContacts = _sortContacts(filteredContacts,
+                currentState.sortField, currentState.ascending);
 
-          emit(currentState.copyWith(
-            displayedContacts: sortedContacts,
-            searchTerm: e.searchTerm, // Update search term in state
-          ));
-        }
-        // APPLY FILTER
-      }, applyFilter: (e) async {
-        final currentState = state;
-        if (currentState is _Loaded) {
-          final filteredContacts = _applyFilterAndSearch(
-              currentState.originalContacts,
-              currentState.searchTerm, // Keep current search term
-              e.filter); // Use new filter
+            emit(currentState.copyWith(
+              displayedContacts: sortedContacts,
+              searchTerm: e.searchTerm, // Update search term in state
+            ));
+          }
+          // APPLY FILTER
+        },
+        applyFilter: (e) async {
+          final currentState = state;
+          if (currentState is _Loaded) {
+            final filteredContacts = _applyFilterAndSearch(
+                currentState.originalContacts,
+                currentState.searchTerm, // Keep current search term
+                e.filter); // Use new filter
 
-          final sortedContacts = _sortContacts(
-              filteredContacts, currentState.sortField, currentState.ascending);
+            final sortedContacts = _sortContacts(filteredContacts,
+                currentState.sortField, currentState.ascending);
 
-          emit(currentState.copyWith(
-            displayedContacts: sortedContacts,
-            currentFilter: e.filter, // Update filter in state
-          ));
-        }
-      }
-          //other event handlers if needed
-          );
+            emit(currentState.copyWith(
+              displayedContacts: sortedContacts,
+              currentFilter: e.filter, // Update filter in state
+            ));
+          }
+        },
+        deleteContacts: (e) async {
+          final currentState = state;
+          if (currentState is! _Loaded) {
+            logger.w("Attempted to delete contacts from non-loaded state.");
+            return; // Can only delete from a loaded state
+          }
+
+          emit(const ContactListState.loading()); // Show loading indicator
+          try {
+            // 1. Delete from repository
+            await _contactRepository.deleteMany(e.contactIds); // Use deleteMany
+
+            // 2. Cancel notifications for deleted contacts
+            for (final contactId in e.contactIds) {
+              await _notificationService.cancelNotification(contactId); //
+            }
+            logger.i(
+                'LOG: Deleted ${e.contactIds.length} contacts and cancelled notifications.');
+
+            // 3. Update state lists immutably
+            // Create a new list excluding the deleted contacts
+            final newOriginalContacts = currentState.originalContacts
+                .where((c) => !e.contactIds.contains(c.id))
+                .toList();
+
+            // Check if the list is now empty
+            if (newOriginalContacts.isEmpty) {
+              emit(const ContactListState.empty());
+            } else {
+              // 4. Re-apply filter and search to the *new* original list
+              final newlyFilteredContacts = _applyFilterAndSearch(
+                  newOriginalContacts,
+                  currentState.searchTerm,
+                  currentState.currentFilter);
+
+              // 5. Re-apply sort to the *newly filtered* list
+              final newlySortedContacts = _sortContacts(newlyFilteredContacts,
+                  currentState.sortField, currentState.ascending);
+
+              // 6. Emit the new loaded state
+              emit(currentState.copyWith(
+                originalContacts: newOriginalContacts,
+                displayedContacts: newlySortedContacts,
+                // Keep sortField, ascending, searchTerm, currentFilter
+              ));
+              logger.i(
+                  "Successfully removed ${e.contactIds.length} contacts from list state.");
+            }
+          } catch (err) {
+            emit(ContactListState.error(err.toString()));
+            logger.e("Error deleting contacts ${e.contactIds}: $err");
+            // Optionally re-emit the previous state on error
+            // emit(currentState);
+          }
+        },
+
+        //other event handlers if needed
+      );
     });
   }
 

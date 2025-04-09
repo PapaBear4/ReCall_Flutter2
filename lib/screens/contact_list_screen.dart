@@ -230,11 +230,13 @@ class _ContactListScreenState extends State<ContactListScreen> {
     if (!_selectionMode) {
       setState(() {
         _selectionMode = true;
-        _selectedContactIds.add(contact.id);
+        if (contact.id != null) {
+          _selectedContactIds.add(contact.id!);
+        }
       });
     } else {
       // If already in selection mode, toggle this contact's selection
-      _toggleContactSelection(contact.id);
+      _toggleContactSelection(contact.id!);
     }
   }
 
@@ -455,7 +457,8 @@ class _ContactListScreenState extends State<ContactListScreen> {
                 );
 
             setState(() {
-              _selectedContactIds.addAll(contacts.map((contact) => contact.id));
+              _selectedContactIds
+                  .addAll(contacts.map((contact) => contact.id!));
             });
           },
         ),
@@ -477,7 +480,7 @@ Widget _buildContactList(List<Contact> contactsToDisplay) {
     itemBuilder: (context, index) {
       final contact = contactsToDisplay[index];
       final bool isSelected =
-          _selectionMode && _selectedContactIds.contains(contact.id);
+          selectionMode && _selectedContactIds.contains(contact.id);
 
       return _selectionMode
           ? _buildSelectableContactItem(context, contact, isSelected)
