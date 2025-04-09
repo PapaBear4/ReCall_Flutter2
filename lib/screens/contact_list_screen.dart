@@ -465,52 +465,53 @@ class _ContactListScreenState extends State<ContactListScreen> {
       ],
     );
   }
-} // End of _ContactListScreenState
+  // End of _ContactListScreenState
 
 // --- Widget for building the list ---
 // Takes the list to display as parameter (now the filtered/searched list)
-Widget _buildContactList(List<Contact> contactsToDisplay) {
-  if (contactsToDisplay.isEmpty) {
-    return const Center(child: Text('No contacts match your search/filter.'));
+  Widget _buildContactList(List<Contact> contactsToDisplay) {
+    if (contactsToDisplay.isEmpty) {
+      return const Center(child: Text('No contacts match your search/filter.'));
+    }
+
+    // Access state variables from the parent class
+    return ListView.builder(
+      itemCount: contactsToDisplay.length,
+      itemBuilder: (context, index) {
+        final contact = contactsToDisplay[index];
+        final bool isSelected =
+            _selectionMode && _selectedContactIds.contains(contact.id);
+
+        return _selectionMode
+            ? _buildSelectableContactItem(context, contact, isSelected)
+            : ContactListItem(contact: contact);
+      },
+    );
   }
 
-  // Access state variables from the parent class
-  return ListView.builder(
-    itemCount: contactsToDisplay.length,
-    itemBuilder: (context, index) {
-      final contact = contactsToDisplay[index];
-      final bool isSelected =
-          selectionMode && _selectedContactIds.contains(contact.id);
-
-      return _selectionMode
-          ? _buildSelectableContactItem(context, contact, isSelected)
-          : ContactListItem(contact: contact);
-    },
-  );
-}
-
 // Build a selectable contact item for selection mode
-Widget _buildSelectableContactItem(
-    BuildContext context, Contact contact, bool isSelected) {
-  return ListTile(
-    leading: CircleAvatar(
-      backgroundColor: isSelected ? Colors.blue : Colors.grey.shade300,
-      child: isSelected
-          ? const Icon(Icons.check, color: Colors.white)
-          : Text(contact.firstName?.isNotEmpty == true
-              ? contact.firstName![0].toUpperCase()
-              : (contact.lastName?.isNotEmpty == true
-                  ? contact.lastName![0].toUpperCase()
-                  : '?')),
-    ),
-    title: Text('${contact.firstName ?? ''} ${contact.lastName ?? ''}',
-        style: TextStyle(
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
-    subtitle: Text(contact.phoneNumber ?? contact.emails?.firstOrNull ?? ''),
-    selected: isSelected,
-    tileColor: isSelected ? Colors.blue.withOpacity(0.1) : null,
-    onTap: () => _toggleContactSelection(contact.id),
-  );
+  Widget _buildSelectableContactItem(
+      BuildContext context, Contact contact, bool isSelected) {
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundColor: isSelected ? Colors.blue : Colors.grey.shade300,
+        child: isSelected
+            ? const Icon(Icons.check, color: Colors.white)
+            : Text(contact.firstName?.isNotEmpty == true
+                ? contact.firstName![0].toUpperCase()
+                : (contact.lastName?.isNotEmpty == true
+                    ? contact.lastName![0].toUpperCase()
+                    : '?')),
+      ),
+      title: Text('${contact.firstName ?? ''} ${contact.lastName ?? ''}',
+          style: TextStyle(
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+      subtitle: Text(contact.phoneNumber ?? contact.emails?.firstOrNull ?? ''),
+      selected: isSelected,
+      tileColor: isSelected ? Colors.blue.withOpacity(0.1) : null,
+      onTap: () => _toggleContactSelection(contact.id!),
+    );
+  }
 }
 
 // Function to navigate to scheduled notifications screen (no change needed)
