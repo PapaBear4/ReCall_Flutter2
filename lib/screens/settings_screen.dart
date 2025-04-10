@@ -1,4 +1,5 @@
 // lib/screens/settings_screen.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart'; // Use provider to read repository
 import 'package:recall/models/contact_frequency.dart';
@@ -17,7 +18,7 @@ import 'package:recall/services/notification_helper.dart';
 import 'package:recall/services/notification_service.dart';
 import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:recall/utils/backup_restore_utils.dart'; // <-- ADD THIS IMPORT
-
+import 'package:recall/utils/debug_utils.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -37,59 +38,68 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _loadSettings();
   }
 
-Future<void> _loadSettings() async {
+  Future<void> _loadSettings() async {
     if (!mounted) return;
-     setState(() { _isLoading = true; });
-     try {
-       final repository = context.read<UserSettingsRepository>();
-       List<UserSettings> settingsList = await repository.getAll();
-       UserSettings settings;
-       bool settingsWereUpdated = false; // Flag to track if we corrected data
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      final repository = context.read<UserSettingsRepository>();
+      List<UserSettings> settingsList = await repository.getAll();
+      UserSettings settings;
+      bool settingsWereUpdated = false; // Flag to track if we corrected data
 
-       if (settingsList.isEmpty) {
-         logger.d("No settings found, creating default.");
-         settings = UserSettings(id: 1); // Uses defaults from model constructor
-         await repository.add(settings);
-         settingsWereUpdated = true; // Technically created, counts as updated for consistency
-       } else {
-         settings = settingsList.first;
-         logger.d("Loaded settings: ID=${settings.id}, Freq='${settings.defaultFrequency}'");
+      if (settingsList.isEmpty) {
+        logger.d("No settings found, creating default.");
+        settings = UserSettings(id: 1); // Uses defaults from model constructor
+        await repository.add(settings);
+        settingsWereUpdated =
+            true; // Technically created, counts as updated for consistency
+      } else {
+        settings = settingsList.first;
+        logger.d(
+            "Loaded settings: ID=${settings.id}, Freq='${settings.defaultFrequency}'");
 
-         // --- Robust Validation ---
-         // Get all valid frequency string values
-         final validFrequencies = ContactFrequency.values.map((f) => f.value).toSet();
+        // --- Robust Validation ---
+        // Get all valid frequency string values
+        final validFrequencies =
+            ContactFrequency.values.map((f) => f.value).toSet();
 
-         // Check if the loaded frequency is NOT in the set of valid values
-         if (!validFrequencies.contains(settings.defaultFrequency)) {
-            logger.w("Loaded invalid defaultFrequency ('${settings.defaultFrequency}'). Resetting to default ('${ContactFrequency.never.value}').");
-            // Correct it to the 'never' default
-            settings = settings.copyWith(defaultFrequency: ContactFrequency.never.value);
-            // Save the corrected value back immediately
-            await repository.update(settings);
-            settingsWereUpdated = true;
-         }
-         // --- End Validation ---
-       }
+        // Check if the loaded frequency is NOT in the set of valid values
+        if (!validFrequencies.contains(settings.defaultFrequency)) {
+          logger.w(
+              "Loaded invalid defaultFrequency ('${settings.defaultFrequency}'). Resetting to default ('${ContactFrequency.never.value}').");
+          // Correct it to the 'never' default
+          settings =
+              settings.copyWith(defaultFrequency: ContactFrequency.never.value);
+          // Save the corrected value back immediately
+          await repository.update(settings);
+          settingsWereUpdated = true;
+        }
+        // --- End Validation ---
+      }
 
-       if (!mounted) return;
-       setState(() {
-         _userSettings = settings;
-         _isLoading = false;
-       });
+      if (!mounted) return;
+      setState(() {
+        _userSettings = settings;
+        _isLoading = false;
+      });
 
-       if (settingsWereUpdated) {
-          logger.d("Final userSettings state after load/update: $_userSettings");
-       }
-
-     } catch (e) {
-       logger.e("Error loading/updating settings: $e");
-        if (!mounted) return;
-       setState(() { _isLoading = false; });
-       ScaffoldMessenger.of(context).showSnackBar(
-         SnackBar(content: Text('Error loading settings: $e')),
-       );
-     }
+      if (settingsWereUpdated) {
+        logger.d("Final userSettings state after load/update: $_userSettings");
+      }
+    } catch (e) {
+      logger.e("Error loading/updating settings: $e");
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading settings: $e')),
+      );
+    }
   }
+
   Future<void> _pickNotificationTime() async {
     if (_userSettings == null) {
       return; // Don't show picker if settings haven't loaded
@@ -216,9 +226,9 @@ Future<void> _loadSettings() async {
       // Check if data preparation failed or widget unmounted
       if (jsonString == null || !mounted) {
         if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
-             const SnackBar(content: Text('Failed to prepare backup data.')),
-           );
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to prepare backup data.')),
+          );
         }
         setState(() => _isBusy = false); // Ensure busy state is reset
         return; // Stop if preparation failed
@@ -237,7 +247,8 @@ Future<void> _loadSettings() async {
                 child: const Text('Save Backup to Device'),
                 onPressed: () {
                   Navigator.of(context).pop();
-                  _saveBackupFile(jsonString!); // Call save function (jsonString is guaranteed non-null here)
+                  _saveBackupFile(
+                      jsonString!); // Call save function (jsonString is guaranteed non-null here)
                 },
               ),
               TextButton(
@@ -260,10 +271,10 @@ Future<void> _loadSettings() async {
     } catch (e) {
       // Catch any unexpected errors during repo access or prepare call
       if (mounted) {
-         logger.e("Error during backup preparation/dialog show: $e");
-         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('An error occurred: $e')),
-         );
+        logger.e("Error during backup preparation/dialog show: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('An error occurred: $e')),
+        );
       }
     } finally {
       // Ensure busy state is always reset, even if errors occur
@@ -305,52 +316,61 @@ Future<void> _loadSettings() async {
       String jsonData = await file.readAsString();
 
       // Parse and validate using the updated function
-      final parsedData = parseAndMigrateBackupData(jsonData); // Use function from utils
+      final parsedData =
+          parseAndMigrateBackupData(jsonData); // Use function from utils
       final UserSettings? settingsFromBackup = parsedData.settings;
       final List<Contact>? contactsFromBackup = parsedData.contacts;
 
       // Check if parsing failed (contacts will be null)
       if (contactsFromBackup == null) {
         if (mounted) {
-           // Error message likely already shown by the parsing function if using logger/snackbar there
-           // Or show a generic one here if parse function just returns nulls on error
-           ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Failed to parse backup file.')),
-           );
-           setState(() => _isBusy = false);
+          // Error message likely already shown by the parsing function if using logger/snackbar there
+          // Or show a generic one here if parse function just returns nulls on error
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to parse backup file.')),
+          );
+          setState(() => _isBusy = false);
         }
         return;
       }
-            // Show confirmation dialog before overwriting
-       final bool confirmRestore = await showDialog<bool>(
-          context: context,
-          barrierDismissible: false, // User must tap button
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text('Confirm Restore'),
-              content: const Text('Restoring will replace ALL current contacts and settings with the data from the backup file. This cannot be undone. Are you sure?'),
-              actions: <Widget>[
-                TextButton(
-                  child: const Text('Cancel'),
-                  onPressed: () { Navigator.of(context).pop(false); },
-                ),
-                TextButton(
-                  child: const Text('Restore', style: TextStyle(color: Colors.red)),
-                  onPressed: () { Navigator.of(context).pop(true); },
-                ),
-              ],
-            );
-          },
-       ) ?? false; // Default to false if dialog dismissed
+      // Show confirmation dialog before overwriting
+      final bool confirmRestore = await showDialog<bool>(
+            context: context,
+            barrierDismissible: false, // User must tap button
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Confirm Restore'),
+                content: const Text(
+                    'Restoring will replace ALL current contacts and settings with the data from the backup file. This cannot be undone. Are you sure?'),
+                actions: <Widget>[
+                  TextButton(
+                    child: const Text('Cancel'),
+                    onPressed: () {
+                      Navigator.of(context).pop(false);
+                    },
+                  ),
+                  TextButton(
+                    child: const Text('Restore',
+                        style: TextStyle(color: Colors.red)),
+                    onPressed: () {
+                      Navigator.of(context).pop(true);
+                    },
+                  ),
+                ],
+              );
+            },
+          ) ??
+          false; // Default to false if dialog dismissed
 
-       if (!confirmRestore || !mounted) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar( const SnackBar(content: Text('Restore cancelled.')), );
-            setState(() => _isBusy = false);
-          }
-          return;
-       }
-
+      if (!confirmRestore || !mounted) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Restore cancelled.')),
+          );
+          setState(() => _isBusy = false);
+        }
+        return;
+      }
 
       // --- Overwrite Data and Notifications ---
       // Update Settings if present in import file (Overwrite strategy)
@@ -412,10 +432,11 @@ Future<void> _loadSettings() async {
 
   @override
   Widget build(BuildContext context) {
-        if (!_isLoading && _userSettings != null) {
-      logger.d("SettingsScreen build: Using defaultFrequency '${_userSettings!.defaultFrequency}' for Dropdown.");
-       // Optional: Log available values too if needed for comparison
-       // settingsLogger.d("Available item values: ${ContactFrequency.values.map((f) => f.value).toList()}");
+    if (!_isLoading && _userSettings != null) {
+      logger.d(
+          "SettingsScreen build: Using defaultFrequency '${_userSettings!.defaultFrequency}' for Dropdown.");
+      // Optional: Log available values too if needed for comparison
+      // settingsLogger.d("Available item values: ${ContactFrequency.values.map((f) => f.value).toList()}");
     }
 
     return Scaffold(
@@ -453,6 +474,7 @@ Future<void> _loadSettings() async {
                           trailing: const Icon(
                               Icons.edit), // Maybe PopupMenuButton is better?
                         ),
+                        // DEFAULT CONTACT FREQ
                         Padding(
                           // Add padding for dropdown
                           padding: const EdgeInsets.symmetric(
@@ -502,20 +524,32 @@ Future<void> _loadSettings() async {
                           ),
                         ),
                         const Divider(),
-
-                        // --- EXPORT TILE ---
+                        // --- IMPORT TILE ---
+                        ListTile(
+                          title: const Text('Import Contacts'),
+                          subtitle:
+                              const Text('Import from device address book'),
+                          trailing:
+                              const Icon(Icons.download_for_offline_outlined),
+                          onTap: () {
+                            // Navigate to the new selection screen
+                            Navigator.pushNamed(context, '/importContacts');
+                          },
+                        ),
+                        const Divider(),
+                        // --- BACKUP TILE ---
                         ListTile(
                           title: const Text('Backup Data'),
-                          subtitle: const Text('Save contacts & settings to a JSON file'),
+                          subtitle: const Text(
+                              'Save contacts & settings to a JSON file'),
                           trailing: const Icon(Icons.file_upload),
                           enabled: !_isBusy, // Disable while exporting
                           onTap: _isBusy
                               ? null
                               : _showBackupOptions, // Call options dialog
                         ),
-                        // --- END EXPORT TILE ---
                         const Divider(),
-                        // --- IMPORT TILE ---
+                        // --- RESTORE TILE ---
                         ListTile(
                           title: const Text('Restore Data'),
                           subtitle: const Text(
@@ -526,7 +560,6 @@ Future<void> _loadSettings() async {
                               ? null
                               : _startRestoreProcess, // Call import function
                         ),
-                        // --- END IMPORT TILE ---
                         const Divider(),
                         // --- ABOUT TILE ---
                         ListTile(
@@ -539,15 +572,57 @@ Future<void> _loadSettings() async {
                           },
                         ),
                         const Divider(),
-                        // --- END ABOUT TILE ---
                         const Divider(),
+                        // --- DEBUG SECTION ---
+                        if (kDebugMode) ...[
+                          const SizedBox(height: 20),
+                          Text('Debug Options',
+                              style: Theme.of(context).textTheme.titleMedium),
+                          const Divider(),
+                          ListTile(
+                            title: const Text('Add Sample Device Contacts'),
+                            subtitle: const Text(
+                                'Creates ~10 contacts in device list for testing import.'),
+                            leading: const Icon(Icons.bug_report,
+                                color: Colors.orange),
+                            enabled: !_isBusy,
+                            // Updated onTap to call the utility function
+                            onTap: _isBusy
+                                ? null
+                                : () async {
+                                    if (!mounted) return;
+                                    setState(() => _isBusy = true);
+                                    ScaffoldMessenger.of(context)
+                                        .hideCurrentSnackBar(); // Hide previous messages
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content:
+                                              Text('Adding debug contacts...')),
+                                    );
+
+                                    // Call the static utility function
+                                    final String resultMessage =
+                                        await DebugUtils
+                                            .addSampleDeviceContacts();
+
+                                    if (!mounted) return;
+                                    setState(() => _isBusy = false);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(resultMessage)),
+                                    );
+                                  },
+                          ),
+                          const Divider(),
+                        ]
+                        // --- END DEBUG SECTION ---
                       ],
                     ),
                     // Loading Indicator Overlay
                     if (_isBusy) // Use combined busy indicator
                       Container(
                         // Replace withOpacity with withAlpha
-                        color: Colors.black.withAlpha((255 * 0.3).round()), // Calculates to 77
+                        color: Colors.black
+                            .withAlpha((255 * 0.3).round()), // Calculates to 77
                         child: const Center(child: CircularProgressIndicator()),
                       ),
                   ],

@@ -24,6 +24,7 @@ mixin _$Contact {
   int? get id => throw _privateConstructorUsedError;
   String get firstName => throw _privateConstructorUsedError;
   String get lastName => throw _privateConstructorUsedError;
+  String? get nickname => throw _privateConstructorUsedError;
   String get frequency =>
       throw _privateConstructorUsedError; // Store the String representation
   @Property(type: PropertyType.date)
@@ -43,7 +44,8 @@ mixin _$Contact {
   String? get instagramHandle => throw _privateConstructorUsedError;
   String? get facebookUrl => throw _privateConstructorUsedError;
   String? get snapchatHandle => throw _privateConstructorUsedError;
-  String? get tikTokHandle => throw _privateConstructorUsedError;
+  String? get xHandle => throw _privateConstructorUsedError;
+  String? get linkedInUrl => throw _privateConstructorUsedError;
 
   /// Serializes this Contact to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -63,6 +65,7 @@ abstract class $ContactCopyWith<$Res> {
       {@Id(assignable: true) int? id,
       String firstName,
       String lastName,
+      String? nickname,
       String frequency,
       @Property(type: PropertyType.date) DateTime? birthday,
       @Property(type: PropertyType.date) DateTime? lastContacted,
@@ -74,7 +77,8 @@ abstract class $ContactCopyWith<$Res> {
       String? instagramHandle,
       String? facebookUrl,
       String? snapchatHandle,
-      String? tikTokHandle});
+      String? xHandle,
+      String? linkedInUrl});
 }
 
 /// @nodoc
@@ -95,6 +99,7 @@ class _$ContactCopyWithImpl<$Res, $Val extends Contact>
     Object? id = freezed,
     Object? firstName = null,
     Object? lastName = null,
+    Object? nickname = freezed,
     Object? frequency = null,
     Object? birthday = freezed,
     Object? lastContacted = freezed,
@@ -106,7 +111,8 @@ class _$ContactCopyWithImpl<$Res, $Val extends Contact>
     Object? instagramHandle = freezed,
     Object? facebookUrl = freezed,
     Object? snapchatHandle = freezed,
-    Object? tikTokHandle = freezed,
+    Object? xHandle = freezed,
+    Object? linkedInUrl = freezed,
   }) {
     return _then(_value.copyWith(
       id: freezed == id
@@ -121,6 +127,10 @@ class _$ContactCopyWithImpl<$Res, $Val extends Contact>
           ? _value.lastName
           : lastName // ignore: cast_nullable_to_non_nullable
               as String,
+      nickname: freezed == nickname
+          ? _value.nickname
+          : nickname // ignore: cast_nullable_to_non_nullable
+              as String?,
       frequency: null == frequency
           ? _value.frequency
           : frequency // ignore: cast_nullable_to_non_nullable
@@ -165,9 +175,13 @@ class _$ContactCopyWithImpl<$Res, $Val extends Contact>
           ? _value.snapchatHandle
           : snapchatHandle // ignore: cast_nullable_to_non_nullable
               as String?,
-      tikTokHandle: freezed == tikTokHandle
-          ? _value.tikTokHandle
-          : tikTokHandle // ignore: cast_nullable_to_non_nullable
+      xHandle: freezed == xHandle
+          ? _value.xHandle
+          : xHandle // ignore: cast_nullable_to_non_nullable
+              as String?,
+      linkedInUrl: freezed == linkedInUrl
+          ? _value.linkedInUrl
+          : linkedInUrl // ignore: cast_nullable_to_non_nullable
               as String?,
     ) as $Val);
   }
@@ -184,6 +198,7 @@ abstract class _$$ContactImplCopyWith<$Res> implements $ContactCopyWith<$Res> {
       {@Id(assignable: true) int? id,
       String firstName,
       String lastName,
+      String? nickname,
       String frequency,
       @Property(type: PropertyType.date) DateTime? birthday,
       @Property(type: PropertyType.date) DateTime? lastContacted,
@@ -195,7 +210,8 @@ abstract class _$$ContactImplCopyWith<$Res> implements $ContactCopyWith<$Res> {
       String? instagramHandle,
       String? facebookUrl,
       String? snapchatHandle,
-      String? tikTokHandle});
+      String? xHandle,
+      String? linkedInUrl});
 }
 
 /// @nodoc
@@ -214,6 +230,7 @@ class __$$ContactImplCopyWithImpl<$Res>
     Object? id = freezed,
     Object? firstName = null,
     Object? lastName = null,
+    Object? nickname = freezed,
     Object? frequency = null,
     Object? birthday = freezed,
     Object? lastContacted = freezed,
@@ -225,7 +242,8 @@ class __$$ContactImplCopyWithImpl<$Res>
     Object? instagramHandle = freezed,
     Object? facebookUrl = freezed,
     Object? snapchatHandle = freezed,
-    Object? tikTokHandle = freezed,
+    Object? xHandle = freezed,
+    Object? linkedInUrl = freezed,
   }) {
     return _then(_$ContactImpl(
       id: freezed == id
@@ -240,6 +258,10 @@ class __$$ContactImplCopyWithImpl<$Res>
           ? _value.lastName
           : lastName // ignore: cast_nullable_to_non_nullable
               as String,
+      nickname: freezed == nickname
+          ? _value.nickname
+          : nickname // ignore: cast_nullable_to_non_nullable
+              as String?,
       frequency: null == frequency
           ? _value.frequency
           : frequency // ignore: cast_nullable_to_non_nullable
@@ -284,9 +306,13 @@ class __$$ContactImplCopyWithImpl<$Res>
           ? _value.snapchatHandle
           : snapchatHandle // ignore: cast_nullable_to_non_nullable
               as String?,
-      tikTokHandle: freezed == tikTokHandle
-          ? _value.tikTokHandle
-          : tikTokHandle // ignore: cast_nullable_to_non_nullable
+      xHandle: freezed == xHandle
+          ? _value.xHandle
+          : xHandle // ignore: cast_nullable_to_non_nullable
+              as String?,
+      linkedInUrl: freezed == linkedInUrl
+          ? _value.linkedInUrl
+          : linkedInUrl // ignore: cast_nullable_to_non_nullable
               as String?,
     ));
   }
@@ -300,6 +326,7 @@ class _$ContactImpl extends _Contact with DiagnosticableTreeMixin {
       {@Id(assignable: true) this.id,
       required this.firstName,
       required this.lastName,
+      this.nickname,
       this.frequency = ContactFrequency.defaultValue,
       @Property(type: PropertyType.date) this.birthday,
       @Property(type: PropertyType.date) this.lastContacted,
@@ -311,7 +338,8 @@ class _$ContactImpl extends _Contact with DiagnosticableTreeMixin {
       this.instagramHandle,
       this.facebookUrl,
       this.snapchatHandle,
-      this.tikTokHandle})
+      this.xHandle,
+      this.linkedInUrl})
       : _emails = emails,
         super._();
 
@@ -325,6 +353,8 @@ class _$ContactImpl extends _Contact with DiagnosticableTreeMixin {
   final String firstName;
   @override
   final String lastName;
+  @override
+  final String? nickname;
   @override
   @JsonKey()
   final String frequency;
@@ -366,11 +396,13 @@ class _$ContactImpl extends _Contact with DiagnosticableTreeMixin {
   @override
   final String? snapchatHandle;
   @override
-  final String? tikTokHandle;
+  final String? xHandle;
+  @override
+  final String? linkedInUrl;
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'Contact(id: $id, firstName: $firstName, lastName: $lastName, frequency: $frequency, birthday: $birthday, lastContacted: $lastContacted, anniversary: $anniversary, phoneNumber: $phoneNumber, emails: $emails, notes: $notes, youtubeUrl: $youtubeUrl, instagramHandle: $instagramHandle, facebookUrl: $facebookUrl, snapchatHandle: $snapchatHandle, tikTokHandle: $tikTokHandle)';
+    return 'Contact(id: $id, firstName: $firstName, lastName: $lastName, nickname: $nickname, frequency: $frequency, birthday: $birthday, lastContacted: $lastContacted, anniversary: $anniversary, phoneNumber: $phoneNumber, emails: $emails, notes: $notes, youtubeUrl: $youtubeUrl, instagramHandle: $instagramHandle, facebookUrl: $facebookUrl, snapchatHandle: $snapchatHandle, xHandle: $xHandle, linkedInUrl: $linkedInUrl)';
   }
 
   @override
@@ -381,6 +413,7 @@ class _$ContactImpl extends _Contact with DiagnosticableTreeMixin {
       ..add(DiagnosticsProperty('id', id))
       ..add(DiagnosticsProperty('firstName', firstName))
       ..add(DiagnosticsProperty('lastName', lastName))
+      ..add(DiagnosticsProperty('nickname', nickname))
       ..add(DiagnosticsProperty('frequency', frequency))
       ..add(DiagnosticsProperty('birthday', birthday))
       ..add(DiagnosticsProperty('lastContacted', lastContacted))
@@ -392,7 +425,8 @@ class _$ContactImpl extends _Contact with DiagnosticableTreeMixin {
       ..add(DiagnosticsProperty('instagramHandle', instagramHandle))
       ..add(DiagnosticsProperty('facebookUrl', facebookUrl))
       ..add(DiagnosticsProperty('snapchatHandle', snapchatHandle))
-      ..add(DiagnosticsProperty('tikTokHandle', tikTokHandle));
+      ..add(DiagnosticsProperty('xHandle', xHandle))
+      ..add(DiagnosticsProperty('linkedInUrl', linkedInUrl));
   }
 
   @override
@@ -405,6 +439,8 @@ class _$ContactImpl extends _Contact with DiagnosticableTreeMixin {
                 other.firstName == firstName) &&
             (identical(other.lastName, lastName) ||
                 other.lastName == lastName) &&
+            (identical(other.nickname, nickname) ||
+                other.nickname == nickname) &&
             (identical(other.frequency, frequency) ||
                 other.frequency == frequency) &&
             (identical(other.birthday, birthday) ||
@@ -425,8 +461,9 @@ class _$ContactImpl extends _Contact with DiagnosticableTreeMixin {
                 other.facebookUrl == facebookUrl) &&
             (identical(other.snapchatHandle, snapchatHandle) ||
                 other.snapchatHandle == snapchatHandle) &&
-            (identical(other.tikTokHandle, tikTokHandle) ||
-                other.tikTokHandle == tikTokHandle));
+            (identical(other.xHandle, xHandle) || other.xHandle == xHandle) &&
+            (identical(other.linkedInUrl, linkedInUrl) ||
+                other.linkedInUrl == linkedInUrl));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -436,6 +473,7 @@ class _$ContactImpl extends _Contact with DiagnosticableTreeMixin {
       id,
       firstName,
       lastName,
+      nickname,
       frequency,
       birthday,
       lastContacted,
@@ -447,7 +485,8 @@ class _$ContactImpl extends _Contact with DiagnosticableTreeMixin {
       instagramHandle,
       facebookUrl,
       snapchatHandle,
-      tikTokHandle);
+      xHandle,
+      linkedInUrl);
 
   /// Create a copy of Contact
   /// with the given fields replaced by the non-null parameter values.
@@ -470,6 +509,7 @@ abstract class _Contact extends Contact {
       {@Id(assignable: true) final int? id,
       required final String firstName,
       required final String lastName,
+      final String? nickname,
       final String frequency,
       @Property(type: PropertyType.date) final DateTime? birthday,
       @Property(type: PropertyType.date) final DateTime? lastContacted,
@@ -481,7 +521,8 @@ abstract class _Contact extends Contact {
       final String? instagramHandle,
       final String? facebookUrl,
       final String? snapchatHandle,
-      final String? tikTokHandle}) = _$ContactImpl;
+      final String? xHandle,
+      final String? linkedInUrl}) = _$ContactImpl;
   _Contact._() : super._();
 
   factory _Contact.fromJson(Map<String, dynamic> json) = _$ContactImpl.fromJson;
@@ -493,6 +534,8 @@ abstract class _Contact extends Contact {
   String get firstName;
   @override
   String get lastName;
+  @override
+  String? get nickname;
   @override
   String get frequency; // Store the String representation
   @override
@@ -520,7 +563,9 @@ abstract class _Contact extends Contact {
   @override
   String? get snapchatHandle;
   @override
-  String? get tikTokHandle;
+  String? get xHandle;
+  @override
+  String? get linkedInUrl;
 
   /// Create a copy of Contact
   /// with the given fields replaced by the non-null parameter values.

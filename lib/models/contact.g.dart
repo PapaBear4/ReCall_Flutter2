@@ -11,6 +11,7 @@ _$ContactImpl _$$ContactImplFromJson(Map<String, dynamic> json) =>
       id: (json['id'] as num?)?.toInt(),
       firstName: json['firstName'] as String,
       lastName: json['lastName'] as String,
+      nickname: json['nickname'] as String?,
       frequency: json['frequency'] as String? ?? ContactFrequency.defaultValue,
       birthday: json['birthday'] == null
           ? null
@@ -29,7 +30,8 @@ _$ContactImpl _$$ContactImplFromJson(Map<String, dynamic> json) =>
       instagramHandle: json['instagramHandle'] as String?,
       facebookUrl: json['facebookUrl'] as String?,
       snapchatHandle: json['snapchatHandle'] as String?,
-      tikTokHandle: json['tikTokHandle'] as String?,
+      xHandle: json['xHandle'] as String?,
+      linkedInUrl: json['linkedInUrl'] as String?,
     );
 
 Map<String, dynamic> _$$ContactImplToJson(_$ContactImpl instance) =>
@@ -37,6 +39,7 @@ Map<String, dynamic> _$$ContactImplToJson(_$ContactImpl instance) =>
       'id': instance.id,
       'firstName': instance.firstName,
       'lastName': instance.lastName,
+      'nickname': instance.nickname,
       'frequency': instance.frequency,
       'birthday': instance.birthday?.toIso8601String(),
       'lastContacted': instance.lastContacted?.toIso8601String(),
@@ -48,5 +51,6 @@ Map<String, dynamic> _$$ContactImplToJson(_$ContactImpl instance) =>
       'instagramHandle': instance.instagramHandle,
       'facebookUrl': instance.facebookUrl,
       'snapchatHandle': instance.snapchatHandle,
-      'tikTokHandle': instance.tikTokHandle,
+      'xHandle': instance.xHandle,
+      'linkedInUrl': instance.linkedInUrl,
     };
