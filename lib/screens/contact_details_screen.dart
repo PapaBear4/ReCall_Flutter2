@@ -508,7 +508,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                     icon: const Icon(Icons.message),
                     tooltip: 'Send Message',
                     onPressed: () => _launchUniversalLink(
-                        Uri.parse('sms:$unmaskedPhoneNumber')),
+                        Uri.parse('sms:${_sanitizePhoneNumber(unmaskedPhoneNumber)}')),
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,
                   ),
@@ -516,7 +516,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                     icon: const Icon(Icons.call),
                     tooltip: 'Call',
                     onPressed: () => _launchUniversalLink(
-                        Uri.parse('tel:$unmaskedPhoneNumber')),
+                        Uri.parse('tel:${_sanitizePhoneNumber(unmaskedPhoneNumber)}')),
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,
                   ),
@@ -1204,12 +1204,21 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     }
   }
 
+  // Add this helper method to clean phone numbers
+  String _sanitizePhoneNumber(String phoneNumber) {
+    // Remove all non-digit characters
+    return phoneNumber.replaceAll(RegExp(r'[^\d]'), '');
+  }
+
   void _showPhoneActions(String unmaskedPhoneNumber) {
     if (unmaskedPhoneNumber.isEmpty) return;
 
+    // Clean the phone number to remove any formatting characters
+    String cleanPhoneNumber = _sanitizePhoneNumber(unmaskedPhoneNumber);
+    
     // Use Uri.parse for proper scheme formatting
-    final Uri telUri = Uri.parse('tel:$unmaskedPhoneNumber');
-    final Uri smsUri = Uri.parse('sms:$unmaskedPhoneNumber');
+    final Uri telUri = Uri.parse('tel:$cleanPhoneNumber');
+    final Uri smsUri = Uri.parse('sms:$cleanPhoneNumber');
 
     showModalBottomSheet(
       context: context,
