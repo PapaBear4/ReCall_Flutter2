@@ -326,51 +326,58 @@ class _ContactListScreenState extends State<ContactListScreen> {
     return AppBar(
       title: const Text('Contacts'),
       actions: [
-        // Sort/Filter Menu
-        PopupMenuButton<ListAction>(
-          icon: const Icon(Icons.sort), // Or Icons.filter_list
-          tooltip: "Sort & Filter",
-          onSelected: _handleListAction, // Call helper function
-          itemBuilder: (BuildContext context) => <PopupMenuEntry<ListAction>>[
-            const PopupMenuItem<ListAction>(
-              value: ListAction.sortByDueDateAsc,
-              child: Text('Sort by Due Date (Soonest)'),
-            ),
-            const PopupMenuItem<ListAction>(
-              value: ListAction.sortByDueDateDesc,
-              child: Text('Sort by Due Date (Latest)'),
-            ),
-            const PopupMenuItem<ListAction>(
-              value: ListAction.sortByLastNameAsc,
-              child: Text('Sort by Last Name (A-Z)'),
-            ),
-            const PopupMenuItem<ListAction>(
-              value: ListAction.sortByLastNameDesc,
-              child: Text('Sort by Last Name (Z-A)'),
-            ),
-            const PopupMenuItem<ListAction>(
-              value: ListAction.sortByLastContactedAsc,
-              child: Text('Sort by Last Contacted (Oldest)'),
-            ),
-            const PopupMenuItem<ListAction>(
-              value: ListAction.sortByLastContactedDesc,
-              child: Text('Sort by Last Contacted (Newest)'),
-            ),
-            const PopupMenuDivider(), // Separator
-            const PopupMenuItem<ListAction>(
-              value: ListAction.filterOverdue,
-              child: Text('Filter: Overdue'),
-            ),
-            const PopupMenuItem<ListAction>(
-              value: ListAction.filterDueSoon,
-              child: Text('Filter: Due Soon'),
-            ),
-            const PopupMenuItem<ListAction>(
-              value: ListAction.filterClear,
-              child: Text('Clear Filter'),
-            ),
-          ],
-        ),
+      // Sort Menu
+      PopupMenuButton<ListAction>(
+        icon: const Icon(Icons.sort),
+        tooltip: "Sort",
+        onSelected: _handleListAction,
+        itemBuilder: (BuildContext context) => <PopupMenuEntry<ListAction>>[
+          const PopupMenuItem<ListAction>(
+            value: ListAction.sortByDueDateAsc,
+            child: Text('Sort by Due Date (Soonest)'),
+          ),
+          const PopupMenuItem<ListAction>(
+            value: ListAction.sortByDueDateDesc,
+            child: Text('Sort by Due Date (Latest)'),
+          ),
+          const PopupMenuItem<ListAction>(
+            value: ListAction.sortByLastNameAsc,
+            child: Text('Sort by Last Name (A-Z)'),
+          ),
+          const PopupMenuItem<ListAction>(
+            value: ListAction.sortByLastNameDesc,
+            child: Text('Sort by Last Name (Z-A)'),
+          ),
+          const PopupMenuItem<ListAction>(
+            value: ListAction.sortByLastContactedAsc,
+            child: Text('Sort by Last Contacted (Oldest)'),
+          ),
+          const PopupMenuItem<ListAction>(
+            value: ListAction.sortByLastContactedDesc,
+            child: Text('Sort by Last Contacted (Newest)'),
+          ),
+        ],
+      ),
+      // Filter Menu - New separate button
+      PopupMenuButton<ListAction>(
+        icon: const Icon(Icons.filter_alt),
+        tooltip: "Filter",
+        onSelected: _handleListAction,
+        itemBuilder: (BuildContext context) => <PopupMenuEntry<ListAction>>[
+          const PopupMenuItem<ListAction>(
+            value: ListAction.filterOverdue,
+            child: Text('Filter: Overdue'),
+          ),
+          const PopupMenuItem<ListAction>(
+            value: ListAction.filterDueSoon,
+            child: Text('Filter: Due Soon'),
+          ),
+          const PopupMenuItem<ListAction>(
+            value: ListAction.filterClear,
+            child: Text('Clear Filter'),
+          ),
+        ],
+      ),
         // HELP BUTTON
         IconButton(
           icon: const Icon(Icons.help_outline),
