@@ -508,7 +508,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                     icon: const Icon(Icons.message),
                     tooltip: 'Send Message',
                     onPressed: () => _launchUniversalLink(
-                        Uri(scheme: 'sms', path: unmaskedPhoneNumber)),
+                        Uri.parse('sms:$unmaskedPhoneNumber')),
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,
                   ),
@@ -516,7 +516,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                     icon: const Icon(Icons.call),
                     tooltip: 'Call',
                     onPressed: () => _launchUniversalLink(
-                        Uri(scheme: 'tel', path: unmaskedPhoneNumber)),
+                        Uri.parse('tel:$unmaskedPhoneNumber')),
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,
                   ),
@@ -1207,13 +1207,13 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   void _showPhoneActions(String unmaskedPhoneNumber) {
     if (unmaskedPhoneNumber.isEmpty) return;
 
-    final Uri telUri = Uri(scheme: 'tel', path: unmaskedPhoneNumber);
-    final Uri smsUri = Uri(scheme: 'sms', path: unmaskedPhoneNumber);
+    // Use Uri.parse for proper scheme formatting
+    final Uri telUri = Uri.parse('tel:$unmaskedPhoneNumber');
+    final Uri smsUri = Uri.parse('sms:$unmaskedPhoneNumber');
 
     showModalBottomSheet(
       context: context,
       builder: (context) => SafeArea(
-        // Use SafeArea for bottom sheets
         child: Wrap(
           children: <Widget>[
             ListTile(
@@ -1245,7 +1245,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
   void _launchEmail(String emailAddress) {
     if (emailAddress.isEmpty) return;
-    final Uri emailUri = Uri(scheme: 'mailto', path: emailAddress);
+    // Use Uri.parse for proper mailto formatting
+    final Uri emailUri = Uri.parse('mailto:$emailAddress');
     _launchUniversalLink(emailUri);
   }
 
