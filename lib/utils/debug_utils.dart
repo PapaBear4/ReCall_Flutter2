@@ -159,8 +159,7 @@ class DebugUtils {
               first: firstName,
               last: lastName,
               nickname: random.nextDouble() < 0.2
-                  ? (faker.person.prefix() ??
-                      '') // Provide a default empty string
+                  ? (faker.person.prefix()) // Provide a default empty string
                   : '', // Default to empty string if no nickname
             ),
             phones: [

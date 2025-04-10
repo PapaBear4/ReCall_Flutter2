@@ -1,6 +1,7 @@
 // lib/screens/contact_list_screen.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:recall/blocs/contact_details/contact_details_bloc.dart';
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
@@ -433,22 +434,24 @@ class _ContactListScreenState extends State<ContactListScreen> {
     return AppBar(
       backgroundColor: Colors
           .blueGrey.shade800, // Different color to indicate selection mode
+      elevation: 0, // Remove the shadow effect
+      scrolledUnderElevation: 0, // Explicitly remove elevation when scrolled
       title: Text('${_selectedContactIds.length} selected'),
       leading: IconButton(
-        icon: const Icon(Icons.close),
+        icon: const Icon(Icons.close, color: Colors.white),
         onPressed: _toggleSelectionMode, // Exit selection mode
       ),
       actions: [
         // Delete button
         IconButton(
-          icon: const Icon(Icons.delete),
+          icon: const Icon(Icons.delete, color: Colors.white),
           tooltip: 'Delete Selected',
           onPressed:
               _selectedContactIds.isEmpty ? null : _deleteSelectedContacts,
         ),
         // Select all button
         IconButton(
-          icon: const Icon(Icons.select_all),
+          icon: const Icon(Icons.select_all, color: Colors.white),
           tooltip: 'Select All',
           onPressed: () {
             final contacts = context.read<ContactListBloc>().state.maybeMap(
@@ -479,46 +482,53 @@ class _ContactListScreenState extends State<ContactListScreen> {
       itemCount: contactsToDisplay.length,
       itemBuilder: (context, index) {
         final contact = contactsToDisplay[index];
+        // Check if the contact ID exists and is not null before checking selection
         final bool isSelected =
-            _selectionMode && _selectedContactIds.contains(contact.id);
+            contact.id != null && _selectedContactIds.contains(contact.id!);
 
-        return _selectionMode
-            ? _buildSelectableContactItem(context, contact, isSelected)
-            : ContactListItem(contact: contact);
+        return ContactListItem(
+            contact: contact,
+            isSelected: isSelected, // Pass selection state
+            // ----- Pass Callbacks -----
+            onTap: () {
+              if (contact.id == null) {
+                logger.e("Error: Tapped contact with null ID.");
+                return; // Should not happen if data is valid
+              }
+              if (_selectionMode) {
+                // If in selection mode, toggle selection
+                _toggleContactSelection(contact.id!);
+              } else {
+                // If not in selection mode, navigate to details
+                context.read<ContactDetailsBloc>().add(
+                    ContactDetailsEvent.loadContact(contactId: contact.id!));
+                Navigator.pushNamed(
+                  context,
+                  '/contactDetails',
+                  arguments: contact.id!,
+                );
+              }
+            },
+            onLongPress: () {
+              // Always trigger long press logic regardless of current mode
+              if (contact.id != null) {
+                _onContactLongPress(contact);
+              } else {
+                logger.e("Error: Long-pressed contact with null ID.");
+              }
+            }
+            // ----- End Callbacks -----
+            );
       },
     );
   }
 
-// Build a selectable contact item for selection mode
-  Widget _buildSelectableContactItem(
-      BuildContext context, Contact contact, bool isSelected) {
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: isSelected ? Colors.blue : Colors.grey.shade300,
-        child: isSelected
-            ? const Icon(Icons.check, color: Colors.white)
-            : Text(contact.firstName?.isNotEmpty == true
-                ? contact.firstName![0].toUpperCase()
-                : (contact.lastName?.isNotEmpty == true
-                    ? contact.lastName![0].toUpperCase()
-                    : '?')),
-      ),
-      title: Text('${contact.firstName ?? ''} ${contact.lastName ?? ''}',
-          style: TextStyle(
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
-      subtitle: Text(contact.phoneNumber ?? contact.emails?.firstOrNull ?? ''),
-      selected: isSelected,
-      tileColor: isSelected ? Colors.blue.withOpacity(0.1) : null,
-      onTap: () => _toggleContactSelection(contact.id!),
-    );
-  }
-}
-
 // Function to navigate to scheduled notifications screen (no change needed)
-void _viewScheduledNotifications(BuildContext context) {
-  Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (context) => const ScheduledNotificationsScreen()));
-  logger.i('LOG: Show notifications button pushed');
+  void _viewScheduledNotifications(BuildContext context) {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => const ScheduledNotificationsScreen()));
+    logger.i('LOG: Show notifications button pushed');
+  }
 }

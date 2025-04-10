@@ -103,7 +103,6 @@ class ContactRepository implements Repository<Contact> {
     return addedContacts;
   }
 
-  @override
   Future<void> deleteMany(List<int> ids) async {
     try {
       await _source.deleteMany(ids); // Call the data source's deleteMany
