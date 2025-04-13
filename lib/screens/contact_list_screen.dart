@@ -10,6 +10,7 @@ import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:recall/widgets/contact_list_item.dart';
 import 'package:recall/screens/help_screen.dart'; // Import HelpScreen
 import 'package:recall/main.dart' as main_app;
+import 'package:flutter/foundation.dart'; // For kDebugMode
 
 // Enum to represent the combined Sort/Filter action
 enum ListAction {
@@ -243,6 +244,7 @@ class _ContactListScreenState extends State<ContactListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: _buildDrawer(context), // Add this line to include the drawer
       appBar: _selectionMode
           ? _buildSelectionAppBar(context)
           : _buildNormalAppBar(context),
@@ -291,12 +293,13 @@ class _ContactListScreenState extends State<ContactListScreen> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  FloatingActionButton.small(
-                    heroTag: "btn1",
-                    tooltip: "View Scheduled Notifications",
-                    onPressed: () => _viewScheduledNotifications(context),
-                    child: const Icon(Icons.notifications),
-                  ),
+                  if (kDebugMode)
+                    FloatingActionButton.small(
+                      heroTag: "btn1",
+                      tooltip: "View Scheduled Notifications",
+                      onPressed: () => _viewScheduledNotifications(context),
+                      child: const Icon(Icons.notifications),
+                    ),
                   const SizedBox(width: 8),
                   FloatingActionButton.small(
                     heroTag: "btn2",
@@ -326,77 +329,57 @@ class _ContactListScreenState extends State<ContactListScreen> {
     return AppBar(
       title: const Text('Contacts'),
       actions: [
-      // Sort Menu
-      PopupMenuButton<ListAction>(
-        icon: const Icon(Icons.sort),
-        tooltip: "Sort",
-        onSelected: _handleListAction,
-        itemBuilder: (BuildContext context) => <PopupMenuEntry<ListAction>>[
-          const PopupMenuItem<ListAction>(
-            value: ListAction.sortByDueDateAsc,
-            child: Text('Sort by Due Date (Soonest)'),
-          ),
-          const PopupMenuItem<ListAction>(
-            value: ListAction.sortByDueDateDesc,
-            child: Text('Sort by Due Date (Latest)'),
-          ),
-          const PopupMenuItem<ListAction>(
-            value: ListAction.sortByLastNameAsc,
-            child: Text('Sort by Last Name (A-Z)'),
-          ),
-          const PopupMenuItem<ListAction>(
-            value: ListAction.sortByLastNameDesc,
-            child: Text('Sort by Last Name (Z-A)'),
-          ),
-          const PopupMenuItem<ListAction>(
-            value: ListAction.sortByLastContactedAsc,
-            child: Text('Sort by Last Contacted (Oldest)'),
-          ),
-          const PopupMenuItem<ListAction>(
-            value: ListAction.sortByLastContactedDesc,
-            child: Text('Sort by Last Contacted (Newest)'),
-          ),
-        ],
-      ),
-      // Filter Menu - New separate button
-      PopupMenuButton<ListAction>(
-        icon: const Icon(Icons.filter_alt),
-        tooltip: "Filter",
-        onSelected: _handleListAction,
-        itemBuilder: (BuildContext context) => <PopupMenuEntry<ListAction>>[
-          const PopupMenuItem<ListAction>(
-            value: ListAction.filterOverdue,
-            child: Text('Filter: Overdue'),
-          ),
-          const PopupMenuItem<ListAction>(
-            value: ListAction.filterDueSoon,
-            child: Text('Filter: Due Soon'),
-          ),
-          const PopupMenuItem<ListAction>(
-            value: ListAction.filterClear,
-            child: Text('Clear Filter'),
-          ),
-        ],
-      ),
-        // HELP BUTTON
-        IconButton(
-          icon: const Icon(Icons.help_outline),
-          tooltip: 'Help',
-          onPressed: () {
-            // Navigate using MaterialPageRoute and pass argument
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const HelpScreen(
-                      initialSection: HelpSection.list), // Pass list section
-                ));
-          },
+        // Sort Menu
+        PopupMenuButton<ListAction>(
+          icon: const Icon(Icons.sort),
+          tooltip: "Sort",
+          onSelected: _handleListAction,
+          itemBuilder: (BuildContext context) => <PopupMenuEntry<ListAction>>[
+            const PopupMenuItem<ListAction>(
+              value: ListAction.sortByDueDateAsc,
+              child: Text('Sort by Due Date (Soonest)'),
+            ),
+            const PopupMenuItem<ListAction>(
+              value: ListAction.sortByDueDateDesc,
+              child: Text('Sort by Due Date (Latest)'),
+            ),
+            const PopupMenuItem<ListAction>(
+              value: ListAction.sortByLastNameAsc,
+              child: Text('Sort by Last Name (A-Z)'),
+            ),
+            const PopupMenuItem<ListAction>(
+              value: ListAction.sortByLastNameDesc,
+              child: Text('Sort by Last Name (Z-A)'),
+            ),
+            const PopupMenuItem<ListAction>(
+              value: ListAction.sortByLastContactedAsc,
+              child: Text('Sort by Last Contacted (Oldest)'),
+            ),
+            const PopupMenuItem<ListAction>(
+              value: ListAction.sortByLastContactedDesc,
+              child: Text('Sort by Last Contacted (Newest)'),
+            ),
+          ],
         ),
-        // SETTINGS BUTTON
-        IconButton(
-          icon: const Icon(Icons.settings),
-          tooltip: 'Settings',
-          onPressed: () => Navigator.pushNamed(context, '/settings'),
+        // Filter Menu - New separate button
+        PopupMenuButton<ListAction>(
+          icon: const Icon(Icons.filter_alt),
+          tooltip: "Filter",
+          onSelected: _handleListAction,
+          itemBuilder: (BuildContext context) => <PopupMenuEntry<ListAction>>[
+            const PopupMenuItem<ListAction>(
+              value: ListAction.filterOverdue,
+              child: Text('Filter: Overdue'),
+            ),
+            const PopupMenuItem<ListAction>(
+              value: ListAction.filterDueSoon,
+              child: Text('Filter: Due Soon'),
+            ),
+            const PopupMenuItem<ListAction>(
+              value: ListAction.filterClear,
+              child: Text('Clear Filter'),
+            ),
+          ],
         ),
       ],
       // Add Search Bar to AppBar bottom
@@ -537,4 +520,81 @@ class _ContactListScreenState extends State<ContactListScreen> {
             builder: (context) => const ScheduledNotificationsScreen()));
     logger.i('LOG: Show notifications button pushed');
   }
+}
+
+Widget _buildDrawer(BuildContext context) {
+  return Drawer(
+    child: ListView(
+      padding: EdgeInsets.zero,
+      children: <Widget>[
+        DrawerHeader(
+          decoration: BoxDecoration(
+            color: Theme.of(context).primaryColor,
+          ),
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text(
+                'ReCall',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Keep in touch with people who matter',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+        ListTile(
+          leading: const Icon(Icons.contact_phone),
+          title: const Text('Contacts'),
+          onTap: () {
+            Navigator.pop(context); // Close the drawer
+            // Already on contacts page, so no navigation needed
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.settings),
+          title: const Text('Settings'),
+          onTap: () {
+            Navigator.pop(context); // Close the drawer first
+            Navigator.pushNamed(context, '/settings');
+          },
+        ),
+        // Add About screen link
+        ListTile(
+          leading: const Icon(Icons.info_outline),
+          title: const Text('About'),
+          onTap: () {
+            Navigator.pop(context); // Close the drawer first
+            Navigator.pushNamed(context, '/about');
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.help_outline),
+          title: const Text('Help'),
+          onTap: () {
+            Navigator.pop(context); // Close the drawer first
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const HelpScreen(
+                  initialSection: HelpSection.list,
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    ),
+  );
 }

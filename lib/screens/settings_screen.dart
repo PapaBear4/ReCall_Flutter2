@@ -560,17 +560,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               : _startRestoreProcess, // Call import function
                         ),
                         const Divider(),
-                        // --- ABOUT TILE ---
-                        ListTile(
-                          title: const Text('About'),
-                          subtitle:
-                              const Text('App description and contact info'),
-                          trailing: const Icon(Icons.info_outline),
-                          onTap: () {
-                            Navigator.pushNamed(context, '/about');
-                          },
-                        ),
-                        const Divider(),
                         const Divider(),
                         // --- DEBUG SECTION ---
                         if (kDebugMode) ...[

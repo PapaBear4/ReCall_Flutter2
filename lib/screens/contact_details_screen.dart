@@ -507,16 +507,16 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   IconButton(
                     icon: const Icon(Icons.message),
                     tooltip: 'Send Message',
-                    onPressed: () => _launchUniversalLink(
-                        Uri.parse('sms:${_sanitizePhoneNumber(unmaskedPhoneNumber)}')),
+                    onPressed: () => _launchUniversalLink(Uri.parse(
+                        'sms:${_sanitizePhoneNumber(unmaskedPhoneNumber)}')),
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,
                   ),
                   IconButton(
                     icon: const Icon(Icons.call),
                     tooltip: 'Call',
-                    onPressed: () => _launchUniversalLink(
-                        Uri.parse('tel:${_sanitizePhoneNumber(unmaskedPhoneNumber)}')),
+                    onPressed: () => _launchUniversalLink(Uri.parse(
+                        'tel:${_sanitizePhoneNumber(unmaskedPhoneNumber)}')),
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,
                   ),
@@ -585,11 +585,11 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         buildEditSectionHeader('Emails'),
         _buildEmailListEditor(), // Keep existing complex editor logic here
 
-        buildEditSectionHeader('Social Media'),
-        _buildEditSocialMedia(), // Delegate
-
         buildEditSectionHeader('Notes'),
         _buildEditNotes(), // Delegate
+
+        buildEditSectionHeader('Social Media'),
+        _buildEditSocialMedia(), // Delegate
 
         const SizedBox(height: 20), // Spacer at bottom
       ],
@@ -1124,7 +1124,9 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          /* ... existing dialog ... */
+          title: const Text('Delete Contact'),
+          content: Text(
+              'Are you sure you want to delete ${_localContact.firstName} ${_localContact.lastName}?\n\nThis action cannot be undone.'),
           actions: <Widget>[
             TextButton(
                 onPressed: () => Navigator.of(dialogContext).pop(),
@@ -1215,7 +1217,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
     // Clean the phone number to remove any formatting characters
     String cleanPhoneNumber = _sanitizePhoneNumber(unmaskedPhoneNumber);
-    
+
     // Use Uri.parse for proper scheme formatting
     final Uri telUri = Uri.parse('tel:$cleanPhoneNumber');
     final Uri smsUri = Uri.parse('sms:$cleanPhoneNumber');
