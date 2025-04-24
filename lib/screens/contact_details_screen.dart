@@ -10,7 +10,6 @@ import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:recall/models/contact_frequency.dart';
 import 'package:recall/repositories/usersettings_repository.dart';
 import 'package:recall/services/notification_helper.dart';
-import 'package:recall/screens/help_screen.dart';
 import '../utils/last_contacted_utils.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -209,19 +208,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               icon: const Icon(Icons.arrow_back),
               onPressed: () => _handleBackNavigation()),
           actions: [
-            IconButton(
-              // HELP
-              icon: const Icon(Icons.help_outline),
-              tooltip: 'Help',
-              onPressed: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          const HelpScreen(initialSection: HelpSection.details),
-                    ));
-              },
-            ),
             IconButton(
               // DELETE
               icon: const Icon(Icons.delete),

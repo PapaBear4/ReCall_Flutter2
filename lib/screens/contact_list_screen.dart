@@ -8,7 +8,6 @@ import 'package:recall/models/contact.dart';
 import 'package:recall/screens/scheduled_notifications_screen.dart';
 import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:recall/widgets/contact_list_item.dart';
-import 'package:recall/screens/help_screen.dart'; // Import HelpScreen
 import 'package:recall/main.dart' as main_app;
 import 'package:flutter/foundation.dart'; // For kDebugMode
 
@@ -577,21 +576,6 @@ Widget _buildDrawer(BuildContext context) {
           onTap: () {
             Navigator.pop(context); // Close the drawer first
             Navigator.pushNamed(context, '/about');
-          },
-        ),
-        ListTile(
-          leading: const Icon(Icons.help_outline),
-          title: const Text('Help'),
-          onTap: () {
-            Navigator.pop(context); // Close the drawer first
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const HelpScreen(
-                  initialSection: HelpSection.list,
-                ),
-              ),
-            );
           },
         ),
       ],
