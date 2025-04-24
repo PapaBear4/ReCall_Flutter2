@@ -348,6 +348,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // SECTION 1: Basic Info + Phone + Email
         Padding(
           padding: const EdgeInsets.only(bottom: 8.0),
           child: Text(
@@ -369,29 +370,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         else
           const SizedBox(height: 24.0),
 
-        _buildDisplayRow(
-            Icons.cake_outlined,
-            'Birthday:',
-            _localContact.birthday == null
-                ? 'Not set'
-                : DateFormat.yMd().format(_localContact.birthday!)),
-        _buildDisplayRow(
-            Icons.celebration_outlined,
-            'Anniversary:',
-            _localContact.anniversary == null
-                ? 'Not set'
-                : DateFormat.yMd().format(_localContact.anniversary!)),
-        _buildDisplayRow(Icons.access_time, 'Last Contacted:',
-            formatLastContacted(_localContact.lastContacted)),
-        _buildDisplayRow(Icons.repeat, 'Frequency:', _localContact.frequency),
-        _buildDisplayRow(
-            Icons.next_plan_outlined,
-            'Next Due:',
-            calculateNextDueDateDisplay(
-                _localContact.lastContacted, _localContact.frequency)),
-
-        const Divider(height: 24.0),
-
+        // Phone (moved up)
         _buildActionableDisplayRow(
           icon: Icons.phone_outlined,
           label: 'Phone:',
@@ -420,6 +399,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                 ]
               : [],
         ),
+        
+        // Email (moved up)
         Padding(
             padding: const EdgeInsets.symmetric(vertical: 6.0),
             child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -432,8 +413,37 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               Expanded(child: _buildEmailDisplayList(_localContact.emails))
             ])),
 
+        const Divider(height: 24.0),
+
+        // SECTION 2: Dates + Notes
+        _buildDisplayRow(
+            Icons.cake_outlined,
+            'Birthday:',
+            _localContact.birthday == null
+                ? 'Not set'
+                : DateFormat.yMd().format(_localContact.birthday!)),
+        _buildDisplayRow(
+            Icons.celebration_outlined,
+            'Anniversary:',
+            _localContact.anniversary == null
+                ? 'Not set'
+                : DateFormat.yMd().format(_localContact.anniversary!)),
+        
+        // Notes
         _buildDisplayRow(
             Icons.notes_outlined, 'Notes:', _localContact.notes ?? 'Not set'),
+
+        const Divider(height: 24.0),
+
+        // SECTION 3: Contact Frequency Details
+        _buildDisplayRow(Icons.access_time, 'Last Contacted:',
+            formatLastContacted(_localContact.lastContacted)),
+        _buildDisplayRow(Icons.repeat, 'Frequency:', _localContact.frequency),
+        _buildDisplayRow(
+            Icons.next_plan_outlined,
+            'Next Due:',
+            calculateNextDueDateDisplay(
+                _localContact.lastContacted, _localContact.frequency)),
 
         const SizedBox(height: 16.0),
       ],
@@ -451,17 +461,24 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        buildEditSectionHeader('Basic Info'),
+        // SECTION 1: Basic Info + Phone + Email
+        buildEditSectionHeader('Contact Information'),
         _buildEditBasicInfo(),
-
-        buildEditSectionHeader('Contact Schedule'),
-        _buildEditSchedule(),
-
+        
+        // Email moved up under basic info
         buildEditSectionHeader('Emails'),
         _buildEmailListEditor(),
 
+        // SECTION 2: Dates + Notes
+        buildEditSectionHeader('Important Dates'),
+        _buildEditDates(),
+        
         buildEditSectionHeader('Notes'),
         _buildEditNotes(),
+        
+        // SECTION 3: Contact Frequency
+        buildEditSectionHeader('Contact Schedule'),
+        _buildEditSchedule(),
 
         const SizedBox(height: 20),
       ],
@@ -536,6 +553,27 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     );
   }
 
+  Widget _buildEditDates() {
+    return Column(
+      children: [
+        _buildDatePickerButton(
+            'Birthday',
+            _localContact.birthday,
+            (picked) => setState(() {
+                  _localContact = _localContact.copyWith(birthday: picked);
+                  _hasUnsavedChanges = true;
+                })),
+        _buildDatePickerButton(
+            'Anniversary',
+            _localContact.anniversary,
+            (picked) => setState(() {
+                  _localContact = _localContact.copyWith(anniversary: picked);
+                  _hasUnsavedChanges = true;
+                })),
+      ],
+    );
+  }
+
   Widget _buildEditSchedule() {
     return Column(
       children: [
@@ -559,20 +597,25 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               labelText: 'Frequency', border: OutlineInputBorder()),
         ),
         const SizedBox(height: 16.0),
-        _buildDatePickerButton(
-            'Birthday',
-            _localContact.birthday,
-            (picked) => setState(() {
-                  _localContact = _localContact.copyWith(birthday: picked);
-                  _hasUnsavedChanges = true;
-                })),
-        _buildDatePickerButton(
-            'Anniversary',
-            _localContact.anniversary,
-            (picked) => setState(() {
-                  _localContact = _localContact.copyWith(anniversary: picked);
-                  _hasUnsavedChanges = true;
-                })),
+        // Last Contacted display (read-only)
+        Container(
+          padding: const EdgeInsets.all(12.0),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade400),
+            borderRadius: BorderRadius.circular(4.0),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Last Contacted', style: TextStyle(fontSize: 12, color: Colors.grey)),
+              const SizedBox(height: 4),
+              Text(
+                formatLastContacted(_localContact.lastContacted),
+                style: const TextStyle(fontSize: 16),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
