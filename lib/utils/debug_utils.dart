@@ -6,7 +6,6 @@ import 'package:recall/utils/logger.dart'; // Your logger
 import 'package:faker/faker.dart'; // Import faker for realistic data
 import 'package:recall/repositories/contact_repository.dart';
 import 'package:recall/repositories/usersettings_repository.dart';
-import 'package:recall/services/notification_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 
@@ -272,8 +271,6 @@ class DebugUtils {
 
       return "App database cleared ($contactCount contacts deleted, settings cleared, notifications cancelled)."; // Use the fetched count
     } catch (e) {
-      logger.e("Error clearing app database: $e");
-      return "Error clearing app database: $e";
       logger.e("Error clearing app database: $e");
       return "Error clearing app database: $e";
     }
