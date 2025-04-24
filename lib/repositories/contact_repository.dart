@@ -119,6 +119,18 @@ class ContactRepository implements Repository<Contact> {
     }
   }
 
+  /// Returns the total number of contacts in the data source.
+  Future<int> getContactsCount() async {
+    try {
+      // Delegates the call to the active data source's count method.
+      return await _source.count();
+    } catch (e) {
+      logger.e("Error getting contact count from repository: $e");
+      // Return 0 or rethrow, depending on how you want to handle errors.
+      return 0;
+    }
+  }
+
   @override
   Future<void> deleteAll() async {
     await _source.deleteAll();

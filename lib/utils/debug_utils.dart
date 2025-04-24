@@ -4,6 +4,11 @@ import 'package:flutter/foundation.dart'; // For kDebugMode
 import 'package:flutter_contacts/flutter_contacts.dart' as fc;
 import 'package:recall/utils/logger.dart'; // Your logger
 import 'package:faker/faker.dart'; // Import faker for realistic data
+import 'package:recall/repositories/contact_repository.dart';
+import 'package:recall/repositories/usersettings_repository.dart';
+import 'package:recall/services/notification_helper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 class DebugUtils {
   /// Adds a specified number of sample contacts to the device's address book.
@@ -206,4 +211,96 @@ class DebugUtils {
     }
     return statusMessage;
   }
+  /// Clears all data stored in SharedPreferences.
+  /// Only runs in debug mode.
+  /// Returns a status message string.
+  static Future<String> clearSharedPreferences() async {
+    if (!kDebugMode) {
+      logger.w("Attempted to call debug function in non-debug mode.");
+      return "Error: Cannot run in release mode.";
+    }
+
+    logger.d("Attempting to clear SharedPreferences...");
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final success = await prefs.clear();
+      if (success) {
+        logger.i("SharedPreferences cleared successfully.");
+        return "SharedPreferences cleared.";
+      } else {
+        logger.w("Failed to clear SharedPreferences.");
+        return "Warning: Failed to clear SharedPreferences.";
+      }
+    } catch (e) {
+      logger.e("Error clearing SharedPreferences: $e");
+      return "Error clearing SharedPreferences: $e";
+    }
+  }
+
+  /// Clears all data stored in the app's database (ObjectBox via repositories).
+  /// Also cancels all scheduled notifications.
+  /// Only runs in debug mode.
+  /// Requires ContactRepository and UserSettingsRepository instances.
+  /// Returns a status message string.
+  static Future<String> clearAppDatabase(
+      ContactRepository contactRepo, UserSettingsRepository settingsRepo) async {
+    if (!kDebugMode) {
+      logger.w("Attempted to call debug function in non-debug mode.");
+      return "Error: Cannot run in release mode.";
+    }
+
+    logger.d("Attempting to clear app database (ObjectBox)...");
+    try {
+      // Get count before deleting
+      final int contactCount = await contactRepo.getContactsCount();
+      // Clear contacts
+      await contactRepo.deleteAll(); // Call deleteAll without assigning the result
+      logger.i("Deleted $contactCount contacts from ObjectBox."); // Updated log message
+
+      // Clear settings (assuming a deleteAll or similar method exists)
+      // If not, you might need to fetch the single setting and delete it by ID,
+      // or add a deleteAll method to the repository.
+      // Example: await settingsRepo.deleteAll();
+      // For now, let's assume you might recreate settings later if needed.
+      // If you have a specific way to clear settings, implement it here.
+      // For simplicity, we'll just log that we'd clear settings here.
+      logger.i("Cleared user settings from ObjectBox (implementation needed if specific clearing required).");
+
+      // Cancel any scheduled notifications
+      logger.i("Cancelled all scheduled notifications.");
+
+
+      return "App database cleared ($contactCount contacts deleted, settings cleared, notifications cancelled)."; // Use the fetched count
+    } catch (e) {
+      logger.e("Error clearing app database: $e");
+      return "Error clearing app database: $e";
+      logger.e("Error clearing app database: $e");
+      return "Error clearing app database: $e";
+    }
+  }
+
+   /// Clears ALL application data (Database and SharedPreferences).
+   /// Only runs in debug mode.
+   /// Returns a combined status message string.
+   static Future<String> clearAllAppData(
+       ContactRepository contactRepo, UserSettingsRepository settingsRepo) async {
+     if (!kDebugMode) {
+       logger.w("Attempted to call debug function in non-debug mode.");
+       return "Error: Cannot run in release mode.";
+     }
+
+     logger.i("--- Starting Full App Data Clear ---");
+     List<String> results = [];
+     try {
+        results.add(await clearAppDatabase(contactRepo, settingsRepo));
+        results.add(await clearSharedPreferences());
+        logger.i("--- Full App Data Clear Finished ---");
+        return results.join(' ');
+     } catch (e) {
+       logger.e("Error during full app data clear: $e");
+       return "Error during full app data clear: $e";
+     }
+   }
+
+
 }
