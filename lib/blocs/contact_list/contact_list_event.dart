@@ -25,6 +25,10 @@ sealed class ContactListEvent with _$ContactListEvent {
   // No ClearFilter event needed if applying 'none' filter achieves the same
   const factory ContactListEvent.deleteContacts(
       {required List<int> contactIds}) = _DeleteContacts;
+        const factory ContactListEvent.markContactsAsContacted({
+    required List<int> contactIds,
+  }) = _MarkContactsAsContacted;
+
 }
 
 //define possible filters

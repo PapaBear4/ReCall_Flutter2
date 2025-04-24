@@ -224,7 +224,57 @@ class _ContactListScreenState extends State<ContactListScreen> {
     }
   }
 
-  // Handle long press on a contact
+  // --- NEW: Handler for Marking Selected as Contacted ---
+  void _markSelectedAsContacted(BuildContext context) async {
+    // Optional: Confirmation Dialog
+    final bool confirmMark = await showDialog<bool>(
+          context: context,
+          builder: (BuildContext dialogContext) {
+            return AlertDialog(
+              title: const Text('Mark as Contacted'),
+              content: Text(
+                  'Mark ${_selectedContactIds.length} selected contacts as contacted today?'),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                ),
+                TextButton(
+                  child: const Text('Mark Contacted'),
+                  onPressed: () => Navigator.of(dialogContext).pop(true),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false; // Default to false if dialog dismissed
+
+    if (!confirmMark || !mounted)
+      return; // Exit if not confirmed or widget unmounted
+
+    // Dispatch event to the BLoC
+    context.read<ContactListBloc>().add(
+        ContactListEvent.markContactsAsContacted(
+            contactIds: _selectedContactIds.toList()));
+
+    // Exit selection mode after dispatching
+    setState(() {
+      _selectionMode = false;
+      _selectedContactIds.clear();
+    });
+
+    // Optional: Show confirmation SnackBar
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content:
+            Text('${_selectedContactIds.length} contacts marked as contacted.'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+  // --- END NEW ---
+
+// Handle long press on a contact
   void _onContactLongPress(Contact contact) {
     // Start selection mode if not already in it
     if (!_selectionMode) {
@@ -325,6 +375,11 @@ class _ContactListScreenState extends State<ContactListScreen> {
 
   // Build normal app bar
   PreferredSizeWidget _buildNormalAppBar(BuildContext context) {
+    final Color debugContainerColor =
+        Colors.orange.shade100; // Example: Light Orange
+    final Color debugIconColor =
+        Colors.deepOrange.shade700; // Example: Darker Orange
+
     return AppBar(
       title: const Text('Contacts'),
       actions: [
@@ -360,60 +415,66 @@ class _ContactListScreenState extends State<ContactListScreen> {
             ),
           ],
         ),
-        // Filter Menu - New separate button
-        PopupMenuButton<ListAction>(
-          icon: const Icon(Icons.filter_alt),
-          tooltip: "Filter",
-          onSelected: _handleListAction,
-          itemBuilder: (BuildContext context) => <PopupMenuEntry<ListAction>>[
-            const PopupMenuItem<ListAction>(
-              value: ListAction.filterOverdue,
-              child: Text('Filter: Overdue'),
-            ),
-            const PopupMenuItem<ListAction>(
-              value: ListAction.filterDueSoon,
-              child: Text('Filter: Due Soon'),
-            ),
-            const PopupMenuItem<ListAction>(
-              value: ListAction.filterClear,
-              child: Text('Clear Filter'),
-            ),
-          ],
-        ),
+        // FILTER Menu - Debug only
+        if (kDebugMode)
+          PopupMenuButton<ListAction>(
+            icon: Icon(Icons.filter_alt, color: debugIconColor),
+            tooltip: "Filter (DEBUG)",
+            onSelected: _handleListAction,
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<ListAction>>[
+              const PopupMenuItem<ListAction>(
+                value: ListAction.filterOverdue,
+                child: Text('Filter: Overdue'),
+              ),
+              const PopupMenuItem<ListAction>(
+                value: ListAction.filterDueSoon,
+                child: Text('Filter: Due Soon'),
+              ),
+              const PopupMenuItem<ListAction>(
+                value: ListAction.filterClear,
+                child: Text('Clear Filter'),
+              ),
+            ],
+          ),
       ],
       // Add Search Bar to AppBar bottom
-      bottom: PreferredSize(
-        preferredSize:
-            const Size.fromHeight(kToolbarHeight), // Standard toolbar height
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          child: TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              hintText: 'Search contacts...',
-              prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(30.0),
-                borderSide: BorderSide.none, // Hide border line
+      bottom: kDebugMode
+          ? PreferredSize(
+              preferredSize: const Size.fromHeight(kToolbarHeight),
+              child: Container(
+                // --- Change Container Background Color ---
+                color: debugContainerColor,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search contacts (DEBUG)...',
+                    prefixIcon: const Icon(
+                        Icons.search), // Keep default color or change too
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30.0),
+                      borderSide: BorderSide.none,
+                    ),
+                    filled: true,
+                    // Adjust fill color for contrast with new background
+                    fillColor: Colors.white.withAlpha(
+                        (255 * 0.85).round()), // Calculate alpha from opacity
+                    contentPadding:
+                        const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                    suffixIcon: IconButton(
+                      icon: const Icon(
+                          Icons.clear), // Keep default color or change too
+                      tooltip: "Clear Search",
+                      onPressed: () {
+                        _searchController.clear();
+                      },
+                    ),
+                  ),
+                ),
               ),
-              filled: true, // Fill background
-              fillColor: Colors
-                  .white, // Or Theme.of(context).inputDecorationTheme.fillColor
-              contentPadding: const EdgeInsets.symmetric(
-                  vertical: 0, horizontal: 16), // Adjust padding
-              // Add clear button
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.clear),
-                tooltip: "Clear Search",
-                onPressed: () {
-                  _searchController
-                      .clear(); // Clears text and triggers listener
-                },
-              ),
-            ),
-          ),
-        ),
-      ),
+            )
+          : null,
     );
   }
 
@@ -430,7 +491,17 @@ class _ContactListScreenState extends State<ContactListScreen> {
         onPressed: _toggleSelectionMode, // Exit selection mode
       ),
       actions: [
-        // Delete button
+        // --- Mark as Contacted Button ---
+        IconButton(
+          icon: const Icon(Icons.check_circle_outline, color: Colors.white),
+          tooltip: 'Mark as Contacted',
+          // Disable if no contacts are selected
+          onPressed: _selectedContactIds.isEmpty
+              ? null
+              : () => _markSelectedAsContacted(context), // Call new handler
+        ),
+        // --- END Mark as Contacted Button ---
+// Delete button
         IconButton(
           icon: const Icon(Icons.delete, color: Colors.white),
           tooltip: 'Delete Selected',

@@ -224,6 +224,82 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
             // emit(currentState);
           }
         },
+        markContactsAsContacted: (e) async {
+          // Use 'e' for the event object
+          final currentState = state;
+          if (currentState is! _Loaded) {
+            logger.w(
+                "Attempted to mark contacts as contacted from non-loaded state.");
+            return; // Can only perform this from a loaded state
+          }
+
+          // Optionally emit loading state if it takes time
+          // emit(const ContactListState.loading());
+
+          logger.d(
+              "BLoC: Handling MarkContactsAsContacted for IDs: ${e.contactIds}");
+          try {
+            final now = DateTime.now();
+            List<Contact> updatedOriginals =
+                List.from(currentState.originalContacts); // Copy original list
+
+            for (final id in e.contactIds) {
+              final contactIndex = updatedOriginals
+                  .indexWhere((c) => c.id == id); // Find index in original list
+              if (contactIndex != -1) {
+                final originalContact = updatedOriginals[contactIndex];
+                // Create updated contact with new last contacted date
+                final updatedContact =
+                    originalContact.copyWith(lastContacted: now);
+
+                // Update in repository
+                await _contactRepository.update(updatedContact);
+
+                // Update the contact in our copied list
+                updatedOriginals[contactIndex] = updatedContact;
+
+                // Reschedule notification for the updated contact
+                await _notificationService.scheduleReminder(updatedContact);
+              } else {
+                logger.w(
+                    "BLoC: Could not find contact with ID $id in original list to mark as contacted.");
+              }
+            }
+
+            // Check if the list is now empty (unlikely for this operation, but good practice)
+            if (updatedOriginals.isEmpty) {
+              emit(const ContactListState.empty());
+            } else {
+              // Re-apply filter and search to the *updated* original list
+              final newlyFilteredContacts = _applyFilterAndSearch(
+                  updatedOriginals,
+                  currentState.searchTerm,
+                  currentState.currentFilter);
+
+              // Re-apply sort to the *newly filtered* list
+              final newlySortedContacts = _sortContacts(newlyFilteredContacts,
+                  currentState.sortField, currentState.ascending);
+
+              // Emit the new loaded state with updated originals and displayed contacts
+              emit(currentState.copyWith(
+                originalContacts:
+                    updatedOriginals, // Emit the updated original list
+                displayedContacts: newlySortedContacts,
+                // Keep sortField, ascending, searchTerm, currentFilter
+              ));
+              logger.i(
+                  "BLoC: Successfully marked ${e.contactIds.length} contacts as contacted in state.");
+            }
+          } catch (err, stackTrace) {
+            // Catch error and stackTrace
+            logger.e('BLoC: Error marking contacts as contacted',
+                error: err, stackTrace: stackTrace);
+            // Optionally emit an error state or re-emit the previous state
+            emit(ContactListState.error(err.toString()));
+            // Or re-emit the state before the operation started
+            // emit(currentState);
+          }
+        },
 
         //other event handlers if needed
       );
