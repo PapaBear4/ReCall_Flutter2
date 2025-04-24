@@ -3,11 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:recall/blocs/contact_details/contact_details_bloc.dart';
+import 'package:recall/blocs/contact_details/contact_details_state.dart';
+import 'package:recall/blocs/contact_details/contact_details_event.dart';
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
+import 'package:recall/blocs/contact_list/contact_list_event.dart';
 import 'package:recall/models/contact.dart';
 import 'package:intl/intl.dart';
 import 'package:recall/utils/logger.dart'; // Adjust path if needed
-import 'package:recall/models/contact_frequency.dart';
+import 'package:recall/models/contact_enums.dart';
 import 'package:recall/repositories/usersettings_repository.dart';
 import 'package:recall/services/notification_helper.dart';
 import '../utils/last_contacted_utils.dart';
@@ -87,9 +90,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final contactId = ModalRoute.of(context)!.settings.arguments as int?;
       if (contactId != null && contactId != 0) {
-        context
-            .read<ContactDetailsBloc>()
-            .add(ContactDetailsEvent.loadContact(contactId: contactId));
+        context.read<ContactDetailsBloc>().add(LoadContact(contactId: contactId));
       } else {
         // --- Logic for NEW contact ---
         // Fetch default frequency first
@@ -111,9 +112,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         if (!mounted) return;
 
         // Dispatch an event to prepare the BLoC for a new contact
-        context.read<ContactDetailsBloc>().add(
-            ContactDetailsEvent.prepareNewContact(
-                defaultFrequency: fetchedDefaultFrequency));
+        context.read<ContactDetailsBloc>().add(PrepareNewContact(defaultFrequency: fetchedDefaultFrequency));
         // --- End NEW contact logic ---
       }
     });
@@ -176,21 +175,18 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       builder: (context, state) {
         // Decide title based on nickname presence
         String nameToShow = '';
-        switch (state) {
-          case _Loaded(contact: final contact): // Use _Loaded and extract contact
-            nameToShow = (contact.nickname != null &&
-                    contact.nickname!.isNotEmpty)
-                ? contact.nickname!
-                : '${contact.firstName} ${contact.lastName}';
-            break;
-          case _Cleared(): // Use _Cleared
-            nameToShow = 'Add Contact';
-            break;
-          default:
-            // Keep existing fallback logic
-             if (nameToShow.isEmpty) {
-               nameToShow = _isEditMode ? 'Add/Edit Contact' : 'Contact Details';
-             }
+        if (state is Loaded) {
+          final contact = state.contact;
+          nameToShow = (contact.nickname != null && contact.nickname!.isNotEmpty)
+              ? contact.nickname!
+              : '${contact.firstName} ${contact.lastName}';
+        } else if (state is Cleared) {
+          nameToShow = 'Add Contact';
+        } else {
+          // Keep existing fallback logic
+          if (nameToShow.isEmpty) {
+            nameToShow = _isEditMode ? 'Add/Edit Contact' : 'Contact Details';
+          }
         }
 
         // If name is still empty (e.g., initial state before load or clear), use defaults
@@ -222,11 +218,11 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   ? () => _onDeleteButtonPressed(context)
                   : null,
             ),
-// EDIT/SAVE IconButton
+            // EDIT/SAVE IconButton
             BlocBuilder<ContactDetailsBloc, ContactDetailsState>(
               builder: (context, state) {
                 // Determine if the BLoC state allows interaction
-                final bool blocAllowsInteraction = state is _Loaded;
+                final bool blocAllowsInteraction = state is Loaded;
 
                 // Can enter edit mode if BLoC is loaded and we're not already editing
                 final bool canEnterEdit = blocAllowsInteraction && !_isEditMode;
@@ -241,22 +237,25 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   // Enable Edit only if bloc allows interaction and not already editing
                   onPressed: _isEditMode
                       ? (canSaveChanges ? () => _onSaveButtonPressed(context) : null) // Save action
-                      : (canEnterEdit ? () {
-                          // Entering edit mode
-                          setState(() {
-                            // _localContact should already be correct from the listener
-                            _isEditMode = true;
-                            _hasUnsavedChanges = false; // Reset flag when starting edit
-                          });
-                           logger.d("Edit button pressed. Entering edit mode.");
-                        } : null), // Edit action
+                      : (canEnterEdit
+                          ? () {
+                              // Entering edit mode
+                              setState(() {
+                                // _localContact should already be correct from the listener
+                                _isEditMode = true;
+                                _hasUnsavedChanges = false; // Reset flag when starting edit
+                              });
+                              logger.d("Edit button pressed. Entering edit mode.");
+                            }
+                          : null), // Edit action
                 );
               },
-            ),          ],
+            ),
+          ],
         ),
         body: BlocConsumer<ContactDetailsBloc, ContactDetailsState>(
           listener: (context, state) {
-            if (state is _Loaded) {
+            if (state is Loaded) {
               final bool isNewContactForm = state.contact.id == 0;
 
               // If we are not currently editing, OR if the loaded contact ID
@@ -273,8 +272,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   // Ensure initialized is true once loaded
                   _initialized = true;
                 });
-                logger.d(
-                    "Listener updated local state from BLoC. isEditMode: $_isEditMode");
+                logger.d("Listener updated local state from BLoC. isEditMode: $_isEditMode");
               } else {
                 // If we ARE in edit mode and the BLoC emits the SAME contact
                 // (e.g., after a background save confirmation), do NOT overwrite local state.
@@ -286,13 +284,12 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                       false; // Exit edit mode after successful save confirmation
                   _initialized = true; // Ensure initialized
                 });
-                logger.d(
-                    "Listener: In edit mode, BLoC re-emitted same contact. Exiting edit mode.");
+                logger.d("Listener: In edit mode, BLoC re-emitted same contact. Exiting edit mode.");
               }
-            } else if (state is _Error) {
+            } else if (state is Error) {
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Error: ${state.message}")));
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(SnackBar(content: Text("Error: ${state.message}")));
               }
               logger.e(state.message);
               // Keep existing UI or show error placeholder in builder
@@ -300,17 +297,15 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                 _initialized =
                     true; // Mark as initialized even on error to show something
               });
-            } else if (state is _Cleared) {
+            } else if (state is Cleared) {
               // This state now primarily means a deletion was successful.
               // The navigation back should handle leaving the screen.
               // We don't need to reset the form here as we're likely popping.
-              logger.d(
-                  "Listener: _Cleared received (likely post-delete).");
+              logger.d("Listener: Cleared received (likely post-delete).");
               setState(() {
                 _initialized = true; // Mark as initialized
               });
-            } else if (state is _Loading ||
-                state is _Initial) {
+            } else if (state is Loading || state is Initial) {
               // Optionally handle loading/initial states (e.g., disable buttons)
               // The builder already shows a progress indicator.
               setState(() {
@@ -321,24 +316,23 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           builder: (context, state) {
             // Builder logic remains largely the same, relying on the state type
             // and the _isEditMode flag managed by the listener/button actions.
-            if (state is _Loaded) {
+            if (state is Loaded) {
               // Show loaded body (view or edit mode determined by _isEditMode)
               return _buildLoadedBody();
-            } else if (state is _Initial) {
+            } else if (state is Initial) {
               return const Center(child: CircularProgressIndicator());
-            } else if (state is _Loading) {
+            } else if (state is Loading) {
               return const Center(child: CircularProgressIndicator());
-            } else if (state is _Cleared) {
+            } else if (state is Cleared) {
               // If cleared and in edit mode, show the form for the new contact
               if (_isEditMode) {
                 return _buildLoadedBody();
               } else {
                 // If cleared and not in edit mode (e.g., after delete before navigation)
                 // show a placeholder or loading indicator.
-                return const Center(
-                    child: Text('Contact cleared or not loaded.'));
+                return const Center(child: Text('Contact cleared or not loaded.'));
               }
-            } else if (state is _Error) {
+            } else if (state is Error) {
               // Show error body, potentially including the form with last known data
               return _buildErrorBody(state.message);
             } else {
@@ -384,8 +378,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text("Error: $errorMessage",
-              style: const TextStyle(color: Colors.red)),
+          Text("Error: $errorMessage", style: const TextStyle(color: Colors.red)),
           const SizedBox(height: 20),
           if (_initialized) // Show last known state if initialized
             Expanded(child: SingleChildScrollView(child: _buildLoadedBody()))
@@ -422,8 +415,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     // --- Apply phone mask for display ---
     String formattedPhoneNumber = 'Not set';
     String unmaskedPhoneNumber = ''; // Store unmasked for actions
-    if (_localContact.phoneNumber != null &&
-        _localContact.phoneNumber!.isNotEmpty) {
+    if (_localContact.phoneNumber != null && _localContact.phoneNumber!.isNotEmpty) {
       unmaskedPhoneNumber = _localContact.phoneNumber!;
       try {
         formattedPhoneNumber = phoneMaskFormatter.maskText(unmaskedPhoneNumber);
@@ -452,11 +444,9 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           ),
         ),
         // Conditionally display Full Name if Nickname was used above
-        if (_localContact.nickname != null &&
-            _localContact.nickname!.isNotEmpty)
+        if (_localContact.nickname != null && _localContact.nickname!.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.only(
-                bottom: 20.0), // Add padding below full name
+            padding: const EdgeInsets.only(bottom: 20.0), // Add padding below full name
             child: Text(
               '($fullNameDisplay)', // Show full name in parentheses
               style: Theme.of(context)
@@ -505,16 +495,16 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   IconButton(
                     icon: const Icon(Icons.message),
                     tooltip: 'Send Message',
-                    onPressed: () => _launchUniversalLink(Uri.parse(
-                        'sms:${_sanitizePhoneNumber(unmaskedPhoneNumber)}')),
+                    onPressed: () => _launchUniversalLink(
+                        Uri.parse('sms:${_sanitizePhoneNumber(unmaskedPhoneNumber)}')),
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,
                   ),
                   IconButton(
                     icon: const Icon(Icons.call),
                     tooltip: 'Call',
-                    onPressed: () => _launchUniversalLink(Uri.parse(
-                        'tel:${_sanitizePhoneNumber(unmaskedPhoneNumber)}')),
+                    onPressed: () => _launchUniversalLink(
+                        Uri.parse('tel:${_sanitizePhoneNumber(unmaskedPhoneNumber)}')),
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,
                   ),
@@ -531,9 +521,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   width: 110,
                   child: Text('Emails:',
                       style: TextStyle(fontWeight: FontWeight.bold))),
-              Expanded(
-                  child: _buildEmailDisplayList(
-                      _localContact.emails)) // Use helper
+              Expanded(child: _buildEmailDisplayList(_localContact.emails)) // Use helper
             ])),
 
         // Notes
@@ -605,9 +593,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           textCapitalization: TextCapitalization.words,
           decoration: const InputDecoration(
               labelText: 'First Name', border: OutlineInputBorder()),
-          validator: (value) => (value == null || value.isEmpty)
-              ? 'Please enter a first name'
-              : null,
+          validator: (value) =>
+              (value == null || value.isEmpty) ? 'Please enter a first name' : null,
           onChanged: (value) => setState(() {
             _localContact = _localContact.copyWith(firstName: value);
             _hasUnsavedChanges = true;
@@ -622,9 +609,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           textCapitalization: TextCapitalization.words,
           decoration: const InputDecoration(
               labelText: 'Last Name', border: OutlineInputBorder()),
-          validator: (value) => (value == null || value.isEmpty)
-              ? 'Please enter a last name'
-              : null,
+          validator: (value) =>
+              (value == null || value.isEmpty) ? 'Please enter a last name' : null,
           onChanged: (value) => setState(() {
             _localContact = _localContact.copyWith(lastName: value);
             _hasUnsavedChanges = true;
@@ -641,8 +627,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               labelText: 'Nickname (Optional)', border: OutlineInputBorder()),
           // No validator needed for optional field
           onChanged: (value) => setState(() {
-            _localContact = _localContact.copyWith(
-                nickname: value.isNotEmpty ? value : null);
+            _localContact =
+                _localContact.copyWith(nickname: value.isNotEmpty ? value : null);
             _hasUnsavedChanges = true;
           }),
           textInputAction: TextInputAction.next,
@@ -660,8 +646,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.phone)),
           onChanged: (value) => setState(() {
-            _localContact = _localContact.copyWith(
-                phoneNumber: phoneMaskFormatter.getUnmaskedText());
+            _localContact =
+                _localContact.copyWith(phoneNumber: phoneMaskFormatter.getUnmaskedText());
             _hasUnsavedChanges = true;
           }),
           textInputAction: TextInputAction.next,
@@ -676,8 +662,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         DropdownButtonFormField<String>(
           // Frequency
           // Ensure value exists in items, use defaultValue if not
-          value: ContactFrequency.values
-                  .any((f) => f.value == _localContact.frequency)
+          value: ContactFrequency.values.any((f) => f.value == _localContact.frequency)
               ? _localContact.frequency
               : ContactFrequency.defaultValue,
           onChanged: (String? newValue) {
@@ -1034,15 +1019,13 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
       // Dispatch event
       if (!isExistingContact) {
-        context.read<ContactDetailsBloc>().add(ContactDetailsEvent.addContact(
-            contact: contactToSave)); // Use contactToSave
+        context.read<ContactDetailsBloc>().add(AddContact(contact: contactToSave)); // Use contactToSave
         if (mounted) {
           ScaffoldMessenger.of(context)
               .showSnackBar(const SnackBar(content: Text('New contact saved')));
         }
       } else {
-        context.read<ContactDetailsBloc>().add(ContactDetailsEvent.saveContact(
-            contact: contactToSave)); // Use contactToSave
+        context.read<ContactDetailsBloc>().add(SaveContact(contact: contactToSave)); // Use contactToSave
         if (mounted) {
           ScaffoldMessenger.of(context)
               .showSnackBar(const SnackBar(content: Text('Changes saved')));
@@ -1057,16 +1040,13 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           _hasUnsavedChanges = false;
           _isEditMode = false;
         });
-        context
-            .read<ContactListBloc>()
-            .add(const ContactListEvent.loadContacts());
+        context.read<ContactListBloc>().add(const LoadContacts());
         Navigator.of(context).pop();
       }
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Please correct the errors before saving.')),
+          const SnackBar(content: Text('Please correct the errors before saving.')),
         );
       }
     }
@@ -1093,12 +1073,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                 final contactIdToDelete = _localContact.id!;
                 Navigator.of(dialogContext).pop();
                 if (mounted) {
-                  context.read<ContactDetailsBloc>().add(
-                      ContactDetailsEvent.deleteContact(
-                          contactId: contactIdToDelete));
-                  context
-                      .read<ContactListBloc>()
-                      .add(const ContactListEvent.loadContacts());
+                  context.read<ContactDetailsBloc>().add(DeleteContact(contactId: contactIdToDelete));
+                  context.read<ContactListBloc>().add(const LoadContacts());
                   Navigator.of(context).pop();
                 }
               },
@@ -1127,17 +1103,12 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     });
 
     // Save the update via BLoC
-    context
-        .read<ContactDetailsBloc>()
-        .add(ContactDetailsEvent.saveContact(contact: updatedContact));
+    context.read<ContactDetailsBloc>().add(SaveContact(contact: updatedContact));
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content:
-              Text('Marked as contacted: ${DateFormat.yMd().format(now)}')));
-      context
-          .read<ContactListBloc>()
-          .add(const ContactListEvent.loadContacts());
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Marked as contacted: ${DateFormat.yMd().format(now)}')));
+      context.read<ContactListBloc>().add(const LoadContacts());
     }
   }
 
@@ -1255,8 +1226,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               width: 110, // Keep consistent label width
               child: Text('$label ',
                   style: const TextStyle(fontWeight: FontWeight.bold))),
-          Expanded(
-              child: valueWidget), // Use the potentially wrapped valueWidget
+          Expanded(child: valueWidget), // Use the potentially wrapped valueWidget
           // Add trailing action icons if provided
           if (actions.isNotEmpty) ...[
             const SizedBox(width: 8), // Spacing before icons
@@ -1275,8 +1245,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     if (emails == null || emails.isEmpty) {
       // Use same styling as _buildActionableDisplayRow for consistency
       return const Padding(
-        padding:
-            EdgeInsets.only(top: 6.0, bottom: 6.0), // Match vertical padding
+        padding: EdgeInsets.only(top: 6.0, bottom: 6.0), // Match vertical padding
         child: Text('Not set'),
       );
     }
@@ -1289,8 +1258,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         }
 
         return Padding(
-          padding: const EdgeInsets.symmetric(
-              vertical: 4.0), // Spacing between emails
+          padding: const EdgeInsets.symmetric(vertical: 4.0), // Spacing between emails
           child: InkWell(
             onTap: () => _launchEmail(email),
             child: Row(

@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
+import 'package:recall/blocs/contact_list/contact_list_event.dart';
 import 'package:recall/models/contact.dart';
-import 'package:recall/models/contact_frequency.dart';
+import 'package:recall/models/contact_enums.dart';
 import 'package:recall/utils/last_contacted_utils.dart';
 
 class ContactListItem extends StatelessWidget {
@@ -24,10 +25,10 @@ class ContactListItem extends StatelessWidget {
   // Helper function to dispatch the update event
   void _markContacted(BuildContext context, Contact contact) {
     final updatedContact = contact.copyWith(lastContacted: DateTime.now());
-    // Dispatch event to update contact in BLoC
-  context.read<ContactListBloc>().add(
-      ContactListEvent.updateContactFromList(contact: updatedContact) // Use named parameter 'contact:'
-  );
+    // Dispatch event to update contact in BLoC using the new consolidated event
+    context.read<ContactListBloc>().add(
+        UpdateContacts.single(contact: updatedContact)
+    );
     ScaffoldMessenger.of(context).clearSnackBars();
     // Determine name for snackbar based on nickname presence
     final nameForSnackbar =
