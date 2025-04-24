@@ -22,111 +22,117 @@ export 'package:objectbox/objectbox.dart'; // so that callers only have to impor
 
 final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
-    id: const obx_int.IdUid(1, 9023869447329200960),
+    id: const obx_int.IdUid(1, 2880320336740233460),
     name: 'Contact',
-    lastPropertyId: const obx_int.IdUid(17, 5555504640993603936),
+    lastPropertyId: const obx_int.IdUid(18, 92743786241616720),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(1, 1675281519582122376),
+        id: const obx_int.IdUid(1, 7786158392996668689),
         name: 'id',
         type: 6,
         flags: 129,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(2, 4578521686525613939),
+        id: const obx_int.IdUid(2, 6523278049049770428),
         name: 'firstName',
         type: 9,
         flags: 0,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(3, 2691509830060103224),
+        id: const obx_int.IdUid(3, 217775021293924972),
         name: 'lastName',
         type: 9,
         flags: 0,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(4, 1098571936091281280),
+        id: const obx_int.IdUid(4, 6166988337166864792),
         name: 'nickname',
         type: 9,
         flags: 0,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(5, 7964066526837520735),
+        id: const obx_int.IdUid(5, 7957976957453740499),
         name: 'frequency',
         type: 9,
         flags: 0,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(6, 7526879239115018251),
+        id: const obx_int.IdUid(6, 1772358295599308212),
         name: 'birthday',
         type: 10,
         flags: 0,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(7, 6675415758010721626),
+        id: const obx_int.IdUid(7, 2589002527012177649),
         name: 'lastContacted',
         type: 10,
         flags: 0,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(8, 1576000135475674592),
+        id: const obx_int.IdUid(8, 5754904356368802256),
         name: 'anniversary',
         type: 10,
         flags: 0,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(9, 9147962101984827812),
+        id: const obx_int.IdUid(9, 1328900568728748115),
         name: 'phoneNumber',
         type: 9,
         flags: 0,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(10, 8361093919788494836),
+        id: const obx_int.IdUid(10, 2501734851380835312),
+        name: 'emails',
+        type: 30,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(11, 8612828127895035517),
         name: 'notes',
         type: 9,
         flags: 0,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(11, 7068813924720646580),
+        id: const obx_int.IdUid(12, 1318182758170310109),
         name: 'youtubeUrl',
         type: 9,
         flags: 0,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(12, 4038145699093095777),
+        id: const obx_int.IdUid(13, 1553841248143349046),
         name: 'instagramHandle',
         type: 9,
         flags: 0,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(13, 9033667966281675051),
+        id: const obx_int.IdUid(14, 1723202139627553320),
         name: 'facebookUrl',
         type: 9,
         flags: 0,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(14, 6902321250746057037),
+        id: const obx_int.IdUid(15, 8191253130450763372),
         name: 'snapchatHandle',
         type: 9,
         flags: 0,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(15, 6116553155793466790),
+        id: const obx_int.IdUid(16, 3238018542597221696),
         name: 'xHandle',
         type: 9,
         flags: 0,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(16, 3133082328778885275),
+        id: const obx_int.IdUid(17, 2634893898965425767),
         name: 'linkedInUrl',
         type: 9,
         flags: 0,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(17, 5555504640993603936),
-        name: 'emails',
-        type: 30,
+        id: const obx_int.IdUid(18, 92743786241616720),
+        name: 'nextContact',
+        type: 10,
         flags: 0,
       ),
     ],
@@ -134,37 +140,37 @@ final _entities = <obx_int.ModelEntity>[
     backlinks: <obx_int.ModelBacklink>[],
   ),
   obx_int.ModelEntity(
-    id: const obx_int.IdUid(2, 3617810349953416850),
+    id: const obx_int.IdUid(2, 7591824227650634640),
     name: 'Notification',
-    lastPropertyId: const obx_int.IdUid(5, 3360340969330163060),
+    lastPropertyId: const obx_int.IdUid(5, 8056842301395819837),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(1, 8610330499649681052),
+        id: const obx_int.IdUid(1, 2526380771482385965),
         name: 'id',
         type: 6,
         flags: 129,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(2, 5341223573231365197),
+        id: const obx_int.IdUid(2, 1447157478650054107),
         name: 'title',
         type: 9,
         flags: 0,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(3, 748669569479386633),
+        id: const obx_int.IdUid(3, 3848453167690064986),
         name: 'body',
         type: 9,
         flags: 0,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(4, 1860028004712547145),
+        id: const obx_int.IdUid(4, 1280843455156809647),
         name: 'payload',
         type: 9,
         flags: 0,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(5, 3360340969330163060),
+        id: const obx_int.IdUid(5, 8056842301395819837),
         name: 'scheduledTime',
         type: 10,
         flags: 0,
@@ -174,43 +180,43 @@ final _entities = <obx_int.ModelEntity>[
     backlinks: <obx_int.ModelBacklink>[],
   ),
   obx_int.ModelEntity(
-    id: const obx_int.IdUid(3, 7616040758953516209),
+    id: const obx_int.IdUid(3, 8348027708397283958),
     name: 'UserSettings',
-    lastPropertyId: const obx_int.IdUid(6, 4721514900881730992),
+    lastPropertyId: const obx_int.IdUid(6, 6240070234979785254),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(1, 6761454180921128856),
+        id: const obx_int.IdUid(1, 4787548043429071349),
         name: 'id',
         type: 6,
         flags: 129,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(2, 3363059382382861741),
+        id: const obx_int.IdUid(2, 644703998999399751),
         name: 'remindersEnabled',
         type: 1,
         flags: 0,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(3, 8752468135951795440),
+        id: const obx_int.IdUid(3, 9132725939087425381),
         name: 'alertsEnabled',
         type: 1,
         flags: 0,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(4, 6825165308826136998),
+        id: const obx_int.IdUid(4, 5292993186006166592),
         name: 'notificationHour',
         type: 6,
         flags: 0,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(5, 7624390682773250372),
+        id: const obx_int.IdUid(5, 7619820673145648303),
         name: 'notificationMinute',
         type: 6,
         flags: 0,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(6, 4721514900881730992),
+        id: const obx_int.IdUid(6, 6240070234979785254),
         name: 'defaultFrequency',
         type: 9,
         flags: 0,
@@ -259,7 +265,7 @@ Future<obx.Store> openStore({
 obx_int.ModelDefinition getObjectBoxModel() {
   final model = obx_int.ModelInfo(
     entities: _entities,
-    lastEntityId: const obx_int.IdUid(3, 7616040758953516209),
+    lastEntityId: const obx_int.IdUid(3, 8348027708397283958),
     lastIndexId: const obx_int.IdUid(0, 0),
     lastRelationId: const obx_int.IdUid(0, 0),
     lastSequenceId: const obx_int.IdUid(0, 0),
@@ -279,15 +285,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
       toManyRelations: (Contact object) => {},
       getId: (Contact object) => object.id,
       setId: (Contact object, int id) {
-        if (object.id != id) {
-          throw ArgumentError(
-            'Field Contact.id is read-only '
-            '(final or getter-only) and it was declared to be self-assigned. '
-            'However, the currently inserted object (.id=${object.id}) '
-            "doesn't match the inserted ID (ID $id). "
-            'You must assign an ID before calling [box.put()].',
-          );
-        }
+        object.id = id;
       },
       objectToFB: (Contact object, fb.Builder fbb) {
         final firstNameOffset = fbb.writeString(object.firstName);
@@ -299,6 +297,12 @@ obx_int.ModelDefinition getObjectBoxModel() {
             object.phoneNumber == null
                 ? null
                 : fbb.writeString(object.phoneNumber!);
+        final emailsOffset =
+            object.emails == null
+                ? null
+                : fbb.writeList(
+                  object.emails!.map(fbb.writeString).toList(growable: false),
+                );
         final notesOffset =
             object.notes == null ? null : fbb.writeString(object.notes!);
         final youtubeUrlOffset =
@@ -323,13 +327,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
             object.linkedInUrl == null
                 ? null
                 : fbb.writeString(object.linkedInUrl!);
-        final emailsOffset =
-            object.emails == null
-                ? null
-                : fbb.writeList(
-                  object.emails!.map(fbb.writeString).toList(growable: false),
-                );
-        fbb.startTable(18);
+        fbb.startTable(19);
         fbb.addInt64(0, object.id ?? 0);
         fbb.addOffset(1, firstNameOffset);
         fbb.addOffset(2, lastNameOffset);
@@ -339,14 +337,15 @@ obx_int.ModelDefinition getObjectBoxModel() {
         fbb.addInt64(6, object.lastContacted?.millisecondsSinceEpoch);
         fbb.addInt64(7, object.anniversary?.millisecondsSinceEpoch);
         fbb.addOffset(8, phoneNumberOffset);
-        fbb.addOffset(9, notesOffset);
-        fbb.addOffset(10, youtubeUrlOffset);
-        fbb.addOffset(11, instagramHandleOffset);
-        fbb.addOffset(12, facebookUrlOffset);
-        fbb.addOffset(13, snapchatHandleOffset);
-        fbb.addOffset(14, xHandleOffset);
-        fbb.addOffset(15, linkedInUrlOffset);
-        fbb.addOffset(16, emailsOffset);
+        fbb.addOffset(9, emailsOffset);
+        fbb.addOffset(10, notesOffset);
+        fbb.addOffset(11, youtubeUrlOffset);
+        fbb.addOffset(12, instagramHandleOffset);
+        fbb.addOffset(13, facebookUrlOffset);
+        fbb.addOffset(14, snapchatHandleOffset);
+        fbb.addOffset(15, xHandleOffset);
+        fbb.addOffset(16, linkedInUrlOffset);
+        fbb.addInt64(17, object.nextContact?.millisecondsSinceEpoch);
         fbb.finish(fbb.endTable());
         return object.id ?? 0;
       },
@@ -367,6 +366,11 @@ obx_int.ModelDefinition getObjectBoxModel() {
           buffer,
           rootOffset,
           18,
+        );
+        final nextContactValue = const fb.Int64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          38,
         );
         final idParam = const fb.Int64Reader().vTableGetNullable(
           buffer,
@@ -393,6 +397,10 @@ obx_int.ModelDefinition getObjectBoxModel() {
             lastContactedValue == null
                 ? null
                 : DateTime.fromMillisecondsSinceEpoch(lastContactedValue);
+        final nextContactParam =
+            nextContactValue == null
+                ? null
+                : DateTime.fromMillisecondsSinceEpoch(nextContactValue);
         final anniversaryParam =
             anniversaryValue == null
                 ? null
@@ -403,28 +411,28 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final emailsParam = const fb.ListReader<String>(
           fb.StringReader(asciiOptimization: true),
           lazy: false,
-        ).vTableGetNullable(buffer, rootOffset, 36);
+        ).vTableGetNullable(buffer, rootOffset, 22);
         final notesParam = const fb.StringReader(
           asciiOptimization: true,
-        ).vTableGetNullable(buffer, rootOffset, 22);
+        ).vTableGetNullable(buffer, rootOffset, 24);
         final youtubeUrlParam = const fb.StringReader(
           asciiOptimization: true,
-        ).vTableGetNullable(buffer, rootOffset, 24);
+        ).vTableGetNullable(buffer, rootOffset, 26);
         final instagramHandleParam = const fb.StringReader(
           asciiOptimization: true,
-        ).vTableGetNullable(buffer, rootOffset, 26);
+        ).vTableGetNullable(buffer, rootOffset, 28);
         final facebookUrlParam = const fb.StringReader(
           asciiOptimization: true,
-        ).vTableGetNullable(buffer, rootOffset, 28);
+        ).vTableGetNullable(buffer, rootOffset, 30);
         final snapchatHandleParam = const fb.StringReader(
           asciiOptimization: true,
-        ).vTableGetNullable(buffer, rootOffset, 30);
+        ).vTableGetNullable(buffer, rootOffset, 32);
         final xHandleParam = const fb.StringReader(
           asciiOptimization: true,
-        ).vTableGetNullable(buffer, rootOffset, 32);
+        ).vTableGetNullable(buffer, rootOffset, 34);
         final linkedInUrlParam = const fb.StringReader(
           asciiOptimization: true,
-        ).vTableGetNullable(buffer, rootOffset, 34);
+        ).vTableGetNullable(buffer, rootOffset, 36);
         final object = Contact(
           id: idParam,
           firstName: firstNameParam,
@@ -433,6 +441,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           frequency: frequencyParam,
           birthday: birthdayParam,
           lastContacted: lastContactedParam,
+          nextContact: nextContactParam,
           anniversary: anniversaryParam,
           phoneNumber: phoneNumberParam,
           emails: emailsParam,
@@ -454,15 +463,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
       toManyRelations: (Notification object) => {},
       getId: (Notification object) => object.id,
       setId: (Notification object, int id) {
-        if (object.id != id) {
-          throw ArgumentError(
-            'Field Notification.id is read-only '
-            '(final or getter-only) and it was declared to be self-assigned. '
-            'However, the currently inserted object (.id=${object.id}) '
-            "doesn't match the inserted ID (ID $id). "
-            'You must assign an ID before calling [box.put()].',
-          );
-        }
+        object.id = id;
       },
       objectToFB: (Notification object, fb.Builder fbb) {
         final titleOffset = fbb.writeString(object.title);
@@ -521,15 +522,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
       toManyRelations: (UserSettings object) => {},
       getId: (UserSettings object) => object.id,
       setId: (UserSettings object, int id) {
-        if (object.id != id) {
-          throw ArgumentError(
-            'Field UserSettings.id is read-only '
-            '(final or getter-only) and it was declared to be self-assigned. '
-            'However, the currently inserted object (.id=${object.id}) '
-            "doesn't match the inserted ID (ID $id). "
-            'You must assign an ID before calling [box.put()].',
-          );
-        }
+        object.id = id;
       },
       objectToFB: (UserSettings object, fb.Builder fbb) {
         final defaultFrequencyOffset = fbb.writeString(object.defaultFrequency);
@@ -642,44 +635,49 @@ class Contact_ {
     _entities[0].properties[8],
   );
 
+  /// See [Contact.emails].
+  static final emails = obx.QueryStringVectorProperty<Contact>(
+    _entities[0].properties[9],
+  );
+
   /// See [Contact.notes].
   static final notes = obx.QueryStringProperty<Contact>(
-    _entities[0].properties[9],
+    _entities[0].properties[10],
   );
 
   /// See [Contact.youtubeUrl].
   static final youtubeUrl = obx.QueryStringProperty<Contact>(
-    _entities[0].properties[10],
+    _entities[0].properties[11],
   );
 
   /// See [Contact.instagramHandle].
   static final instagramHandle = obx.QueryStringProperty<Contact>(
-    _entities[0].properties[11],
+    _entities[0].properties[12],
   );
 
   /// See [Contact.facebookUrl].
   static final facebookUrl = obx.QueryStringProperty<Contact>(
-    _entities[0].properties[12],
+    _entities[0].properties[13],
   );
 
   /// See [Contact.snapchatHandle].
   static final snapchatHandle = obx.QueryStringProperty<Contact>(
-    _entities[0].properties[13],
+    _entities[0].properties[14],
   );
 
   /// See [Contact.xHandle].
   static final xHandle = obx.QueryStringProperty<Contact>(
-    _entities[0].properties[14],
+    _entities[0].properties[15],
   );
 
   /// See [Contact.linkedInUrl].
   static final linkedInUrl = obx.QueryStringProperty<Contact>(
-    _entities[0].properties[15],
+    _entities[0].properties[16],
   );
 
-  /// See [Contact.emails].
-  static final emails = obx.QueryStringVectorProperty<Contact>(
-    _entities[0].properties[16],
+  /// See [Contact.nextContact].
+  static final nextContact = obx.QueryDateProperty<Contact>(
+    _entities[0].properties[17],
   );
 }
 

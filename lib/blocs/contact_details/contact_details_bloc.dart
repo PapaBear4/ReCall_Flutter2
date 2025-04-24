@@ -1,121 +1,147 @@
-// lib/blocs/contact_details/contact_detals_bloc.dart
+// lib/blocs/contact_details/contact_details_bloc.dart
 import 'package:bloc/bloc.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:recall/models/contact.dart';
 import 'package:recall/repositories/contact_repository.dart';
-import 'package:recall/utils/logger.dart'; // Adjust path if needed
-import 'package:recall/services/notification_service.dart';
+import 'package:recall/utils/logger.dart';
 
-part 'contact_details_event.dart';
-part 'contact_details_state.dart';
-part 'contact_details_bloc.freezed.dart';
+import 'contact_details_event.dart';
+import 'contact_details_state.dart';
 
-// Bloc responsible for managing the state of Contact Details screen
-class ContactDetailsBloc
-    extends Bloc<ContactDetailsEvent, ContactDetailsState> {
-  // Repository for interacting with contact data
+/// BLoC for managing the state of a single contact's details.
+///
+/// Handles operations like loading, creating, updating, and deleting
+/// individual contacts.
+class ContactDetailsBloc extends Bloc<ContactDetailsEvent, ContactDetailsState> {
   final ContactRepository _contactRepository;
-  final NotificationService _notificationService;
 
-  // Constructor initializes the bloc with the contact repository and initial state
-  ContactDetailsBloc({
-    required ContactRepository contactRepository,
-    required NotificationService notificationService,
-  })  : _contactRepository = contactRepository,
-        _notificationService = notificationService,
-        super(const ContactDetailsState.initial()) {
-    // Event handler for loading contact details
-    on<ContactDetailsEvent>((event, emit) async {
-      switch (event) {
-        case _LoadContact e:
-          emit(const ContactDetailsState.loading());
-          try {
-            final contact = await _contactRepository.getById(e.contactId);
-            if (contact != null) {
-              emit(ContactDetailsState.loaded(contact));
-            } else {
-              emit(const ContactDetailsState.error('Contact not found'));
-            }
-          } catch (err) {
-            emit(ContactDetailsState.error(err.toString()));
-          }
-          break;
+  /// Creates a new ContactDetailsBloc.
+  ///
+  /// Requires a [contactRepository] for data access.
+  ContactDetailsBloc({required ContactRepository contactRepository})
+      : _contactRepository = contactRepository,
+        super(const Initial()) {
+    on<LoadContact>(_onLoadContact);
+    on<SaveContact>(_onSaveContact);
+    on<UpdateContactLocally>(_onUpdateContactLocally);
+    on<AddContact>(_onAddContact);
+    on<ClearContact>(_onClearContact);
+    on<DeleteContact>(_onDeleteContact);
+    on<PrepareNewContact>(_onPrepareNewContact);
+  }
 
-        case _SaveContact e:
-          emit(const ContactDetailsState.loading());
-          try {
-            Contact savedContact;
-            if (e.contact.id == null) {
-              savedContact = await _contactRepository.add(e.contact);
-            } else {
-              await _contactRepository.update(e.contact);
-              savedContact = (await _contactRepository.getById(e.contact.id!))!;
-            }
-            emit(ContactDetailsState.loaded(savedContact));
-            await _notificationService.scheduleReminder(savedContact);
-          } catch (error) {
-            emit(ContactDetailsState.error(error.toString()));
-          }
-          break;
-
-        case _UpdateContactLocally e:
-          try {
-            emit(ContactDetailsState.loaded(e.contact));
-          } catch (error) {
-            emit(ContactDetailsState.error(error.toString()));
-          }
-          break;
-
-        case _AddContact e:
-          emit(const ContactDetailsState.loading());
-          try {
-            final newContact = await _contactRepository.add(e.contact);
-            emit(ContactDetailsState.loaded(newContact));
-            await _notificationService.scheduleReminder(newContact);
-          } catch (error) {
-            emit(ContactDetailsState.error(error.toString()));
-          }
-          break;
-
-        case _DeleteContact e:
-          emit(const ContactDetailsState.loading());
-          try {
-            await _notificationService.cancelNotification(e.contactId);
-            await _contactRepository.delete(e.contactId);
-            emit(const ContactDetailsState.cleared());
-          } catch (error) {
-            emit(ContactDetailsState.error(error.toString()));
-          }
-          break;
-
-        case _ClearContact e:
-          logger.i('Log: Clearing contact details');
-          emit(const ContactDetailsState.cleared());
-          break;
-
-        // Add this case within the switch (event) { ... } block
-        case _PrepareNewContact e:
-          emit(const ContactDetailsState.loading()); // Show loading briefly
-          try {
-            // Create a new, empty contact with the default frequency
-            final newContact = Contact(
-              id: 0, // Use 0 to signify a new contact
-              firstName: '',
-              lastName: '',
-              frequency: e.defaultFrequency, // Use the passed default
-              // Initialize other fields as needed (null or default)
-              emails: [],
-            );
-            emit(ContactDetailsState.loaded(
-                newContact)); // Emit loaded with the blank contact
-            logger.i(
-                'Prepared BLoC for new contact with default frequency: ${e.defaultFrequency}');
-          } catch (error) {
-            emit(ContactDetailsState.error(
-                'Error preparing new contact: ${error.toString()}'));
-          }
-          break;
+  /// Handles the LoadContact event by fetching a contact from the repository.
+  ///
+  /// Emits a Loading state first, then either a Loaded state with the contact 
+  /// or an Error state if the contact can't be found.
+  Future<void> _onLoadContact(
+      LoadContact event, Emitter<ContactDetailsState> emit) async {
+    emit(const Loading());
+    try {
+      final contact = await _contactRepository.getById(event.contactId);
+      if (contact != null) {
+        emit(Loaded(contact));
+      } else {
+        emit(const Error("Contact not found"));
       }
-    });
+    } catch (e) {
+      logger.e('Error loading contact: $e');
+      emit(Error(e.toString()));
+    }
+  }
+
+  /// Handles the SaveContact event by updating an existing contact.
+  ///
+  /// Saves the updated contact to the repository and emits a Loaded state
+  /// with the saved contact, or an Error state if the update fails.
+  Future<void> _onSaveContact(
+      SaveContact event, Emitter<ContactDetailsState> emit) async {
+    // First emit a loading state to indicate we're processing
+    emit(const Loading());
+    
+    try {
+      final updatedContact = await _contactRepository.update(event.contact);
+      emit(Loaded(updatedContact));
+    } catch (e) {
+      logger.e('Error saving contact: $e');
+      emit(Error(e.toString()));
+      
+      // If there's an error, we should re-emit the previous state with the contact
+      // so that the UI can maintain its state
+      final currentState = state;
+      if (currentState is Loaded) {
+        emit(Loaded(currentState.contact));
+      }
+    }
+  }
+
+  /// Handles the UpdateContactLocally event by updating the contact in the UI without saving.
+  ///
+  /// This is used for temporary UI updates during editing before committing changes.
+  void _onUpdateContactLocally(
+      UpdateContactLocally event, Emitter<ContactDetailsState> emit) {
+    // Just update the in-memory contact without saving to repository
+    emit(Loaded(event.contact));
+  }
+
+  /// Handles the AddContact event by saving a new contact to the repository.
+  ///
+  /// Emits a Loading state first, then either a Loaded state with the saved
+  /// contact or an Error state if the save fails.
+  Future<void> _onAddContact(
+      AddContact event, Emitter<ContactDetailsState> emit) async {
+    // First emit a loading state to indicate we're processing
+    emit(const Loading());
+    
+    try {
+      final savedContact = await _contactRepository.add(event.contact);
+      emit(Loaded(savedContact));
+    } catch (e) {
+      logger.e('Error adding contact: $e');
+      emit(Error(e.toString()));
+    }
+  }
+
+  /// Handles the ClearContact event by resetting the state.
+  ///
+  /// This is typically used when navigating away from the contact details screen.
+  void _onClearContact(ClearContact event, Emitter<ContactDetailsState> emit) {
+    emit(const Cleared());
+  }
+
+  /// Handles the DeleteContact event by removing a contact from the repository.
+  ///
+  /// Emits a Loading state first, then either a Cleared state on success
+  /// or an Error state if the deletion fails.
+  Future<void> _onDeleteContact(
+      DeleteContact event, Emitter<ContactDetailsState> emit) async {
+    // First emit a loading state to indicate we're processing
+    emit(const Loading());
+    
+    try {
+      await _contactRepository.delete(event.contactId);
+      // If delete succeeds without throwing an exception, emit Cleared state
+      emit(const Cleared());
+    } catch (e) {
+      logger.e('Error deleting contact: $e');
+      emit(Error(e.toString()));
+    }
+  }
+
+  /// Handles the PrepareNewContact event by creating an empty contact template.
+  ///
+  /// Initializes a new contact with default values and emits a Loaded state.
+  /// This is used when the user starts creating a new contact.
+  void _onPrepareNewContact(
+      PrepareNewContact event, Emitter<ContactDetailsState> emit) {
+    // Create a new empty contact with the default frequency
+    final newContact = Contact(
+      id: 0, // Use 0 to indicate a new contact (not saved yet)
+      firstName: '',
+      lastName: '',
+      frequency: event.defaultFrequency,
+      emails: [], // Initialize with empty list rather than null
+    );
+    
+    emit(Loaded(newContact));
   }
 }

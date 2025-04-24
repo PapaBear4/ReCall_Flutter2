@@ -2,7 +2,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart'; // Use provider to read repository
-import 'package:recall/models/contact_frequency.dart';
+import 'package:recall/blocs/contact_list/contact_list_event.dart';
+import 'package:recall/models/contact_enums.dart';
 import 'package:recall/models/usersettings.dart';
 import 'package:recall/repositories/usersettings_repository.dart';
 import 'package:recall/repositories/contact_repository.dart'; // To get contacts
@@ -417,7 +418,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
       context
           .read<ContactListBloc>()
-          .add(const ContactListEvent.loadContacts());
+          .add(const LoadContacts());
       setState(() => _isBusy = false);
     } catch (e) {
       if (mounted) {
@@ -663,7 +664,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     // 1. Reload settings (will create defaults if missing)
                                     await _loadSettings();
                                     // 2. Trigger contact list reload
-                                    context.read<ContactListBloc>().add(const ContactListEvent.loadContacts());
+                                    context.read<ContactListBloc>().add(const LoadContacts());
 
 
                                     setState(() => _isBusy = false);

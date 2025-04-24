@@ -1,7 +1,7 @@
 // lib/services/notification_service.dart
 import 'package:flutter/foundation.dart';
 import 'package:recall/models/contact.dart';
-import 'package:recall/models/contact_frequency.dart';
+import 'package:recall/models/contact_enums.dart';
 import 'package:recall/models/usersettings.dart';
 import 'package:recall/repositories/usersettings_repository.dart';
 import 'package:recall/services/notification_helper.dart';
@@ -44,7 +44,7 @@ class NotificationService extends ChangeNotifier {
        logger.i('LOG: Contact ${contact.id} never contacted. Due date calculated as now.');
     } else {
       // Previously contacted: Calculate next due date
-      nextDueDate = calculateNextDueDate(contact); // Calculate the ideal date
+      nextDueDate = calculateNextContact(contact); // Calculate the ideal date
       baseTitle = "Contact ${contact.firstName} ${contact.lastName}";
       baseBody = "${contact.firstName} is due for contact."; // Simpler body
        logger.i('LOG: Contact ${contact.id} previously contacted. Next due date calculated as $nextDueDate.');

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
+import 'package:recall/blocs/contact_list/contact_list_event.dart';
 import 'package:recall/main.dart';
 import 'package:recall/repositories/contact_repository.dart';
 import 'package:recall/repositories/usersettings_repository.dart';
@@ -39,12 +40,11 @@ class ReCall extends StatelessWidget {
               create: (context) => ContactListBloc(
                 contactRepository: _contactRepository,
                 notificationService: context.read<NotificationService>(),
-              )..add(const ContactListEvent.loadContacts()),
+              )..add(const LoadContacts()),
             ),
             BlocProvider(
               create: (context) => ContactDetailsBloc(
                 contactRepository: _contactRepository,
-                notificationService: context.read<NotificationService>(),
               ),
             ),
           ],

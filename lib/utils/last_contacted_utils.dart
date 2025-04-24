@@ -1,7 +1,14 @@
 // lib/utils/last_contacted_utils.dart
 import 'package:recall/models/contact.dart';
-import 'package:recall/models/contact_frequency.dart';
+import 'package:recall/models/contact_enums.dart';
 
+/// Formats the last contacted date into a human-readable string.
+///
+/// Returns relative time expressions like "Today", "2 days ago", 
+/// "3 weeks ago", or "4 months ago" based on the difference between
+/// the provided date and now.
+/// 
+/// Returns an empty string if [lastContacted] is null.
 String formatLastContacted(DateTime? lastContacted) {
   if (lastContacted == null) {
     return '';
@@ -30,6 +37,15 @@ String formatLastContacted(DateTime? lastContacted) {
   }
 }
 
+/// Determines if a contact is overdue for communication based on frequency.
+///
+/// Checks if the time elapsed since [lastContacted] exceeds the expected
+/// interval defined by [frequency]. Returns false if frequency is "never"
+/// or if the contact has never been contacted before.
+///
+/// @param frequency The contact frequency string from ContactFrequency
+/// @param lastContacted The last time the contact was communicated with
+/// @return true if contact is overdue, false otherwise
 bool isOverdue(String frequency, DateTime? lastContacted) {
   if (frequency == ContactFrequency.never.value || lastContacted == null) {
     return false;
@@ -59,7 +75,18 @@ bool isOverdue(String frequency, DateTime? lastContacted) {
   }
 }
 
-DateTime calculateNextDueDate(Contact contact) {
+/// Calculates the next contact date based on contact frequency.
+///
+/// Takes a contact's last contacted date and frequency setting to determine
+/// when they should next be contacted. The returned date is normalized to 7 AM
+/// on the calculated day.
+///
+/// For "never" frequency, returns a date far in the future.
+/// For null lastContacted, returns the current date.
+///
+/// @param contact The contact with lastContacted and frequency information
+/// @return DateTime representing when the contact should next be contacted
+DateTime calculateNextContact(Contact contact) {
   if (contact.lastContacted == null) {
     return DateTime.now(); // Or some other default behavior
   }
@@ -95,9 +122,19 @@ DateTime calculateNextDueDate(Contact contact) {
   }
 }
 
+/// Formats the next due contact date into a human-readable string.
+///
+/// Returns expressions like "Overdue", "Today", "Tomorrow", or "In X days"
+/// based on when the next contact is due relative to today.
+///
+/// If [lastContacted] is null, returns "Never Contacted".
+///
+/// @param lastContacted When the contact was last communicated with
+/// @param frequency The communication frequency string
+/// @return A human-readable string representing when contact is due
 String calculateNextDueDateDisplay(DateTime? lastContacted, String frequency) {
   if (lastContacted == null) return 'Never Contacted';
-  final nextDueDate = calculateNextDueDate(Contact(
+  final nextDueDate = calculateNextContact(Contact(
       firstName: '',
       frequency: frequency,
       id: 0,

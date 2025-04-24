@@ -2,7 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart'; // Import Bloc
 import 'package:flutter_contacts/flutter_contacts.dart' as fc; // Use prefix
-import 'package:recall/models/contact_frequency.dart';
+import 'package:recall/blocs/contact_list/contact_list_event.dart';
+import 'package:recall/models/contact_enums.dart';
 import 'package:recall/repositories/contact_repository.dart'; // Import Contact Repo
 import 'package:recall/repositories/usersettings_repository.dart'; // Import Settings Repo
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart'; // Import List Bloc
@@ -549,7 +550,7 @@ class _ContactImportSelectionScreenState
       // Refresh the main list
       context
           .read<ContactListBloc>()
-          .add(const ContactListEvent.loadContacts());
+          .add(const LoadContacts());
 
       // Navigate back
       Navigator.of(context).pop();
