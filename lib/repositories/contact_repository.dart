@@ -136,6 +136,39 @@ class ContactRepository implements Repository<Contact> {
     await _source.deleteAll();
     _contacts.clear(); // Clear the cache
   }
+
+  Future<void> addSampleContacts() async {
+    // Implementation to add sample contacts
+    // For example:
+    final sampleContacts = [
+      Contact(
+        firstName: "John",
+        lastName: "Doe",
+        phoneNumber: "1234567890",
+        frequency: "weekly",
+        // ...other required fields...
+      ),
+      Contact(
+        firstName: "Jane",
+        lastName: "Smith",
+        phoneNumber: "0987654321",
+        frequency: "monthly",
+        // ...other required fields...
+      ),
+      // Add more sample contacts as needed
+    ];
+    
+    for (final contact in sampleContacts) {
+      await add(contact);
+    }
+  }
+
+  Future<void> clearAllData() async {
+    // Implementation to clear all data
+    // For example:
+    await deleteAll();
+    // You might also want to clear preferences, etc.
+  }
 }
 
 class _InMemoryContactSource implements DataSource<Contact> {

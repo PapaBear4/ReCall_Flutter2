@@ -35,10 +35,19 @@ class ContactListScreen extends StatefulWidget {
   State<ContactListScreen> createState() => _ContactListScreenState();
 }
 
-class _ContactListScreenState extends State<ContactListScreen> {
+class _ContactListScreenState extends State<ContactListScreen>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _searchController =
       TextEditingController(); // Controller for search
   Timer? _debounce;
+
+  // Speed dial animation controller
+  late AnimationController _animationController;
+  late Animation<double> _buttonAnimationScale;
+  late Animation<double> _childButtonAnimation1;
+  late Animation<double> _childButtonAnimation2;
+
+  bool _isSpeedDialOpen = false;
 
   // Selection mode state
   bool _selectionMode = false;
@@ -50,6 +59,32 @@ class _ContactListScreenState extends State<ContactListScreen> {
     super.initState();
     _searchController.addListener(_onSearchChanged); // Use separate handler
     _handleInitialNotification();
+
+    // Initialize animation controller
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    // Button animations
+    _buttonAnimationScale = Tween<double>(begin: 1.0, end: 0.9).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+
+    // Child buttons animations with different intervals
+    _childButtonAnimation1 = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
+      ),
+    );
+
+    _childButtonAnimation2 = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
+      ),
+    );
   }
 
   @override
@@ -57,6 +92,7 @@ class _ContactListScreenState extends State<ContactListScreen> {
     _searchController.removeListener(_onSearchChanged); // Remove listener
     _searchController.dispose();
     _debounce?.cancel(); // Cancel timer on dispose
+    _animationController.dispose(); // Dispose animation controller
     super.dispose();
   }
 
@@ -70,8 +106,9 @@ class _ContactListScreenState extends State<ContactListScreen> {
       if (mounted) {
         // Check if still mounted before dispatching
         // Dispatch search event after delay
-        context.read<ContactListBloc>().add(
-            ApplySearch(searchTerm: _searchController.text));
+        context
+            .read<ContactListBloc>()
+            .add(ApplySearch(searchTerm: _searchController.text));
       }
     });
   }
@@ -141,16 +178,18 @@ class _ContactListScreenState extends State<ContactListScreen> {
         break;
       // Filtering
       case ListAction.filterOverdue:
-        context.read<ContactListBloc>().add(ApplyFilter(
-            filter: ContactListFilter.overdue));
+        context
+            .read<ContactListBloc>()
+            .add(ApplyFilter(filter: ContactListFilter.overdue));
         break;
       case ListAction.filterDueSoon:
-        context.read<ContactListBloc>().add(ApplyFilter(
-            filter: ContactListFilter.dueSoon));
+        context
+            .read<ContactListBloc>()
+            .add(ApplyFilter(filter: ContactListFilter.dueSoon));
         break;
       case ListAction.filterClear:
-        context.read<ContactListBloc>().add(ApplyFilter(
-            filter: ContactListFilter.none)); // Apply 'none' filter
+        context.read<ContactListBloc>().add(
+            ApplyFilter(filter: ContactListFilter.none)); // Apply 'none' filter
         break;
     }
   }
@@ -209,8 +248,9 @@ class _ContactListScreenState extends State<ContactListScreen> {
 
     if (confirmDelete && mounted) {
       // Process deletion through the bloc
-      context.read<ContactListBloc>().add(DeleteContacts(
-          contactIds: _selectedContactIds.toList()));
+      context
+          .read<ContactListBloc>()
+          .add(DeleteContacts(contactIds: _selectedContactIds.toList()));
 
       // Exit selection mode
       setState(() {
@@ -258,9 +298,8 @@ class _ContactListScreenState extends State<ContactListScreen> {
     }
 
     // Use the new UpdateContacts event instead of MarkContactsAsContacted
-    context.read<ContactListBloc>().add(
-        UpdateContacts.markAsContacted(
-            contactIds: _selectedContactIds.toList()));
+    context.read<ContactListBloc>().add(UpdateContacts.markAsContacted(
+        contactIds: _selectedContactIds.toList()));
 
     // Exit selection mode after dispatching
     setState(() {
@@ -295,10 +334,248 @@ class _ContactListScreenState extends State<ContactListScreen> {
     }
   }
 
+  // Toggle speed dial
+  void _toggleSpeedDial() {
+    setState(() {
+      _isSpeedDialOpen = !_isSpeedDialOpen;
+      if (_isSpeedDialOpen) {
+        _animationController.forward();
+      } else {
+        _animationController.reverse();
+      }
+    });
+  }
+
+  // Import contacts action
+  void _importContacts() {
+    // Close the speed dial
+    _toggleSpeedDial();
+
+    Navigator.pushNamed(context, '/importContacts');
+  }
+
+  // Add new contact action
+  void _addNewContact() {
+    // Close the speed dial
+    _toggleSpeedDial();
+
+    // Clear details BLoC for new contact
+    context.read<ContactDetailsBloc>().add(const ClearContact());
+
+    // Navigate to add new contact (passing 0 or null)
+    Navigator.pushNamed(context, '/contactDetails', arguments: 0);
+  }
+
+  // Add helper methods for the debug functions
+  void _addSampleContacts() {
+    // Show confirmation dialog first
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Add Sample Contacts'),
+          content: const Text(
+              'This will add several sample contacts to your database for testing purposes. Continue?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: const Text('Add Samples'),
+              onPressed: () {
+                // Close dialog
+                Navigator.of(context).pop();
+
+                // Add sample contacts via BLoC
+                context.read<ContactListBloc>().add(const AddSampleContacts());
+
+                // Show confirmation
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Sample contacts added')),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _clearAppData() {
+    // Show confirmation dialog with warning
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Clear All App Data'),
+          content: const Text(
+              'WARNING: This will delete ALL contacts and settings. This action cannot be undone. Continue?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: const Text('Clear Everything',
+                  style: TextStyle(color: Colors.red)),
+              onPressed: () {
+                // Close dialog
+                Navigator.of(context).pop();
+
+                // Clear all data via BLoC
+                context.read<ContactListBloc>().add(const ClearAllData());
+
+                // Show confirmation
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('All app data cleared')),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Moved drawer build into the state class
+  Widget _buildDrawer() {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: <Widget>[
+          DrawerHeader(
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor,
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  'ReCall',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Keep in touch with people who matter',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.contact_phone),
+            title: const Text('Contacts'),
+            onTap: () {
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.settings),
+            title: const Text('Settings'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/settings');
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.info_outline),
+            title: const Text('About'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/about');
+            },
+          ),
+
+          // Add debug section only in debug mode
+          if (kDebugMode) const Divider(),
+
+          if (kDebugMode)
+            ListTile(
+              leading: const Icon(Icons.bug_report, color: Colors.orange),
+              title: const Text('Developer Debug',
+                  style: TextStyle(color: Colors.orange)),
+              onTap: () {
+                Navigator.pop(context);
+                _showDebugMenu();
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  // Debug menu implementation
+  void _showDebugMenu() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Container(
+                width: double.infinity,
+                color: Colors.orange.shade100,
+                padding: const EdgeInsets.symmetric(
+                    vertical: 12.0, horizontal: 16.0),
+                child: const Text(
+                  'Developer Debug Options',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Colors.deepOrange,
+                  ),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.notifications),
+                title: const Text('View Scheduled Notifications'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              const ScheduledNotificationsScreen()));
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.people),
+                title: const Text('Add Sample Contacts'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _addSampleContacts();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete_forever, color: Colors.red),
+                title: const Text('Clear ALL App Data',
+                    style: TextStyle(color: Colors.red)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _clearAppData();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: _buildDrawer(context), // Add this line to include the drawer
+      drawer: _buildDrawer(),
       appBar: _selectionMode
           ? _buildSelectionAppBar(context)
           : _buildNormalAppBar(context),
@@ -307,70 +584,88 @@ class _ContactListScreenState extends State<ContactListScreen> {
           // Reloading should clear search/filter and fetch fresh data
           _searchController.clear(); // Clear search field visually
           // Dispatch load event which will reset state in BLoC
-          context
-              .read<ContactListBloc>()
-              .add(const LoadContacts());
+          context.read<ContactListBloc>().add(const LoadContacts());
         },
         child: BlocBuilder<ContactListBloc, ContactListState>(
-          builder: (context, state) {
-            if (state is Initial) {
-              return const Center(child: Text('Initializing contact list...'));
-            } else if (state is Loading) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is Loaded) {
-              return _buildContactList(state.displayedContacts);
-            } else if (state is Empty) {
-              return const Center(
-                  child: Text(
-                      'No contacts found. Add one using the + button below!'));
-            } else if (state is Error) {
-              return Center(child: Text('Error loading contacts: ${state.message}'));
-            } else {
-              return const Center(child: Text('Unknown state'));
-            }
+            builder: (context, state) {
+          if (state is Initial) {
+            return const Center(child: Text('Initializing contact list...'));
+          } else if (state is Loading) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (state is Loaded) {
+            return _buildContactList(state.displayedContacts);
+          } else if (state is Empty) {
+            return const Center(
+                child: Text(
+                    'No contacts found. Add one using the + button below!'));
+          } else if (state is Error) {
+            return Center(
+                child: Text('Error loading contacts: ${state.message}'));
+          } else {
+            return const Center(child: Text('Unknown state'));
           }
-        ),
+        }),
       ),
-      // BottomAppBar remains largely the same
-      bottomNavigationBar: BottomAppBar(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              const Spacer(),
-              const SizedBox(width: 10),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (kDebugMode)
-                    FloatingActionButton.small(
-                      heroTag: "btn1",
-                      tooltip: "View Scheduled Notifications",
-                      onPressed: () => _viewScheduledNotifications(context),
-                      child: const Icon(Icons.notifications),
-                    ),
-                  const SizedBox(width: 8),
-                  FloatingActionButton.small(
-                    heroTag: "btn2",
-                    tooltip: "Add New Contact",
-                    onPressed: () {
-                      // Clear details BLoC for new contact
-                      context
-                          .read<ContactDetailsBloc>()
-                          .add(const ClearContact());
-                      // Navigate to add new contact (passing 0 or null)
-                      Navigator.pushNamed(context, '/contactDetails',
-                          arguments: 0);
-                    },
-                    child: const Icon(Icons.add),
-                  ),
-                ],
-              )
-            ],
+      floatingActionButton: _buildSpeedDial(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+    );
+  }
+
+  // Build the speed dial FAB system
+  Widget _buildSpeedDial() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        // Import contacts button (first child)
+        ScaleTransition(
+          scale: _childButtonAnimation1,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 16.0),
+            child: FloatingActionButton(
+              heroTag: "importBtn",
+              backgroundColor: Colors.amber[700],
+              mini: true,
+              onPressed: _importContacts,
+              tooltip: 'Import Contacts',
+              child: const Icon(Icons.file_download),
+            ),
           ),
         ),
-      ),
+
+        // Add contact button (second child)
+        ScaleTransition(
+          scale: _childButtonAnimation2,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 16.0),
+            child: FloatingActionButton(
+              heroTag: "addBtn",
+              backgroundColor: Colors.green,
+              mini: true,
+              onPressed: _addNewContact,
+              tooltip: 'Add New Contact',
+              child: const Icon(Icons.person_add),
+            ),
+          ),
+        ),
+
+        // Main button
+        ScaleTransition(
+          scale: _buttonAnimationScale,
+          child: FloatingActionButton(
+            heroTag: "mainBtn",
+            backgroundColor:
+                Theme.of(context).primaryColor.withAlpha((255 * 0.6).round()),
+            onPressed: _toggleSpeedDial,
+            tooltip: 'Add Contact Options',
+            child: AnimatedRotation(
+              duration: const Duration(milliseconds: 300),
+              turns: _isSpeedDialOpen ? 0.125 : 0, // 45 degrees when open
+              child: const Icon(Icons.add, size: 30),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -527,8 +822,8 @@ class _ContactListScreenState extends State<ContactListScreen> {
       ],
     );
   }
-  
-// --- Widget for building the list ---
+
+  // --- Widget for building the list ---
   Widget _buildContactList(List<Contact> contactsToDisplay) {
     if (contactsToDisplay.isEmpty) {
       return const Center(child: Text('No contacts match your search/filter.'));
@@ -552,8 +847,9 @@ class _ContactListScreenState extends State<ContactListScreen> {
               if (_selectionMode) {
                 _toggleContactSelection(contact.id!);
               } else {
-                context.read<ContactDetailsBloc>().add(
-                    LoadContact(contactId: contact.id!));
+                context
+                    .read<ContactDetailsBloc>()
+                    .add(LoadContact(contactId: contact.id!));
                 Navigator.pushNamed(
                   context,
                   '/contactDetails',
@@ -571,72 +867,4 @@ class _ContactListScreenState extends State<ContactListScreen> {
       },
     );
   }
-
-  void _viewScheduledNotifications(BuildContext context) {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => const ScheduledNotificationsScreen()));
-    logger.i('LOG: Show notifications button pushed');
-  }
-}
-
-Widget _buildDrawer(BuildContext context) {
-  return Drawer(
-    child: ListView(
-      padding: EdgeInsets.zero,
-      children: <Widget>[
-        DrawerHeader(
-          decoration: BoxDecoration(
-            color: Theme.of(context).primaryColor,
-          ),
-          child: const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Text(
-                'ReCall',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Keep in touch with people who matter',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-        ),
-        ListTile(
-          leading: const Icon(Icons.contact_phone),
-          title: const Text('Contacts'),
-          onTap: () {
-            Navigator.pop(context);
-          },
-        ),
-        ListTile(
-          leading: const Icon(Icons.settings),
-          title: const Text('Settings'),
-          onTap: () {
-            Navigator.pop(context);
-            Navigator.pushNamed(context, '/settings');
-          },
-        ),
-        ListTile(
-          leading: const Icon(Icons.info_outline),
-          title: const Text('About'),
-          onTap: () {
-            Navigator.pop(context);
-            Navigator.pushNamed(context, '/about');
-          },
-        ),
-      ],
-    ),
-  );
 }

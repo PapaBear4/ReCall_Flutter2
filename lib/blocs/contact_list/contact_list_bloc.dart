@@ -33,6 +33,8 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
     on<ApplyFilter>(_onApplyFilter);
     on<DeleteContacts>(_onDeleteContacts);
     on<UpdateContacts>(_onUpdateContacts);
+    on<AddSampleContacts>(_onAddSampleContacts);
+    on<ClearAllData>(_onClearAllData);
   }
 
   /// Handles the LoadContacts event by fetching contacts from the repository.
@@ -274,6 +276,40 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
       emit(Error(e.toString()));
       // Re-emit the previous state to ensure UI stability
       emit(currentState);
+    }
+  }
+
+  /// Handles the AddSampleContacts event by adding sample contacts.
+  Future<void> _onAddSampleContacts(
+      AddSampleContacts event, Emitter<ContactListState> emit) async {
+    emit(const Loading());
+    try {
+      await _contactRepository.addSampleContacts();
+      final contacts = await _contactRepository.getAll();
+      emit(Loaded(
+        originalContacts: contacts,
+        displayedContacts: contacts,
+        sortField: ContactListSortField.dueDate,
+        ascending: true,
+        searchTerm: '',
+        currentFilter: ContactListFilter.none,
+      ));
+    } catch (e) {
+      logger.e('Error adding sample contacts: $e');
+      emit(Error(e.toString()));
+    }
+  }
+
+  /// Handles the ClearAllData event by clearing all data.
+  Future<void> _onClearAllData(
+      ClearAllData event, Emitter<ContactListState> emit) async {
+    emit(const Loading());
+    try {
+      await _contactRepository.clearAllData();
+      emit(const Empty());
+    } catch (e) {
+      logger.e('Error clearing data: $e');
+      emit(Error(e.toString()));
     }
   }
 

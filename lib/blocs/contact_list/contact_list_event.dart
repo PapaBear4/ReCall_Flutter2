@@ -121,3 +121,13 @@ class UpdateContacts extends ContactListEvent {
   @override
   List<Object?> get props => [contacts, contactIds, markAsContacted];
 }
+
+/// Event to add sample contacts for testing
+class AddSampleContacts extends ContactListEvent {
+  const AddSampleContacts();
+}
+
+/// Event to clear all app data
+class ClearAllData extends ContactListEvent {
+  const ClearAllData();
+}
