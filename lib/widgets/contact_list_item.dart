@@ -102,19 +102,12 @@ class ContactListItem extends StatelessWidget {
                           ? contact.lastName[0].toUpperCase()
                           : '?')),
             ),
-            title: Text(displayName),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (secondaryName
-                    .isNotEmpty) // Only show if there's a secondary name
-                  Text(secondaryName,
-                      style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                Text(
-                    calculateNextDueDateDisplay(
-                        contact.lastContacted, contact.frequency),
-                    style: const TextStyle(fontSize: 12)),
-              ],
+            title: Text(
+              displayName,
+              style: const TextStyle(
+                fontSize: 20, // Increased font size further from 16 to 17
+                fontWeight: FontWeight.w500, // Kept the same weight
+              ),
             ),
             trailing: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -126,17 +119,15 @@ class ContactListItem extends StatelessWidget {
                   style: isContactOverdue // Highlight if overdue
                       ? const TextStyle(
                           color: Colors.red, fontWeight: FontWeight.bold)
-                      : const TextStyle(
-                          fontSize: 12), // Smaller font size for non-overdue
+                      : const TextStyle(fontSize: 14),
                 ),
                 Text(
-                    // Show frequency
-                    contact.frequency != ContactFrequency.never.value
-                        ? contact.frequency
-                        : '', // Don't show 'never' explicitly
-                    style: const TextStyle(
-                        fontSize: 10,
-                        color: Colors.grey)), // Smaller/greyed out
+                  // Show frequency
+                  contact.frequency != ContactFrequency.never.value
+                      ? contact.frequency
+                      : '', // Don't show 'never' explicitly
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
               ],
             ),
             onTap: onTap, // Use the passed onTap callback
