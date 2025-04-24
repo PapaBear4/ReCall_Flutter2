@@ -12,6 +12,7 @@ import 'package:recall/utils/logger.dart';
 import 'package:recall/models/contact.dart'
     as app_contact; // Alias for your app's Contact model
 
+//-------------------- MAIN SCREEN WIDGET --------------------
 class ContactImportSelectionScreen extends StatefulWidget {
   const ContactImportSelectionScreen({super.key});
 
@@ -20,6 +21,7 @@ class ContactImportSelectionScreen extends StatefulWidget {
       _ContactImportSelectionScreenState();
 }
 
+//-------------------- HELPER CLASSES --------------------
 // Helper class to manage selection state for each contact
 class ContactSelectionInfo {
   final fc.Contact contact;
@@ -31,6 +33,7 @@ class ContactSelectionInfo {
   ContactSelectionInfo(this.contact, {this.isSelected = false});
 }
 
+//-------------------- PHONE/EMAIL SELECTION DIALOG --------------------
 class PhoneEmailSelectionDialog extends StatefulWidget {
   final fc.Contact contact;
   final fc.Phone? initialPhone;
@@ -177,6 +180,7 @@ class _PhoneEmailSelectionDialogState extends State<PhoneEmailSelectionDialog> {
   }
 }
 
+//-------------------- SORT OPTIONS --------------------
 // Sort options - aligned with Contact model properties
 enum SortOption {
   firstNameAsc, // Sort by first name ascending
@@ -187,6 +191,7 @@ enum SortOption {
   withEmail // Contacts with emails first
 }
 
+//-------------------- MAIN SCREEN STATE --------------------
 class _ContactImportSelectionScreenState
     extends State<ContactImportSelectionScreen> {
   final ContactImporter _importer = ContactImporter();
@@ -208,6 +213,7 @@ class _ContactImportSelectionScreenState
   bool _showOnlyWithPhone = false;
   bool _showOnlyWithEmail = false;
 
+  //-------------------- LIFECYCLE METHODS --------------------
   @override
   void initState() {
     super.initState();
@@ -222,6 +228,7 @@ class _ContactImportSelectionScreenState
     super.dispose();
   }
 
+  //-------------------- EVENT HANDLERS --------------------
   void _onSearchChanged() {
     setState(() {
       _searchQuery = _searchController.text;
@@ -229,6 +236,7 @@ class _ContactImportSelectionScreenState
     });
   }
 
+  //-------------------- DATA LOADING --------------------
   Future<void> _fetchContacts() async {
     if (!mounted) return;
     setState(() {
@@ -266,6 +274,7 @@ class _ContactImportSelectionScreenState
     });
   }
 
+  //-------------------- CONTACT SORTING & FILTERING --------------------
   // Sort contacts alphabetically for display
   void _sortSelectableContacts() {
     _selectableContacts.sort((a, b) {
@@ -275,6 +284,112 @@ class _ContactImportSelectionScreenState
     });
   }
 
+  // Apply search, filters, and sort to contacts
+  void _applyFiltersAndSort() {
+    setState(() {
+      _filteredContacts = _selectableContacts.where((item) {
+        // Apply search query
+        if (_searchQuery.isNotEmpty) {
+          return item.contact.displayName
+              .toLowerCase()
+              .contains(_searchQuery.toLowerCase());
+        }
+        return true;
+      }).where((item) {
+        // Apply phone filter
+        if (_showOnlyWithPhone && item.contact.phones.isEmpty) {
+          return false;
+        }
+        // Apply email filter
+        if (_showOnlyWithEmail && item.contact.emails.isEmpty) {
+          return false;
+        }
+        return true;
+      }).toList();
+
+      // Apply sort
+      _sortFilteredContacts();
+    });
+  }
+
+  // Apply sorting to filtered contacts based on current sort option
+  void _sortFilteredContacts() {
+    switch (_currentSortOption) {
+      case SortOption.firstNameAsc:
+        _filteredContacts.sort((a, b) => a.contact.name.first
+            .toLowerCase()
+            .compareTo(b.contact.name.first.toLowerCase()));
+        break;
+      case SortOption.firstNameDesc:
+        _filteredContacts.sort((a, b) => b.contact.name.first
+            .toLowerCase()
+            .compareTo(a.contact.name.first.toLowerCase()));
+        break;
+      case SortOption.lastNameAsc:
+        _filteredContacts.sort((a, b) => a.contact.name.last
+            .toLowerCase()
+            .compareTo(b.contact.name.last.toLowerCase()));
+        break;
+      case SortOption.lastNameDesc:
+        _filteredContacts.sort((a, b) => b.contact.name.last
+            .toLowerCase()
+            .compareTo(a.contact.name.last.toLowerCase()));
+        break;
+      case SortOption.withPhone:
+        _filteredContacts.sort((a, b) {
+          if (a.contact.phones.isNotEmpty && b.contact.phones.isEmpty) {
+            return -1;
+          } else if (a.contact.phones.isEmpty && b.contact.phones.isNotEmpty) {
+            return 1;
+          } else {
+            // Secondary sort by first name
+            return a.contact.name.first
+                .toLowerCase()
+                .compareTo(b.contact.name.first.toLowerCase());
+          }
+        });
+        break;
+      case SortOption.withEmail:
+        _filteredContacts.sort((a, b) {
+          if (a.contact.emails.isNotEmpty && b.contact.emails.isEmpty) {
+            return -1;
+          } else if (a.contact.emails.isEmpty && b.contact.emails.isNotEmpty) {
+            return 1;
+          } else {
+            // Secondary sort by first name
+            return a.contact.name.first
+                .toLowerCase()
+                .compareTo(b.contact.name.first.toLowerCase());
+          }
+        });
+        break;
+    }
+  }
+
+  // Change the sort option and reapply sorting
+  void _changeSortOption(SortOption option) {
+    setState(() {
+      _currentSortOption = option;
+      _sortFilteredContacts();
+    });
+  }
+
+  // Toggle filter options
+  void _togglePhoneFilter(bool value) {
+    setState(() {
+      _showOnlyWithPhone = value;
+      _applyFiltersAndSort();
+    });
+  }
+
+  void _toggleEmailFilter(bool value) {
+    setState(() {
+      _showOnlyWithEmail = value;
+      _applyFiltersAndSort();
+    });
+  }
+
+  //-------------------- ERROR HANDLING --------------------
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
@@ -291,6 +406,7 @@ class _ContactImportSelectionScreenState
     );
   }
 
+  //-------------------- SELECTION MANAGEMENT --------------------
   void _toggleSelectAll(bool? newValue) {
     if (newValue == null) return;
     setState(() {
@@ -360,6 +476,7 @@ class _ContactImportSelectionScreenState
     // Note: We are not implementing tristate here for simplicity
   }
 
+  //-------------------- IMPORT PROCESSING --------------------
   // --- PHASE 4: Import Action ---
   Future<void> _triggerImport() async {
     if (!mounted) return;
@@ -386,6 +503,7 @@ class _ContactImportSelectionScreenState
       final String defaultFrequency = settings.isNotEmpty
           ? settings.first.defaultFrequency
           : ContactFrequency.never.value;
+      final DateTime now = DateTime.now();
 
       List<app_contact.Contact> contactsToAdd = [];
       List<String> skippedContactsLog = [];
@@ -509,6 +627,8 @@ class _ContactImportSelectionScreenState
               : null, // Use first note if exists
           xHandle: xHandle,
           linkedInUrl: linkedInUrl,
+          // Set lastContacted to now for newly imported contacts
+          lastContacted: now,
           // Map other fields if needed (youtube, instagram, facebook, snapchat)
           // youtubeUrl: fcContact.websites.firstWhereOrNull((w) => w.url.contains('youtube.com'))?.url,
           // instagramHandle: fcContact.socialMedias.firstWhereOrNull((s) => s.label == fc.SocialMediaLabel.instagram)?.userName,
@@ -568,6 +688,7 @@ class _ContactImportSelectionScreenState
     }
   }
 
+  //-------------------- UI BUILDING --------------------
   @override
   Widget build(BuildContext context) {
     // Show loading overlay if saving
@@ -605,7 +726,7 @@ class _ContactImportSelectionScreenState
               : _selectableContacts.isEmpty
                   ? const Center(child: Text('No contacts found on device.'))
                   : Column(children: [
-                      // Search Bar
+                      //-------------------- SEARCH BAR --------------------
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: TextField(
@@ -631,7 +752,7 @@ class _ContactImportSelectionScreenState
                         ),
                       ),
 
-                      // Sort and Filter Controls
+                      //-------------------- SORT & FILTER CONTROLS --------------------
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -727,7 +848,7 @@ class _ContactImportSelectionScreenState
                         ),
                       ),
 
-                      // Contact List (Expanded to fill remaining space)
+                      //-------------------- CONTACT LIST --------------------
                       Expanded(
                         child: _filteredContacts.isEmpty
                             ? const Center(
@@ -820,110 +941,5 @@ class _ContactImportSelectionScreenState
             : null,
       ),
     );
-  }
-
-  // Apply search, filters, and sort to contacts
-  void _applyFiltersAndSort() {
-    setState(() {
-      _filteredContacts = _selectableContacts.where((item) {
-        // Apply search query
-        if (_searchQuery.isNotEmpty) {
-          return item.contact.displayName
-              .toLowerCase()
-              .contains(_searchQuery.toLowerCase());
-        }
-        return true;
-      }).where((item) {
-        // Apply phone filter
-        if (_showOnlyWithPhone && item.contact.phones.isEmpty) {
-          return false;
-        }
-        // Apply email filter
-        if (_showOnlyWithEmail && item.contact.emails.isEmpty) {
-          return false;
-        }
-        return true;
-      }).toList();
-
-      // Apply sort
-      _sortFilteredContacts();
-    });
-  }
-
-  // Apply sorting to filtered contacts based on current sort option
-  void _sortFilteredContacts() {
-    switch (_currentSortOption) {
-      case SortOption.firstNameAsc:
-        _filteredContacts.sort((a, b) => a.contact.name.first
-            .toLowerCase()
-            .compareTo(b.contact.name.first.toLowerCase()));
-        break;
-      case SortOption.firstNameDesc:
-        _filteredContacts.sort((a, b) => b.contact.name.first
-            .toLowerCase()
-            .compareTo(a.contact.name.first.toLowerCase()));
-        break;
-      case SortOption.lastNameAsc:
-        _filteredContacts.sort((a, b) => a.contact.name.last
-            .toLowerCase()
-            .compareTo(b.contact.name.last.toLowerCase()));
-        break;
-      case SortOption.lastNameDesc:
-        _filteredContacts.sort((a, b) => b.contact.name.last
-            .toLowerCase()
-            .compareTo(a.contact.name.last.toLowerCase()));
-        break;
-      case SortOption.withPhone:
-        _filteredContacts.sort((a, b) {
-          if (a.contact.phones.isNotEmpty && b.contact.phones.isEmpty) {
-            return -1;
-          } else if (a.contact.phones.isEmpty && b.contact.phones.isNotEmpty) {
-            return 1;
-          } else {
-            // Secondary sort by first name
-            return a.contact.name.first
-                .toLowerCase()
-                .compareTo(b.contact.name.first.toLowerCase());
-          }
-        });
-        break;
-      case SortOption.withEmail:
-        _filteredContacts.sort((a, b) {
-          if (a.contact.emails.isNotEmpty && b.contact.emails.isEmpty) {
-            return -1;
-          } else if (a.contact.emails.isEmpty && b.contact.emails.isNotEmpty) {
-            return 1;
-          } else {
-            // Secondary sort by first name
-            return a.contact.name.first
-                .toLowerCase()
-                .compareTo(b.contact.name.first.toLowerCase());
-          }
-        });
-        break;
-    }
-  }
-
-  // Change the sort option and reapply sorting
-  void _changeSortOption(SortOption option) {
-    setState(() {
-      _currentSortOption = option;
-      _sortFilteredContacts();
-    });
-  }
-
-  // Toggle filter options
-  void _togglePhoneFilter(bool value) {
-    setState(() {
-      _showOnlyWithPhone = value;
-      _applyFiltersAndSort();
-    });
-  }
-
-  void _toggleEmailFilter(bool value) {
-    setState(() {
-      _showOnlyWithEmail = value;
-      _applyFiltersAndSort();
-    });
   }
 }

@@ -555,7 +555,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               : _startRestoreProcess, // Call import function
                         ),
                         const Divider(),
-                        const Divider(),
                       ],
                     ),
                     // Loading Indicator Overlay

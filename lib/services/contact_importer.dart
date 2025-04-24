@@ -4,6 +4,7 @@ import 'package:flutter_contacts/flutter_contacts.dart'
 import 'package:permission_handler/permission_handler.dart';
 import 'package:recall/utils/logger.dart'; // Your logger
 
+//-------------------- RESULT TYPES --------------------
 // Define a result type for clarity
 enum ContactImportResultStatus {
   success,
@@ -24,13 +25,14 @@ class ContactImportResult {
   });
 }
 
+//-------------------- CONTACT IMPORTER SERVICE --------------------
 class ContactImporter {
   /// Fetches and filters contacts from the device.
   /// Handles permission requests.
   Future<ContactImportResult> fetchAndFilterDeviceContacts() async {
     logger.i("Starting contact import process...");
 
-    // --- 1. Permission Handling ---
+    //-------------------- PERMISSION HANDLING --------------------
     PermissionStatus status = await Permission.contacts.status;
     logger.i("Initial contacts permission status: $status");
 
@@ -56,7 +58,7 @@ class ContactImporter {
           errorMessage: 'Contacts permission denied.');
     }
 
-    // --- 2. Contact Fetching ---
+    //-------------------- CONTACT FETCHING --------------------
     logger.i("Contacts permission granted. Fetching contacts...");
     List<fc.Contact> deviceContacts = [];
     try {
@@ -76,7 +78,7 @@ class ContactImporter {
           errorMessage: "Error fetching contacts: $e");
     }
 
-    // --- 3. Business Contact Filtering ---
+    //-------------------- CONTACT FILTERING --------------------
     // Filter out contacts that have a company name but empty first/last names
     final originalCount = deviceContacts.length;
     List<fc.Contact> filteredContacts = deviceContacts.where((contact) {
@@ -106,7 +108,7 @@ class ContactImporter {
       logger.i("No business-only contacts needed filtering.");
     }
 
-    // --- 4. Return Success ---
+    //-------------------- RETURN RESULT --------------------
     logger.i(
         "Contact fetching and filtering complete. Returning ${filteredContacts.length} contacts.");
     return ContactImportResult(
