@@ -32,12 +32,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isLoading = true;
   bool _isBusy = false;
 
+  //-------------------- LIFECYCLE METHODS --------------------
   @override
   void initState() {
     super.initState();
     _loadSettings();
   }
 
+  //-------------------- DATA LOADING --------------------
   Future<void> _loadSettings() async {
     if (!mounted) return;
     setState(() {
@@ -100,6 +102,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  //-------------------- NOTIFICATION SETTINGS --------------------
   Future<void> _pickNotificationTime() async {
     if (_userSettings == null) {
       return; // Don't show picker if settings haven't loaded
@@ -136,6 +139,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  //-------------------- BACKUP FUNCTIONALITY --------------------
   // Saves the JSON string using file_picker
   Future<void> _saveBackupFile(String jsonString) async {
     setState(() => _isBusy = true); // Show loading indicator
@@ -284,6 +288,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  //-------------------- RESTORE FUNCTIONALITY --------------------
   // Orchestrates the import process
   Future<void> _startRestoreProcess() async {
     if (!mounted) return;
@@ -430,6 +435,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  //-------------------- UI BUILDING --------------------
   @override
   Widget build(BuildContext context) {
     if (!_isLoading && _userSettings != null) {
@@ -453,7 +459,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ListView(
                       padding: const EdgeInsets.all(16.0),
                       children: <Widget>[
-                        // NOTIFICATION TIME
+                        //-------------------- NOTIFICATION TIME SECTION --------------------
                         ListTile(
                           title: const Text('Notification Time'),
                           subtitle: Text(
@@ -464,7 +470,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           onTap: _pickNotificationTime,
                         ),
                         const Divider(),
-                        // CONTACT FREQUENCY
+                        //-------------------- CONTACT FREQUENCY SECTION --------------------
                         ListTile(
                           title: const Text('Default New Contact Frequency'),
                           subtitle: Text(
@@ -524,19 +530,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         ),
                         const Divider(),
-                        // --- IMPORT TILE ---
-                        ListTile(
-                          title: const Text('Import Contacts'),
-                          subtitle:
-                              const Text('Import from device address book'),
-                          trailing:
-                              const Icon(Icons.download_for_offline_outlined),
-                          onTap: () {
-                            // Navigate to the new selection screen
-                            Navigator.pushNamed(context, '/importContacts');
-                          },
-                        ),
-                        const Divider(),
+                        //-------------------- DATA MANAGEMENT SECTION --------------------
                         // --- BACKUP TILE ---
                         ListTile(
                           title: const Text('Backup Data'),
@@ -562,121 +556,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         const Divider(),
                         const Divider(),
-                        // --- DEBUG SECTION ---
-                        if (kDebugMode) ...[
-                          const SizedBox(height: 20),
-                          Text('Debug Options',
-                              style: Theme.of(context).textTheme.titleMedium),
-                          const Divider(),
-                          ListTile(
-                            title: const Text('Add Sample Device Contacts'),
-                            subtitle: const Text(
-                                'Creates ~10 contacts in device list for testing import.'),
-                            leading: const Icon(Icons.bug_report,
-                                color: Colors.orange),
-                            enabled: !_isBusy,
-                            // Updated onTap to call the utility function
-                            onTap: _isBusy
-                                ? null
-                                : () async {
-                                    if (!mounted) return;
-                                    setState(() => _isBusy = true);
-                                    ScaffoldMessenger.of(context)
-                                        .hideCurrentSnackBar(); // Hide previous messages
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                          content:
-                                              Text('Adding debug contacts...')),
-                                    );
-
-                                    // Call the static utility function
-                                    final String resultMessage =
-                                        await DebugUtils
-                                            .addSampleDeviceContacts();
-
-                                    if (!mounted) return;
-                                    setState(() => _isBusy = false);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text(resultMessage)),
-                                    );
-                                  },
-                          ),
-                          const Divider(),
-                                                  // --- NEW CLEAR APP DATA TILE ---
-                          ListTile(
-                            title: const Text('Clear All App Data'),
-                            subtitle: const Text(
-                                'Deletes all contacts, settings (ObjectBox) & cache (SharedPreferences). Requires restart or refresh.'),
-                            leading: const Icon(Icons.delete_forever, color: Colors.red),
-                            enabled: !_isBusy,
-                            onTap: _isBusy
-                                ? null
-                                : () async {
-                                    // Confirmation Dialog
-                                    final bool? confirmClear = await showDialog<bool>(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return AlertDialog(
-                                          title: const Text('Confirm Clear Data'),
-                                          content: const Text(
-                                              'This will permanently delete all contacts and settings stored within the app (ObjectBox) and clear cached preferences. This cannot be undone. Are you sure?'),
-                                          actions: <Widget>[
-                                            TextButton(
-                                              child: const Text('Cancel'),
-                                              onPressed: () => Navigator.of(context).pop(false),
-                                            ),
-                                            TextButton(
-                                              child: const Text('Clear Data', style: TextStyle(color: Colors.red)),
-                                              onPressed: () => Navigator.of(context).pop(true),
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    );
-
-                                    if (confirmClear != true || !mounted) {
-                                      if (mounted && confirmClear == false) { // Only show cancelled if explicitly cancelled
-                                         ScaffoldMessenger.of(context).showSnackBar(
-                                           const SnackBar(content: Text('Clear data cancelled.')),
-                                         );
-                                      }
-                                      return; // Exit if not confirmed or widget unmounted
-                                    }
-
-
-                                    if (!mounted) return;
-                                    setState(() => _isBusy = true);
-                                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Clearing all app data...')),
-                                    );
-
-                                    // Get repositories
-                                    final contactRepo = context.read<ContactRepository>();
-                                    final settingsRepo = context.read<UserSettingsRepository>();
-
-                                    // Call the static utility function
-                                    final String resultMessage = await DebugUtils.clearAllAppData(contactRepo, settingsRepo);
-
-                                    if (!mounted) return;
-
-                                    // Refresh UI elements after clearing
-                                    // 1. Reload settings (will create defaults if missing)
-                                    await _loadSettings();
-                                    // 2. Trigger contact list reload
-                                    context.read<ContactListBloc>().add(const LoadContacts());
-
-
-                                    setState(() => _isBusy = false);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text(resultMessage)),
-                                    );
-                                  },
-                          ),
-                          const Divider(),
-                          // --- END NEW CLEAR APP DATA TILE ---
-]
-                        // --- END DEBUG SECTION ---
                       ],
                     ),
                     // Loading Indicator Overlay
