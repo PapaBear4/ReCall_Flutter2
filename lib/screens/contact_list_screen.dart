@@ -249,8 +249,9 @@ class _ContactListScreenState extends State<ContactListScreen> {
         ) ??
         false; // Default to false if dialog dismissed
 
-    if (!confirmMark || !mounted)
+    if (!confirmMark || !mounted) {
       return; // Exit if not confirmed or widget unmounted
+    }
 
     // Dispatch event to the BLoC
     context.read<ContactListBloc>().add(
@@ -308,18 +309,20 @@ class _ContactListScreenState extends State<ContactListScreen> {
         },
         child: BlocBuilder<ContactListBloc, ContactListState>(
             builder: (context, state) {
-          // Handle different states
-          return state.map(
-            initial: (_) => const Center(child: CircularProgressIndicator()),
-            loading: (_) => const Center(child: CircularProgressIndicator()),
-            empty: (_) => const Center(
-                child: Text('No contacts found.')), // Original list empty
-            // Use loadedState.displayedContacts for the list
-            loaded: (loadedState) => _buildContactList(
-                loadedState.displayedContacts), // Pass displayed list
-            error: (errorState) =>
-                Center(child: Text("Error: ${errorState.message}")),
-          );
+          // --- Replace state.map with switch ---
+          return switch (state) {
+            _Initial() =>
+              const Center(child: Text('Initializing contact list...')),
+            _Loading() => const Center(child: CircularProgressIndicator()),
+            _Loaded(displayedContacts: final contacts) =>
+              _buildContactList(contacts),
+            _Empty() => const Center(
+                child: Text(
+                    'No contacts found. Add one using the + button below!')),
+            _Error(message: final msg) =>
+              Center(child: Text('Error loading contacts: $msg')),
+          };
+          // --- End switch ---
         }),
       ),
       // BottomAppBar remains largely the same
@@ -329,15 +332,7 @@ class _ContactListScreenState extends State<ContactListScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              // Info text (can be removed if cluttering)
-              // const Expanded(
-              //   child: Text(
-              //     'Swipe/Tap list item to mark as contacted',
-              //     style: TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
-              //     overflow: TextOverflow.ellipsis,
-              //   ),
-              // ),
-              const Spacer(), // Pushes buttons to the right
+              const Spacer(),
               const SizedBox(width: 10),
               Row(
                 mainAxisSize: MainAxisSize.min,
@@ -501,7 +496,7 @@ class _ContactListScreenState extends State<ContactListScreen> {
               : () => _markSelectedAsContacted(context), // Call new handler
         ),
         // --- END Mark as Contacted Button ---
-// Delete button
+        // Delete button
         IconButton(
           icon: const Icon(Icons.delete, color: Colors.white),
           tooltip: 'Delete Selected',
@@ -513,15 +508,16 @@ class _ContactListScreenState extends State<ContactListScreen> {
           icon: const Icon(Icons.select_all, color: Colors.white),
           tooltip: 'Select All',
           onPressed: () {
-            final contacts = context.read<ContactListBloc>().state.maybeMap(
-                  loaded: (state) => state.displayedContacts,
-                  orElse: () => <Contact>[],
-                );
-
-            setState(() {
-              _selectedContactIds
-                  .addAll(contacts.map((contact) => contact.id!));
-            });
+            // --- Replace maybeMap with if check ---
+            final currentState = context.read<ContactListBloc>().state;
+            if (currentState is _Loaded) {
+              final contacts = currentState.displayedContacts;
+              setState(() {
+                _selectedContactIds
+                    .addAll(contacts.map((contact) => contact.id!));
+              });
+            }
+            // --- End if check ---
           },
         ),
       ],
@@ -530,35 +526,29 @@ class _ContactListScreenState extends State<ContactListScreen> {
   // End of _ContactListScreenState
 
 // --- Widget for building the list ---
-// Takes the list to display as parameter (now the filtered/searched list)
   Widget _buildContactList(List<Contact> contactsToDisplay) {
     if (contactsToDisplay.isEmpty) {
       return const Center(child: Text('No contacts match your search/filter.'));
     }
 
-    // Access state variables from the parent class
     return ListView.builder(
       itemCount: contactsToDisplay.length,
       itemBuilder: (context, index) {
         final contact = contactsToDisplay[index];
-        // Check if the contact ID exists and is not null before checking selection
         final bool isSelected =
             contact.id != null && _selectedContactIds.contains(contact.id!);
 
         return ContactListItem(
             contact: contact,
-            isSelected: isSelected, // Pass selection state
-            // ----- Pass Callbacks -----
+            isSelected: isSelected,
             onTap: () {
               if (contact.id == null) {
                 logger.e("Error: Tapped contact with null ID.");
-                return; // Should not happen if data is valid
+                return;
               }
               if (_selectionMode) {
-                // If in selection mode, toggle selection
                 _toggleContactSelection(contact.id!);
               } else {
-                // If not in selection mode, navigate to details
                 context.read<ContactDetailsBloc>().add(
                     ContactDetailsEvent.loadContact(contactId: contact.id!));
                 Navigator.pushNamed(
@@ -569,20 +559,16 @@ class _ContactListScreenState extends State<ContactListScreen> {
               }
             },
             onLongPress: () {
-              // Always trigger long press logic regardless of current mode
               if (contact.id != null) {
                 _onContactLongPress(contact);
               } else {
                 logger.e("Error: Long-pressed contact with null ID.");
               }
-            }
-            // ----- End Callbacks -----
-            );
+            });
       },
     );
   }
 
-// Function to navigate to scheduled notifications screen (no change needed)
   void _viewScheduledNotifications(BuildContext context) {
     Navigator.push(
         context,
@@ -628,24 +614,22 @@ Widget _buildDrawer(BuildContext context) {
           leading: const Icon(Icons.contact_phone),
           title: const Text('Contacts'),
           onTap: () {
-            Navigator.pop(context); // Close the drawer
-            // Already on contacts page, so no navigation needed
+            Navigator.pop(context);
           },
         ),
         ListTile(
           leading: const Icon(Icons.settings),
           title: const Text('Settings'),
           onTap: () {
-            Navigator.pop(context); // Close the drawer first
+            Navigator.pop(context);
             Navigator.pushNamed(context, '/settings');
           },
         ),
-        // Add About screen link
         ListTile(
           leading: const Icon(Icons.info_outline),
           title: const Text('About'),
           onTap: () {
-            Navigator.pop(context); // Close the drawer first
+            Navigator.pop(context);
             Navigator.pushNamed(context, '/about');
           },
         ),

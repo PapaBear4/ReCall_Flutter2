@@ -6,8 +6,8 @@ part of 'usersettings.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_UserSettings _$UserSettingsFromJson(Map<String, dynamic> json) =>
-    _UserSettings(
+_$UserSettingsImpl _$$UserSettingsImplFromJson(Map<String, dynamic> json) =>
+    _$UserSettingsImpl(
       id: (json['id'] as num?)?.toInt(),
       remindersEnabled: json['remindersEnabled'] as bool? ?? true,
       alertsEnabled: json['alertsEnabled'] as bool? ?? true,
@@ -17,7 +17,7 @@ _UserSettings _$UserSettingsFromJson(Map<String, dynamic> json) =>
           json['defaultFrequency'] as String? ?? ContactFrequency.defaultValue,
     );
 
-Map<String, dynamic> _$UserSettingsToJson(_UserSettings instance) =>
+Map<String, dynamic> _$$UserSettingsImplToJson(_$UserSettingsImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
       'remindersEnabled': instance.remindersEnabled,

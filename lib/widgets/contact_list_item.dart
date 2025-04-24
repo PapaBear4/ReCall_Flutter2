@@ -25,9 +25,9 @@ class ContactListItem extends StatelessWidget {
   void _markContacted(BuildContext context, Contact contact) {
     final updatedContact = contact.copyWith(lastContacted: DateTime.now());
     // Dispatch event to update contact in BLoC
-    context
-        .read<ContactListBloc>()
-        .add(ContactListEvent.updateContactFromList(updatedContact));
+  context.read<ContactListBloc>().add(
+      ContactListEvent.updateContactFromList(contact: updatedContact) // Use named parameter 'contact:'
+  );
     ScaffoldMessenger.of(context).clearSnackBars();
     // Determine name for snackbar based on nickname presence
     final nameForSnackbar =

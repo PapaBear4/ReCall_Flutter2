@@ -1,4 +1,3 @@
-// dart format width=80
 // coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint
@@ -10,136 +9,57 @@ part of 'contact.dart';
 // FreezedGenerator
 // **************************************************************************
 
-// dart format off
 T _$identity<T>(T value) => value;
 
+final _privateConstructorUsedError = UnsupportedError(
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
+
+Contact _$ContactFromJson(Map<String, dynamic> json) {
+  return _Contact.fromJson(json);
+}
+
 /// @nodoc
-mixin _$Contact implements DiagnosticableTreeMixin {
+mixin _$Contact {
   @Id(assignable: true)
-  int? get id;
-  String get firstName;
-  String get lastName;
-  String? get nickname;
-  String get frequency; // Store the String representation
+  int? get id => throw _privateConstructorUsedError;
+  String get firstName => throw _privateConstructorUsedError;
+  String get lastName => throw _privateConstructorUsedError;
+  String? get nickname => throw _privateConstructorUsedError;
+  String get frequency =>
+      throw _privateConstructorUsedError; // Store the String representation
   @Property(type: PropertyType.date)
-  DateTime? get birthday;
+  DateTime? get birthday => throw _privateConstructorUsedError;
   @Property(type: PropertyType.date)
-  DateTime? get lastContacted;
+  DateTime? get lastContacted => throw _privateConstructorUsedError;
   @Property(type: PropertyType.date)
-  DateTime? get anniversary;
-  String? get phoneNumber; // Single phone number (optional)
-  List<String>? get emails; // List of emails (optional)
-  String? get notes; // Notes field (optional)
+  DateTime? get anniversary => throw _privateConstructorUsedError;
+  String? get phoneNumber =>
+      throw _privateConstructorUsedError; // Single phone number (optional)
+  List<String>? get emails =>
+      throw _privateConstructorUsedError; // List of emails (optional)
+  String? get notes =>
+      throw _privateConstructorUsedError; // Notes field (optional)
 // Specific Social Media Fields (optional Strings)
-  String? get youtubeUrl;
-  String? get instagramHandle;
-  String? get facebookUrl;
-  String? get snapchatHandle;
-  String? get xHandle;
-  String? get linkedInUrl;
+  String? get youtubeUrl => throw _privateConstructorUsedError;
+  String? get instagramHandle => throw _privateConstructorUsedError;
+  String? get facebookUrl => throw _privateConstructorUsedError;
+  String? get snapchatHandle => throw _privateConstructorUsedError;
+  String? get xHandle => throw _privateConstructorUsedError;
+  String? get linkedInUrl => throw _privateConstructorUsedError;
+
+  /// Serializes this Contact to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
   /// Create a copy of Contact
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  @pragma('vm:prefer-inline')
-  $ContactCopyWith<Contact> get copyWith =>
-      _$ContactCopyWithImpl<Contact>(this as Contact, _$identity);
-
-  /// Serializes this Contact to a JSON map.
-  Map<String, dynamic> toJson();
-
-  @override
-  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-    properties
-      ..add(DiagnosticsProperty('type', 'Contact'))
-      ..add(DiagnosticsProperty('id', id))
-      ..add(DiagnosticsProperty('firstName', firstName))
-      ..add(DiagnosticsProperty('lastName', lastName))
-      ..add(DiagnosticsProperty('nickname', nickname))
-      ..add(DiagnosticsProperty('frequency', frequency))
-      ..add(DiagnosticsProperty('birthday', birthday))
-      ..add(DiagnosticsProperty('lastContacted', lastContacted))
-      ..add(DiagnosticsProperty('anniversary', anniversary))
-      ..add(DiagnosticsProperty('phoneNumber', phoneNumber))
-      ..add(DiagnosticsProperty('emails', emails))
-      ..add(DiagnosticsProperty('notes', notes))
-      ..add(DiagnosticsProperty('youtubeUrl', youtubeUrl))
-      ..add(DiagnosticsProperty('instagramHandle', instagramHandle))
-      ..add(DiagnosticsProperty('facebookUrl', facebookUrl))
-      ..add(DiagnosticsProperty('snapchatHandle', snapchatHandle))
-      ..add(DiagnosticsProperty('xHandle', xHandle))
-      ..add(DiagnosticsProperty('linkedInUrl', linkedInUrl));
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is Contact &&
-            (identical(other.id, id) || other.id == id) &&
-            (identical(other.firstName, firstName) ||
-                other.firstName == firstName) &&
-            (identical(other.lastName, lastName) ||
-                other.lastName == lastName) &&
-            (identical(other.nickname, nickname) ||
-                other.nickname == nickname) &&
-            (identical(other.frequency, frequency) ||
-                other.frequency == frequency) &&
-            (identical(other.birthday, birthday) ||
-                other.birthday == birthday) &&
-            (identical(other.lastContacted, lastContacted) ||
-                other.lastContacted == lastContacted) &&
-            (identical(other.anniversary, anniversary) ||
-                other.anniversary == anniversary) &&
-            (identical(other.phoneNumber, phoneNumber) ||
-                other.phoneNumber == phoneNumber) &&
-            const DeepCollectionEquality().equals(other.emails, emails) &&
-            (identical(other.notes, notes) || other.notes == notes) &&
-            (identical(other.youtubeUrl, youtubeUrl) ||
-                other.youtubeUrl == youtubeUrl) &&
-            (identical(other.instagramHandle, instagramHandle) ||
-                other.instagramHandle == instagramHandle) &&
-            (identical(other.facebookUrl, facebookUrl) ||
-                other.facebookUrl == facebookUrl) &&
-            (identical(other.snapchatHandle, snapchatHandle) ||
-                other.snapchatHandle == snapchatHandle) &&
-            (identical(other.xHandle, xHandle) || other.xHandle == xHandle) &&
-            (identical(other.linkedInUrl, linkedInUrl) ||
-                other.linkedInUrl == linkedInUrl));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      firstName,
-      lastName,
-      nickname,
-      frequency,
-      birthday,
-      lastContacted,
-      anniversary,
-      phoneNumber,
-      const DeepCollectionEquality().hash(emails),
-      notes,
-      youtubeUrl,
-      instagramHandle,
-      facebookUrl,
-      snapchatHandle,
-      xHandle,
-      linkedInUrl);
-
-  @override
-  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'Contact(id: $id, firstName: $firstName, lastName: $lastName, nickname: $nickname, frequency: $frequency, birthday: $birthday, lastContacted: $lastContacted, anniversary: $anniversary, phoneNumber: $phoneNumber, emails: $emails, notes: $notes, youtubeUrl: $youtubeUrl, instagramHandle: $instagramHandle, facebookUrl: $facebookUrl, snapchatHandle: $snapchatHandle, xHandle: $xHandle, linkedInUrl: $linkedInUrl)';
-  }
+  $ContactCopyWith<Contact> get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract mixin class $ContactCopyWith<$Res> {
-  factory $ContactCopyWith(Contact value, $Res Function(Contact) _then) =
-      _$ContactCopyWithImpl;
+abstract class $ContactCopyWith<$Res> {
+  factory $ContactCopyWith(Contact value, $Res Function(Contact) then) =
+      _$ContactCopyWithImpl<$Res, Contact>;
   @useResult
   $Res call(
       {@Id(assignable: true) int? id,
@@ -162,11 +82,14 @@ abstract mixin class $ContactCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$ContactCopyWithImpl<$Res> implements $ContactCopyWith<$Res> {
-  _$ContactCopyWithImpl(this._self, this._then);
+class _$ContactCopyWithImpl<$Res, $Val extends Contact>
+    implements $ContactCopyWith<$Res> {
+  _$ContactCopyWithImpl(this._value, this._then);
 
-  final Contact _self;
-  final $Res Function(Contact) _then;
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
 
   /// Create a copy of Contact
   /// with the given fields replaced by the non-null parameter values.
@@ -191,73 +114,204 @@ class _$ContactCopyWithImpl<$Res> implements $ContactCopyWith<$Res> {
     Object? xHandle = freezed,
     Object? linkedInUrl = freezed,
   }) {
-    return _then(_self.copyWith(
+    return _then(_value.copyWith(
       id: freezed == id
-          ? _self.id
+          ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as int?,
       firstName: null == firstName
-          ? _self.firstName
+          ? _value.firstName
           : firstName // ignore: cast_nullable_to_non_nullable
               as String,
       lastName: null == lastName
-          ? _self.lastName
+          ? _value.lastName
           : lastName // ignore: cast_nullable_to_non_nullable
               as String,
       nickname: freezed == nickname
-          ? _self.nickname
+          ? _value.nickname
           : nickname // ignore: cast_nullable_to_non_nullable
               as String?,
       frequency: null == frequency
-          ? _self.frequency
+          ? _value.frequency
           : frequency // ignore: cast_nullable_to_non_nullable
               as String,
       birthday: freezed == birthday
-          ? _self.birthday
+          ? _value.birthday
           : birthday // ignore: cast_nullable_to_non_nullable
               as DateTime?,
       lastContacted: freezed == lastContacted
-          ? _self.lastContacted
+          ? _value.lastContacted
           : lastContacted // ignore: cast_nullable_to_non_nullable
               as DateTime?,
       anniversary: freezed == anniversary
-          ? _self.anniversary
+          ? _value.anniversary
           : anniversary // ignore: cast_nullable_to_non_nullable
               as DateTime?,
       phoneNumber: freezed == phoneNumber
-          ? _self.phoneNumber
+          ? _value.phoneNumber
           : phoneNumber // ignore: cast_nullable_to_non_nullable
               as String?,
       emails: freezed == emails
-          ? _self.emails
+          ? _value.emails
           : emails // ignore: cast_nullable_to_non_nullable
               as List<String>?,
       notes: freezed == notes
-          ? _self.notes
+          ? _value.notes
           : notes // ignore: cast_nullable_to_non_nullable
               as String?,
       youtubeUrl: freezed == youtubeUrl
-          ? _self.youtubeUrl
+          ? _value.youtubeUrl
           : youtubeUrl // ignore: cast_nullable_to_non_nullable
               as String?,
       instagramHandle: freezed == instagramHandle
-          ? _self.instagramHandle
+          ? _value.instagramHandle
           : instagramHandle // ignore: cast_nullable_to_non_nullable
               as String?,
       facebookUrl: freezed == facebookUrl
-          ? _self.facebookUrl
+          ? _value.facebookUrl
           : facebookUrl // ignore: cast_nullable_to_non_nullable
               as String?,
       snapchatHandle: freezed == snapchatHandle
-          ? _self.snapchatHandle
+          ? _value.snapchatHandle
           : snapchatHandle // ignore: cast_nullable_to_non_nullable
               as String?,
       xHandle: freezed == xHandle
-          ? _self.xHandle
+          ? _value.xHandle
           : xHandle // ignore: cast_nullable_to_non_nullable
               as String?,
       linkedInUrl: freezed == linkedInUrl
-          ? _self.linkedInUrl
+          ? _value.linkedInUrl
+          : linkedInUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$ContactImplCopyWith<$Res> implements $ContactCopyWith<$Res> {
+  factory _$$ContactImplCopyWith(
+          _$ContactImpl value, $Res Function(_$ContactImpl) then) =
+      __$$ContactImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {@Id(assignable: true) int? id,
+      String firstName,
+      String lastName,
+      String? nickname,
+      String frequency,
+      @Property(type: PropertyType.date) DateTime? birthday,
+      @Property(type: PropertyType.date) DateTime? lastContacted,
+      @Property(type: PropertyType.date) DateTime? anniversary,
+      String? phoneNumber,
+      List<String>? emails,
+      String? notes,
+      String? youtubeUrl,
+      String? instagramHandle,
+      String? facebookUrl,
+      String? snapchatHandle,
+      String? xHandle,
+      String? linkedInUrl});
+}
+
+/// @nodoc
+class __$$ContactImplCopyWithImpl<$Res>
+    extends _$ContactCopyWithImpl<$Res, _$ContactImpl>
+    implements _$$ContactImplCopyWith<$Res> {
+  __$$ContactImplCopyWithImpl(
+      _$ContactImpl _value, $Res Function(_$ContactImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of Contact
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = freezed,
+    Object? firstName = null,
+    Object? lastName = null,
+    Object? nickname = freezed,
+    Object? frequency = null,
+    Object? birthday = freezed,
+    Object? lastContacted = freezed,
+    Object? anniversary = freezed,
+    Object? phoneNumber = freezed,
+    Object? emails = freezed,
+    Object? notes = freezed,
+    Object? youtubeUrl = freezed,
+    Object? instagramHandle = freezed,
+    Object? facebookUrl = freezed,
+    Object? snapchatHandle = freezed,
+    Object? xHandle = freezed,
+    Object? linkedInUrl = freezed,
+  }) {
+    return _then(_$ContactImpl(
+      id: freezed == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int?,
+      firstName: null == firstName
+          ? _value.firstName
+          : firstName // ignore: cast_nullable_to_non_nullable
+              as String,
+      lastName: null == lastName
+          ? _value.lastName
+          : lastName // ignore: cast_nullable_to_non_nullable
+              as String,
+      nickname: freezed == nickname
+          ? _value.nickname
+          : nickname // ignore: cast_nullable_to_non_nullable
+              as String?,
+      frequency: null == frequency
+          ? _value.frequency
+          : frequency // ignore: cast_nullable_to_non_nullable
+              as String,
+      birthday: freezed == birthday
+          ? _value.birthday
+          : birthday // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      lastContacted: freezed == lastContacted
+          ? _value.lastContacted
+          : lastContacted // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      anniversary: freezed == anniversary
+          ? _value.anniversary
+          : anniversary // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      phoneNumber: freezed == phoneNumber
+          ? _value.phoneNumber
+          : phoneNumber // ignore: cast_nullable_to_non_nullable
+              as String?,
+      emails: freezed == emails
+          ? _value._emails
+          : emails // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      notes: freezed == notes
+          ? _value.notes
+          : notes // ignore: cast_nullable_to_non_nullable
+              as String?,
+      youtubeUrl: freezed == youtubeUrl
+          ? _value.youtubeUrl
+          : youtubeUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+      instagramHandle: freezed == instagramHandle
+          ? _value.instagramHandle
+          : instagramHandle // ignore: cast_nullable_to_non_nullable
+              as String?,
+      facebookUrl: freezed == facebookUrl
+          ? _value.facebookUrl
+          : facebookUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+      snapchatHandle: freezed == snapchatHandle
+          ? _value.snapchatHandle
+          : snapchatHandle // ignore: cast_nullable_to_non_nullable
+              as String?,
+      xHandle: freezed == xHandle
+          ? _value.xHandle
+          : xHandle // ignore: cast_nullable_to_non_nullable
+              as String?,
+      linkedInUrl: freezed == linkedInUrl
+          ? _value.linkedInUrl
           : linkedInUrl // ignore: cast_nullable_to_non_nullable
               as String?,
     ));
@@ -267,8 +321,8 @@ class _$ContactCopyWithImpl<$Res> implements $ContactCopyWith<$Res> {
 /// @nodoc
 @JsonSerializable()
 @Entity(realClass: Contact)
-class _Contact extends Contact with DiagnosticableTreeMixin {
-  _Contact(
+class _$ContactImpl extends _Contact with DiagnosticableTreeMixin {
+  _$ContactImpl(
       {@Id(assignable: true) this.id,
       required this.firstName,
       required this.lastName,
@@ -288,8 +342,9 @@ class _Contact extends Contact with DiagnosticableTreeMixin {
       this.linkedInUrl})
       : _emails = emails,
         super._();
-  factory _Contact.fromJson(Map<String, dynamic> json) =>
-      _$ContactFromJson(json);
+
+  factory _$ContactImpl.fromJson(Map<String, dynamic> json) =>
+      _$$ContactImplFromJson(json);
 
   @override
   @Id(assignable: true)
@@ -345,23 +400,14 @@ class _Contact extends Contact with DiagnosticableTreeMixin {
   @override
   final String? linkedInUrl;
 
-  /// Create a copy of Contact
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @pragma('vm:prefer-inline')
-  _$ContactCopyWith<_Contact> get copyWith =>
-      __$ContactCopyWithImpl<_Contact>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$ContactToJson(
-      this,
-    );
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
+    return 'Contact(id: $id, firstName: $firstName, lastName: $lastName, nickname: $nickname, frequency: $frequency, birthday: $birthday, lastContacted: $lastContacted, anniversary: $anniversary, phoneNumber: $phoneNumber, emails: $emails, notes: $notes, youtubeUrl: $youtubeUrl, instagramHandle: $instagramHandle, facebookUrl: $facebookUrl, snapchatHandle: $snapchatHandle, xHandle: $xHandle, linkedInUrl: $linkedInUrl)';
   }
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
     properties
       ..add(DiagnosticsProperty('type', 'Contact'))
       ..add(DiagnosticsProperty('id', id))
@@ -387,7 +433,7 @@ class _Contact extends Contact with DiagnosticableTreeMixin {
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _Contact &&
+            other is _$ContactImpl &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.firstName, firstName) ||
                 other.firstName == firstName) &&
@@ -442,139 +488,89 @@ class _Contact extends Contact with DiagnosticableTreeMixin {
       xHandle,
       linkedInUrl);
 
+  /// Create a copy of Contact
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'Contact(id: $id, firstName: $firstName, lastName: $lastName, nickname: $nickname, frequency: $frequency, birthday: $birthday, lastContacted: $lastContacted, anniversary: $anniversary, phoneNumber: $phoneNumber, emails: $emails, notes: $notes, youtubeUrl: $youtubeUrl, instagramHandle: $instagramHandle, facebookUrl: $facebookUrl, snapchatHandle: $snapchatHandle, xHandle: $xHandle, linkedInUrl: $linkedInUrl)';
+  @pragma('vm:prefer-inline')
+  _$$ContactImplCopyWith<_$ContactImpl> get copyWith =>
+      __$$ContactImplCopyWithImpl<_$ContactImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$ContactImplToJson(
+      this,
+    );
   }
 }
 
-/// @nodoc
-abstract mixin class _$ContactCopyWith<$Res> implements $ContactCopyWith<$Res> {
-  factory _$ContactCopyWith(_Contact value, $Res Function(_Contact) _then) =
-      __$ContactCopyWithImpl;
+abstract class _Contact extends Contact {
+  factory _Contact(
+      {@Id(assignable: true) final int? id,
+      required final String firstName,
+      required final String lastName,
+      final String? nickname,
+      final String frequency,
+      @Property(type: PropertyType.date) final DateTime? birthday,
+      @Property(type: PropertyType.date) final DateTime? lastContacted,
+      @Property(type: PropertyType.date) final DateTime? anniversary,
+      final String? phoneNumber,
+      final List<String>? emails,
+      final String? notes,
+      final String? youtubeUrl,
+      final String? instagramHandle,
+      final String? facebookUrl,
+      final String? snapchatHandle,
+      final String? xHandle,
+      final String? linkedInUrl}) = _$ContactImpl;
+  _Contact._() : super._();
+
+  factory _Contact.fromJson(Map<String, dynamic> json) = _$ContactImpl.fromJson;
+
   @override
-  @useResult
-  $Res call(
-      {@Id(assignable: true) int? id,
-      String firstName,
-      String lastName,
-      String? nickname,
-      String frequency,
-      @Property(type: PropertyType.date) DateTime? birthday,
-      @Property(type: PropertyType.date) DateTime? lastContacted,
-      @Property(type: PropertyType.date) DateTime? anniversary,
-      String? phoneNumber,
-      List<String>? emails,
-      String? notes,
-      String? youtubeUrl,
-      String? instagramHandle,
-      String? facebookUrl,
-      String? snapchatHandle,
-      String? xHandle,
-      String? linkedInUrl});
-}
-
-/// @nodoc
-class __$ContactCopyWithImpl<$Res> implements _$ContactCopyWith<$Res> {
-  __$ContactCopyWithImpl(this._self, this._then);
-
-  final _Contact _self;
-  final $Res Function(_Contact) _then;
+  @Id(assignable: true)
+  int? get id;
+  @override
+  String get firstName;
+  @override
+  String get lastName;
+  @override
+  String? get nickname;
+  @override
+  String get frequency; // Store the String representation
+  @override
+  @Property(type: PropertyType.date)
+  DateTime? get birthday;
+  @override
+  @Property(type: PropertyType.date)
+  DateTime? get lastContacted;
+  @override
+  @Property(type: PropertyType.date)
+  DateTime? get anniversary;
+  @override
+  String? get phoneNumber; // Single phone number (optional)
+  @override
+  List<String>? get emails; // List of emails (optional)
+  @override
+  String? get notes; // Notes field (optional)
+// Specific Social Media Fields (optional Strings)
+  @override
+  String? get youtubeUrl;
+  @override
+  String? get instagramHandle;
+  @override
+  String? get facebookUrl;
+  @override
+  String? get snapchatHandle;
+  @override
+  String? get xHandle;
+  @override
+  String? get linkedInUrl;
 
   /// Create a copy of Contact
   /// with the given fields replaced by the non-null parameter values.
   @override
-  @pragma('vm:prefer-inline')
-  $Res call({
-    Object? id = freezed,
-    Object? firstName = null,
-    Object? lastName = null,
-    Object? nickname = freezed,
-    Object? frequency = null,
-    Object? birthday = freezed,
-    Object? lastContacted = freezed,
-    Object? anniversary = freezed,
-    Object? phoneNumber = freezed,
-    Object? emails = freezed,
-    Object? notes = freezed,
-    Object? youtubeUrl = freezed,
-    Object? instagramHandle = freezed,
-    Object? facebookUrl = freezed,
-    Object? snapchatHandle = freezed,
-    Object? xHandle = freezed,
-    Object? linkedInUrl = freezed,
-  }) {
-    return _then(_Contact(
-      id: freezed == id
-          ? _self.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as int?,
-      firstName: null == firstName
-          ? _self.firstName
-          : firstName // ignore: cast_nullable_to_non_nullable
-              as String,
-      lastName: null == lastName
-          ? _self.lastName
-          : lastName // ignore: cast_nullable_to_non_nullable
-              as String,
-      nickname: freezed == nickname
-          ? _self.nickname
-          : nickname // ignore: cast_nullable_to_non_nullable
-              as String?,
-      frequency: null == frequency
-          ? _self.frequency
-          : frequency // ignore: cast_nullable_to_non_nullable
-              as String,
-      birthday: freezed == birthday
-          ? _self.birthday
-          : birthday // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      lastContacted: freezed == lastContacted
-          ? _self.lastContacted
-          : lastContacted // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      anniversary: freezed == anniversary
-          ? _self.anniversary
-          : anniversary // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      phoneNumber: freezed == phoneNumber
-          ? _self.phoneNumber
-          : phoneNumber // ignore: cast_nullable_to_non_nullable
-              as String?,
-      emails: freezed == emails
-          ? _self._emails
-          : emails // ignore: cast_nullable_to_non_nullable
-              as List<String>?,
-      notes: freezed == notes
-          ? _self.notes
-          : notes // ignore: cast_nullable_to_non_nullable
-              as String?,
-      youtubeUrl: freezed == youtubeUrl
-          ? _self.youtubeUrl
-          : youtubeUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
-      instagramHandle: freezed == instagramHandle
-          ? _self.instagramHandle
-          : instagramHandle // ignore: cast_nullable_to_non_nullable
-              as String?,
-      facebookUrl: freezed == facebookUrl
-          ? _self.facebookUrl
-          : facebookUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
-      snapchatHandle: freezed == snapchatHandle
-          ? _self.snapchatHandle
-          : snapchatHandle // ignore: cast_nullable_to_non_nullable
-              as String?,
-      xHandle: freezed == xHandle
-          ? _self.xHandle
-          : xHandle // ignore: cast_nullable_to_non_nullable
-              as String?,
-      linkedInUrl: freezed == linkedInUrl
-          ? _self.linkedInUrl
-          : linkedInUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ));
-  }
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$ContactImplCopyWith<_$ContactImpl> get copyWith =>
+      throw _privateConstructorUsedError;
 }
-
-// dart format on

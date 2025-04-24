@@ -1,4 +1,3 @@
-// dart format width=80
 // coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint
@@ -10,70 +9,40 @@ part of 'notification.dart';
 // FreezedGenerator
 // **************************************************************************
 
-// dart format off
 T _$identity<T>(T value) => value;
 
+final _privateConstructorUsedError = UnsupportedError(
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
+
+Notification _$NotificationFromJson(Map<String, dynamic> json) {
+  return _Notification.fromJson(json);
+}
+
 /// @nodoc
-mixin _$Notification implements DiagnosticableTreeMixin {
+mixin _$Notification {
   @Id(assignable: true)
-  int? get id;
-  String get title;
-  String get body;
-  String? get payload;
+  int? get id => throw _privateConstructorUsedError;
+  String get title => throw _privateConstructorUsedError;
+  String get body => throw _privateConstructorUsedError;
+  String? get payload => throw _privateConstructorUsedError;
   @Property(type: PropertyType.date)
-  DateTime? get scheduledTime;
+  DateTime? get scheduledTime => throw _privateConstructorUsedError;
+
+  /// Serializes this Notification to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
   /// Create a copy of Notification
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  @pragma('vm:prefer-inline')
   $NotificationCopyWith<Notification> get copyWith =>
-      _$NotificationCopyWithImpl<Notification>(
-          this as Notification, _$identity);
-
-  /// Serializes this Notification to a JSON map.
-  Map<String, dynamic> toJson();
-
-  @override
-  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-    properties
-      ..add(DiagnosticsProperty('type', 'Notification'))
-      ..add(DiagnosticsProperty('id', id))
-      ..add(DiagnosticsProperty('title', title))
-      ..add(DiagnosticsProperty('body', body))
-      ..add(DiagnosticsProperty('payload', payload))
-      ..add(DiagnosticsProperty('scheduledTime', scheduledTime));
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is Notification &&
-            (identical(other.id, id) || other.id == id) &&
-            (identical(other.title, title) || other.title == title) &&
-            (identical(other.body, body) || other.body == body) &&
-            (identical(other.payload, payload) || other.payload == payload) &&
-            (identical(other.scheduledTime, scheduledTime) ||
-                other.scheduledTime == scheduledTime));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, title, body, payload, scheduledTime);
-
-  @override
-  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'Notification(id: $id, title: $title, body: $body, payload: $payload, scheduledTime: $scheduledTime)';
-  }
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract mixin class $NotificationCopyWith<$Res> {
+abstract class $NotificationCopyWith<$Res> {
   factory $NotificationCopyWith(
-          Notification value, $Res Function(Notification) _then) =
-      _$NotificationCopyWithImpl;
+          Notification value, $Res Function(Notification) then) =
+      _$NotificationCopyWithImpl<$Res, Notification>;
   @useResult
   $Res call(
       {@Id(assignable: true) int? id,
@@ -84,11 +53,14 @@ abstract mixin class $NotificationCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$NotificationCopyWithImpl<$Res> implements $NotificationCopyWith<$Res> {
-  _$NotificationCopyWithImpl(this._self, this._then);
+class _$NotificationCopyWithImpl<$Res, $Val extends Notification>
+    implements $NotificationCopyWith<$Res> {
+  _$NotificationCopyWithImpl(this._value, this._then);
 
-  final Notification _self;
-  final $Res Function(Notification) _then;
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
 
   /// Create a copy of Notification
   /// with the given fields replaced by the non-null parameter values.
@@ -101,25 +73,85 @@ class _$NotificationCopyWithImpl<$Res> implements $NotificationCopyWith<$Res> {
     Object? payload = freezed,
     Object? scheduledTime = freezed,
   }) {
-    return _then(_self.copyWith(
+    return _then(_value.copyWith(
       id: freezed == id
-          ? _self.id
+          ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as int?,
       title: null == title
-          ? _self.title
+          ? _value.title
           : title // ignore: cast_nullable_to_non_nullable
               as String,
       body: null == body
-          ? _self.body
+          ? _value.body
           : body // ignore: cast_nullable_to_non_nullable
               as String,
       payload: freezed == payload
-          ? _self.payload
+          ? _value.payload
           : payload // ignore: cast_nullable_to_non_nullable
               as String?,
       scheduledTime: freezed == scheduledTime
-          ? _self.scheduledTime
+          ? _value.scheduledTime
+          : scheduledTime // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$NotificationImplCopyWith<$Res>
+    implements $NotificationCopyWith<$Res> {
+  factory _$$NotificationImplCopyWith(
+          _$NotificationImpl value, $Res Function(_$NotificationImpl) then) =
+      __$$NotificationImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {@Id(assignable: true) int? id,
+      String title,
+      String body,
+      String? payload,
+      @Property(type: PropertyType.date) DateTime? scheduledTime});
+}
+
+/// @nodoc
+class __$$NotificationImplCopyWithImpl<$Res>
+    extends _$NotificationCopyWithImpl<$Res, _$NotificationImpl>
+    implements _$$NotificationImplCopyWith<$Res> {
+  __$$NotificationImplCopyWithImpl(
+      _$NotificationImpl _value, $Res Function(_$NotificationImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of Notification
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = freezed,
+    Object? title = null,
+    Object? body = null,
+    Object? payload = freezed,
+    Object? scheduledTime = freezed,
+  }) {
+    return _then(_$NotificationImpl(
+      id: freezed == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int?,
+      title: null == title
+          ? _value.title
+          : title // ignore: cast_nullable_to_non_nullable
+              as String,
+      body: null == body
+          ? _value.body
+          : body // ignore: cast_nullable_to_non_nullable
+              as String,
+      payload: freezed == payload
+          ? _value.payload
+          : payload // ignore: cast_nullable_to_non_nullable
+              as String?,
+      scheduledTime: freezed == scheduledTime
+          ? _value.scheduledTime
           : scheduledTime // ignore: cast_nullable_to_non_nullable
               as DateTime?,
     ));
@@ -129,16 +161,17 @@ class _$NotificationCopyWithImpl<$Res> implements $NotificationCopyWith<$Res> {
 /// @nodoc
 @JsonSerializable()
 @Entity(realClass: Notification)
-class _Notification extends Notification with DiagnosticableTreeMixin {
-  _Notification(
+class _$NotificationImpl extends _Notification with DiagnosticableTreeMixin {
+  _$NotificationImpl(
       {@Id(assignable: true) this.id,
       required this.title,
       required this.body,
       this.payload,
       @Property(type: PropertyType.date) this.scheduledTime})
       : super._();
-  factory _Notification.fromJson(Map<String, dynamic> json) =>
-      _$NotificationFromJson(json);
+
+  factory _$NotificationImpl.fromJson(Map<String, dynamic> json) =>
+      _$$NotificationImplFromJson(json);
 
   @override
   @Id(assignable: true)
@@ -153,23 +186,14 @@ class _Notification extends Notification with DiagnosticableTreeMixin {
   @Property(type: PropertyType.date)
   final DateTime? scheduledTime;
 
-  /// Create a copy of Notification
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @pragma('vm:prefer-inline')
-  _$NotificationCopyWith<_Notification> get copyWith =>
-      __$NotificationCopyWithImpl<_Notification>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$NotificationToJson(
-      this,
-    );
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
+    return 'Notification(id: $id, title: $title, body: $body, payload: $payload, scheduledTime: $scheduledTime)';
   }
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
     properties
       ..add(DiagnosticsProperty('type', 'Notification'))
       ..add(DiagnosticsProperty('id', id))
@@ -183,7 +207,7 @@ class _Notification extends Notification with DiagnosticableTreeMixin {
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _Notification &&
+            other is _$NotificationImpl &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.title, title) || other.title == title) &&
             (identical(other.body, body) || other.body == body) &&
@@ -197,70 +221,52 @@ class _Notification extends Notification with DiagnosticableTreeMixin {
   int get hashCode =>
       Object.hash(runtimeType, id, title, body, payload, scheduledTime);
 
+  /// Create a copy of Notification
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'Notification(id: $id, title: $title, body: $body, payload: $payload, scheduledTime: $scheduledTime)';
+  @pragma('vm:prefer-inline')
+  _$$NotificationImplCopyWith<_$NotificationImpl> get copyWith =>
+      __$$NotificationImplCopyWithImpl<_$NotificationImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$NotificationImplToJson(
+      this,
+    );
   }
 }
 
-/// @nodoc
-abstract mixin class _$NotificationCopyWith<$Res>
-    implements $NotificationCopyWith<$Res> {
-  factory _$NotificationCopyWith(
-          _Notification value, $Res Function(_Notification) _then) =
-      __$NotificationCopyWithImpl;
+abstract class _Notification extends Notification {
+  factory _Notification(
+          {@Id(assignable: true) final int? id,
+          required final String title,
+          required final String body,
+          final String? payload,
+          @Property(type: PropertyType.date) final DateTime? scheduledTime}) =
+      _$NotificationImpl;
+  _Notification._() : super._();
+
+  factory _Notification.fromJson(Map<String, dynamic> json) =
+      _$NotificationImpl.fromJson;
+
   @override
-  @useResult
-  $Res call(
-      {@Id(assignable: true) int? id,
-      String title,
-      String body,
-      String? payload,
-      @Property(type: PropertyType.date) DateTime? scheduledTime});
-}
-
-/// @nodoc
-class __$NotificationCopyWithImpl<$Res>
-    implements _$NotificationCopyWith<$Res> {
-  __$NotificationCopyWithImpl(this._self, this._then);
-
-  final _Notification _self;
-  final $Res Function(_Notification) _then;
+  @Id(assignable: true)
+  int? get id;
+  @override
+  String get title;
+  @override
+  String get body;
+  @override
+  String? get payload;
+  @override
+  @Property(type: PropertyType.date)
+  DateTime? get scheduledTime;
 
   /// Create a copy of Notification
   /// with the given fields replaced by the non-null parameter values.
   @override
-  @pragma('vm:prefer-inline')
-  $Res call({
-    Object? id = freezed,
-    Object? title = null,
-    Object? body = null,
-    Object? payload = freezed,
-    Object? scheduledTime = freezed,
-  }) {
-    return _then(_Notification(
-      id: freezed == id
-          ? _self.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as int?,
-      title: null == title
-          ? _self.title
-          : title // ignore: cast_nullable_to_non_nullable
-              as String,
-      body: null == body
-          ? _self.body
-          : body // ignore: cast_nullable_to_non_nullable
-              as String,
-      payload: freezed == payload
-          ? _self.payload
-          : payload // ignore: cast_nullable_to_non_nullable
-              as String?,
-      scheduledTime: freezed == scheduledTime
-          ? _self.scheduledTime
-          : scheduledTime // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-    ));
-  }
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$NotificationImplCopyWith<_$NotificationImpl> get copyWith =>
+      throw _privateConstructorUsedError;
 }
-
-// dart format on

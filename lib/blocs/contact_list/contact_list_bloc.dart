@@ -24,294 +24,233 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
         super(const ContactListState.initial()) {
     // BEGIN EVENT HANDLING
     on<ContactListEvent>((event, emit) async {
-      // LOAD CONTACTS
-      await event.map(
-        loadContacts: (e) async {
+      switch (event) {
+        case _LoadContacts e:
+          final currentState = state;
+          List<Contact> originalContacts = [];
+          ContactListSortField sortField = ContactListSortField.dueDate;
+          bool ascending = true;
+          String searchTerm = '';
+          ContactListFilter currentFilter = ContactListFilter.none;
+
+          if (currentState is _Loaded) {
+            sortField = currentState.sortField;
+            ascending = currentState.ascending;
+            searchTerm = currentState.searchTerm;
+            currentFilter = currentState.currentFilter;
+          }
+
           emit(const ContactListState.loading());
           try {
-            final allContacts = await _contactRepository.getAll();
-            if (allContacts.isEmpty) {
+            originalContacts = await _contactRepository.getAll();
+            if (originalContacts.isEmpty) {
               emit(const ContactListState.empty());
             } else {
-              // Sort contacts by due date by default when loading
-              final sortedContacts = _sortContacts(
-                  List.from(allContacts), ContactListSortField.dueDate, true);
+              final filteredContacts = _applyFilterAndSearch(
+                  originalContacts, searchTerm, currentFilter);
+              final sortedContacts =
+                  _sortContacts(filteredContacts, sortField, ascending);
               emit(ContactListState.loaded(
-                originalContacts: allContacts,
+                originalContacts: originalContacts,
                 displayedContacts: sortedContacts,
-                sortField:
-                    ContactListSortField.dueDate, // Explicitly set default sort
-                ascending: true,
-                searchTerm: '',
-                currentFilter: ContactListFilter.none,
+                sortField: sortField,
+                ascending: ascending,
+                searchTerm: searchTerm,
+                currentFilter: currentFilter,
               ));
             }
           } catch (e) {
             emit(ContactListState.error(e.toString()));
-            logger.e("Error loading contacts: $e");
           }
+          break;
 
-          // DELETE CONTACT FROM LIST
-        },
-        deleteContactFromList: (e) async {
-          //TODO: Maybe for later to provide a way to delete contacts
-          //directly from the list
-
-          // UPDATE CONTACT FROM LIST
-        },
-        updateContactFromList: (e) async {
-          // Get current state details before updating
+        case _DeleteContactFromList e:
           final currentState = state;
-          if (currentState is! _Loaded) {
-            logger.w("Attempted to update contact from non-loaded state.");
-            return;
-          } // Can only update from loaded state
+          if (currentState is _Loaded) {
+            final updatedOriginals = List<Contact>.from(
+                currentState.originalContacts)
+              ..removeWhere((c) => c.id == e.contactId);
 
-          emit(const ContactListState
-              .loading()); // Indicate loading during update
-          try {
-            // 1. Update in repository
-            // Use e.contact as the input for the update
-            final updatedContact = await _contactRepository.update(e.contact);
+            final filtered = _applyFilterAndSearch(updatedOriginals,
+                currentState.searchTerm, currentState.currentFilter);
+            final sorted = _sortContacts(
+                filtered, currentState.sortField, currentState.ascending);
 
-            // 2. Reschedule notification
-            await _notificationService.scheduleReminder(updatedContact);
-            logger.i(
-                'LOG: Updated contact ${updatedContact.id} and rescheduled notification.');
-
-            // 3. Update state lists immutably
-            // Create a new list by mapping over the old one
-            final newOriginalContacts = currentState.originalContacts.map((c) {
-              // If the contact ID matches, return the updated contact, otherwise return the original
-              return c.id == updatedContact.id ? updatedContact : c;
-            }).toList();
-
-            // 4. Re-apply filter and search to the *updated* original list
-            final newlyFilteredContacts = _applyFilterAndSearch(
-                newOriginalContacts, // Use the updated originals
-                currentState.searchTerm,
-                currentState.currentFilter);
-
-            // 5. Re-apply sort to the *newly filtered* list
-            final newlySortedContacts = _sortContacts(newlyFilteredContacts,
-                currentState.sortField, currentState.ascending);
-
-            // 6. Emit the new loaded state
-            emit(currentState.copyWith(
-              originalContacts: newOriginalContacts,
-              displayedContacts: newlySortedContacts,
-              // sortField, ascending, searchTerm, currentFilter remain the same
-            ));
-            logger.i(
-                "Successfully updated contact ${updatedContact.id} in list state.");
-          } catch (err) {
-            // Catch specific error
-            emit(ContactListState.error(err.toString()));
-            // Log the specific contact ID if available in the error or event context
-            logger
-                .e("Error updating contact ID ${e.contact.id} from list: $err");
-            // Optionally emit the previous state back on error
-            // emit(currentState);
+            if (updatedOriginals.isEmpty) {
+              emit(const ContactListState.empty());
+            } else {
+              emit(currentState.copyWith(
+                originalContacts: updatedOriginals,
+                displayedContacts: sorted,
+              ));
+            }
           }
+          break;
 
-          // SORT CONTACTS
-        },
-        sortContacts: (e) async {
+        case _UpdateContactFromList e:
+          final currentState = state;
+          if (currentState is _Loaded) {
+            final index = currentState.originalContacts
+                .indexWhere((c) => c.id == e.contact.id);
+            if (index != -1) {
+              final updatedOriginals =
+                  List<Contact>.from(currentState.originalContacts);
+              updatedOriginals[index] = e.contact;
+
+              final filtered = _applyFilterAndSearch(updatedOriginals,
+                  currentState.searchTerm, currentState.currentFilter);
+              final sorted = _sortContacts(
+                  filtered, currentState.sortField, currentState.ascending);
+
+              emit(currentState.copyWith(
+                originalContacts: updatedOriginals,
+                displayedContacts: sorted,
+              ));
+            }
+          }
+          break;
+
+        case _SortContacts e:
           final currentState = state;
           if (currentState is _Loaded) {
             final sortedContacts = _sortContacts(
-                currentState
-                    .displayedContacts, // Sort the ALREADY filtered/searched list
+                List.from(currentState.displayedContacts),
                 e.sortField,
                 e.ascending);
             emit(currentState.copyWith(
-              // Use copyWith to update only relevant fields
               displayedContacts: sortedContacts,
               sortField: e.sortField,
               ascending: e.ascending,
             ));
           }
+          break;
 
-          // APPLY SEARCH
-        },
-        applySearch: (e) async {
+        case _ApplySearch e:
           final currentState = state;
           if (currentState is _Loaded) {
             final filteredContacts = _applyFilterAndSearch(
                 currentState.originalContacts,
-                e.searchTerm, // Use new search term
-                currentState.currentFilter); // Keep current filter
-
+                e.searchTerm,
+                currentState.currentFilter);
             final sortedContacts = _sortContacts(filteredContacts,
                 currentState.sortField, currentState.ascending);
-
             emit(currentState.copyWith(
               displayedContacts: sortedContacts,
-              searchTerm: e.searchTerm, // Update search term in state
+              searchTerm: e.searchTerm,
             ));
           }
-          // APPLY FILTER
-        },
-        applyFilter: (e) async {
+          break;
+
+        case _ApplyFilter e:
           final currentState = state;
           if (currentState is _Loaded) {
             final filteredContacts = _applyFilterAndSearch(
                 currentState.originalContacts,
-                currentState.searchTerm, // Keep current search term
-                e.filter); // Use new filter
-
+                currentState.searchTerm,
+                e.filter);
             final sortedContacts = _sortContacts(filteredContacts,
                 currentState.sortField, currentState.ascending);
-
             emit(currentState.copyWith(
               displayedContacts: sortedContacts,
-              currentFilter: e.filter, // Update filter in state
+              currentFilter: e.filter,
             ));
           }
-        },
-        deleteContacts: (e) async {
+          break;
+
+        case _DeleteContacts e:
           final currentState = state;
-          if (currentState is! _Loaded) {
-            logger.w("Attempted to delete contacts from non-loaded state.");
-            return; // Can only delete from a loaded state
-          }
-
-          emit(const ContactListState.loading()); // Show loading indicator
-          try {
-            // 1. Delete from repository
-            await _contactRepository.deleteMany(e.contactIds); // Use deleteMany
-
-            // 2. Cancel notifications for deleted contacts
-            for (final contactId in e.contactIds) {
-              await _notificationService.cancelNotification(contactId); //
-            }
-            logger.i(
-                'LOG: Deleted ${e.contactIds.length} contacts and cancelled notifications.');
-
-            // 3. Update state lists immutably
-            // Create a new list excluding the deleted contacts
-            final newOriginalContacts = currentState.originalContacts
-                .where((c) => !e.contactIds.contains(c.id))
-                .toList();
-
-            // Check if the list is now empty
-            if (newOriginalContacts.isEmpty) {
-              emit(const ContactListState.empty());
-            } else {
-              // 4. Re-apply filter and search to the *new* original list
-              final newlyFilteredContacts = _applyFilterAndSearch(
-                  newOriginalContacts,
-                  currentState.searchTerm,
-                  currentState.currentFilter);
-
-              // 5. Re-apply sort to the *newly filtered* list
-              final newlySortedContacts = _sortContacts(newlyFilteredContacts,
-                  currentState.sortField, currentState.ascending);
-
-              // 6. Emit the new loaded state
-              emit(currentState.copyWith(
-                originalContacts: newOriginalContacts,
-                displayedContacts: newlySortedContacts,
-                // Keep sortField, ascending, searchTerm, currentFilter
-              ));
-              logger.i(
-                  "Successfully removed ${e.contactIds.length} contacts from list state.");
-            }
-          } catch (err) {
-            emit(ContactListState.error(err.toString()));
-            logger.e("Error deleting contacts ${e.contactIds}: $err");
-            // Optionally re-emit the previous state on error
-            // emit(currentState);
-          }
-        },
-        markContactsAsContacted: (e) async {
-          // Use 'e' for the event object
-          final currentState = state;
-          if (currentState is! _Loaded) {
-            logger.w(
-                "Attempted to mark contacts as contacted from non-loaded state.");
-            return; // Can only perform this from a loaded state
-          }
-
-          // Optionally emit loading state if it takes time
-          // emit(const ContactListState.loading());
-
-          logger.d(
-              "BLoC: Handling MarkContactsAsContacted for IDs: ${e.contactIds}");
-          try {
-            final now = DateTime.now();
-            List<Contact> updatedOriginals =
-                List.from(currentState.originalContacts); // Copy original list
-
-            for (final id in e.contactIds) {
-              final contactIndex = updatedOriginals
-                  .indexWhere((c) => c.id == id); // Find index in original list
-              if (contactIndex != -1) {
-                final originalContact = updatedOriginals[contactIndex];
-                // Create updated contact with new last contacted date
-                final updatedContact =
-                    originalContact.copyWith(lastContacted: now);
-
-                // Update in repository
-                await _contactRepository.update(updatedContact);
-
-                // Update the contact in our copied list
-                updatedOriginals[contactIndex] = updatedContact;
-
-                // Reschedule notification for the updated contact
-                await _notificationService.scheduleReminder(updatedContact);
-              } else {
-                logger.w(
-                    "BLoC: Could not find contact with ID $id in original list to mark as contacted.");
+          if (currentState is _Loaded) {
+            try {
+              await _contactRepository.deleteMany(e.contactIds);
+              for (final id in e.contactIds) {
+                await _notificationService.cancelNotification(id);
               }
+
+              final updatedOriginals = List<Contact>.from(
+                  currentState.originalContacts)
+                ..removeWhere((c) => e.contactIds.contains(c.id));
+
+              if (updatedOriginals.isEmpty) {
+                emit(const ContactListState.empty());
+              } else {
+                final filtered = _applyFilterAndSearch(updatedOriginals,
+                    currentState.searchTerm, currentState.currentFilter);
+                final sorted = _sortContacts(
+                    filtered, currentState.sortField, currentState.ascending);
+                emit(currentState.copyWith(
+                  originalContacts: updatedOriginals,
+                  displayedContacts: sorted,
+                ));
+              }
+            } catch (err, stackTrace) {
+              logger.e('BLoC: Error deleting multiple contacts',
+                  error: err, stackTrace: stackTrace);
+              emit(currentState);
             }
-
-            // Check if the list is now empty (unlikely for this operation, but good practice)
-            if (updatedOriginals.isEmpty) {
-              emit(const ContactListState.empty());
-            } else {
-              // Re-apply filter and search to the *updated* original list
-              final newlyFilteredContacts = _applyFilterAndSearch(
-                  updatedOriginals,
-                  currentState.searchTerm,
-                  currentState.currentFilter);
-
-              // Re-apply sort to the *newly filtered* list
-              final newlySortedContacts = _sortContacts(newlyFilteredContacts,
-                  currentState.sortField, currentState.ascending);
-
-              // Emit the new loaded state with updated originals and displayed contacts
-              emit(currentState.copyWith(
-                originalContacts:
-                    updatedOriginals, // Emit the updated original list
-                displayedContacts: newlySortedContacts,
-                // Keep sortField, ascending, searchTerm, currentFilter
-              ));
-              logger.i(
-                  "BLoC: Successfully marked ${e.contactIds.length} contacts as contacted in state.");
-            }
-          } catch (err, stackTrace) {
-            // Catch error and stackTrace
-            logger.e('BLoC: Error marking contacts as contacted',
-                error: err, stackTrace: stackTrace);
-            // Optionally emit an error state or re-emit the previous state
-            emit(ContactListState.error(err.toString()));
-            // Or re-emit the state before the operation started
-            // emit(currentState);
           }
-        },
+          break;
 
-        //other event handlers if needed
-      );
+        case _MarkContactsAsContacted e:
+          final currentState = state;
+          if (currentState is _Loaded) {
+            logger.d(
+                "BLoC: Handling MarkContactsAsContacted for IDs: ${e.contactIds}");
+            try {
+              final now = DateTime.now();
+              List<Contact> updatedOriginals =
+                  List.from(currentState.originalContacts);
+
+              for (final id in e.contactIds) {
+                final contactIndex =
+                    updatedOriginals.indexWhere((c) => c.id == id);
+                if (contactIndex != -1) {
+                  final originalContact = updatedOriginals[contactIndex];
+                  final updatedContact =
+                      originalContact.copyWith(lastContacted: now);
+
+                  await _contactRepository.update(updatedContact);
+                  updatedOriginals[contactIndex] = updatedContact;
+                  await _notificationService.scheduleReminder(updatedContact);
+                } else {
+                  logger.w(
+                      "BLoC: Could not find contact with ID $id in original list to mark as contacted.");
+                }
+              }
+
+              if (updatedOriginals.isEmpty) {
+                emit(const ContactListState.empty());
+              } else {
+                final newlyFilteredContacts = _applyFilterAndSearch(
+                    updatedOriginals,
+                    currentState.searchTerm,
+                    currentState.currentFilter);
+                final newlySortedContacts = _sortContacts(
+                    newlyFilteredContacts,
+                    currentState.sortField,
+                    currentState.ascending);
+
+                emit(currentState.copyWith(
+                  originalContacts: updatedOriginals,
+                  displayedContacts: newlySortedContacts,
+                ));
+                logger.i(
+                    "BLoC: Successfully marked ${e.contactIds.length} contacts as contacted in state.");
+              }
+            } catch (err, stackTrace) {
+              logger.e('BLoC: Error marking contacts as contacted',
+                  error: err, stackTrace: stackTrace);
+              emit(ContactListState.error(err.toString()));
+            }
+          }
+          break;
+      }
     });
   }
 
-//HELPER FUNCTIONS
   List<Contact> _applyFilterAndSearch(List<Contact> originalContacts,
       String searchTerm, ContactListFilter filter) {
     List<Contact> filteredList = List.from(originalContacts);
 
-    // Apply Search Filter
     if (searchTerm.isNotEmpty) {
       final lowerCaseSearchTerm = searchTerm.toLowerCase();
       filteredList = filteredList.where((contact) {
@@ -320,7 +259,6 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
       }).toList();
     }
 
-    // Apply Type Filter
     switch (filter) {
       case ContactListFilter.overdue:
         filteredList = filteredList
@@ -328,10 +266,9 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
             .toList();
         break;
       case ContactListFilter.dueSoon:
-        // Define "due soon" (e.g., Today or Tomorrow)
         filteredList = filteredList.where((c) {
           if (c.frequency == ContactFrequency.never.value) {
-            return false; // Skip 'never'
+            return false;
           }
           final dueDateDisplay =
               calculateNextDueDateDisplay(c.lastContacted, c.frequency);
@@ -339,17 +276,14 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
         }).toList();
         break;
       case ContactListFilter.none:
-        // No additional filtering needed
         break;
     }
 
     return filteredList;
   }
 
-// Helper function for sorting
   List<Contact> _sortContacts(List<Contact> contactsToSort,
       ContactListSortField sortField, bool ascending) {
-    // Define the logical order for frequencies - Ensure keys match the enum values
     const Map<ContactFrequency, int> frequencyOrder = {
       ContactFrequency.daily: 1,
       ContactFrequency.weekly: 2,
@@ -358,11 +292,10 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
       ContactFrequency.quarterly: 5,
       ContactFrequency.yearly: 6,
       ContactFrequency.rarely: 7,
-      ContactFrequency.never: 8, // 'never' comes last
+      ContactFrequency.never: 8,
     };
 
-    List<Contact> sortedList =
-        List.from(contactsToSort); // Create a modifiable copy
+    List<Contact> sortedList = List.from(contactsToSort);
 
     sortedList.sort((a, b) {
       int comparison;
@@ -370,20 +303,17 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
         case ContactListSortField.dueDate:
           DateTime dueA = calculateNextDueDate(a);
           DateTime dueB = calculateNextDueDate(b);
-          // Handle 'never' frequency - push them to the end regardless of sort order
           bool aIsNever = a.frequency == ContactFrequency.never.value;
           bool bIsNever = b.frequency == ContactFrequency.never.value;
           if (aIsNever && bIsNever) {
             comparison = 0;
           } else if (aIsNever) {
             comparison = 1;
-          } // a goes after b
-          else if (bIsNever) {
+          } else if (bIsNever) {
             comparison = -1;
-          } // b goes after a
-          else {
+          } else {
             comparison = dueA.compareTo(dueB);
-          } // Normal comparison
+          }
           break;
         case ContactListSortField.lastName:
           comparison =
@@ -394,8 +324,6 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           }
           break;
         case ContactListSortField.lastContacted:
-          // Handle nulls: Never contacted go last when ascending.
-          // Treat null as very far in the past for descending, future for ascending
           DateTime lastA =
               a.lastContacted ?? (ascending ? DateTime(9999) : DateTime(1900));
           DateTime lastB =
@@ -403,17 +331,15 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           comparison = lastA.compareTo(lastB);
           break;
         case ContactListSortField.birthday:
-          // Handle nulls: No birthday goes last when ascending.
           DateTime? bdayA = a.birthday;
           DateTime? bdayB = b.birthday;
           if (bdayA == null && bdayB == null) {
-            comparison = 0; // Both null, treat as equal
+            comparison = 0;
           } else if (bdayA == null) {
-            comparison = ascending ? 1 : -1; // a (null) goes after b
+            comparison = ascending ? 1 : -1;
           } else if (bdayB == null) {
-            comparison = ascending ? -1 : 1; // b (null) goes after a
+            comparison = ascending ? -1 : 1;
           } else {
-            // Compare month and day, ignore year for typical birthday sorting
             int monthComparison = bdayA.month.compareTo(bdayB.month);
             if (monthComparison == 0) {
               comparison = bdayA.day.compareTo(bdayB.day);
@@ -423,20 +349,15 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           }
           break;
         case ContactListSortField.contactFrequency:
-          // Get the enum value from the string
           ContactFrequency freqA = ContactFrequency.fromString(a.frequency);
           ContactFrequency freqB = ContactFrequency.fromString(b.frequency);
 
-          // Look up the order using the enum value as the key
-          // Provide a default comparison value (e.g., 99) if somehow the enum isn't in the map
           int orderA = frequencyOrder[freqA] ?? 99;
           int orderB = frequencyOrder[freqB] ?? 99;
 
           comparison = orderA.compareTo(orderB);
           break;
       }
-      // Apply ascending/descending ONLY if comparison is not 0
-      // Or simply return based on 'ascending' flag
       return ascending ? comparison : -comparison;
     });
     return sortedList;

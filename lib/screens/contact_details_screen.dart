@@ -91,9 +91,12 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             .read<ContactDetailsBloc>()
             .add(ContactDetailsEvent.loadContact(contactId: contactId));
       } else {
-        // logic for NEW contact
+        // --- Logic for NEW contact ---
+        // Fetch default frequency first
         String fetchedDefaultFrequency = ContactFrequency.never.value;
         try {
+          // Use read outside async gap if possible, or ensure mounted check
+          if (!mounted) return;
           final settingsRepo = context.read<UserSettingsRepository>();
           final settingsList = await settingsRepo.getAll();
           if (settingsList.isNotEmpty) {
@@ -101,21 +104,17 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           }
         } catch (e) {
           logger.e("Error fetching default frequency: $e");
+          // Handle error appropriately, maybe show a message
         }
+
+        // Check mounted again after await
         if (!mounted) return;
-        setState(() {
-          _isEditMode = true;
-          _hasUnsavedChanges = true; // New contact starts with changes needed
-          _localContact = _localContact.copyWith(
-            frequency: fetchedDefaultFrequency,
-            emails: [], // Ensure emails is an empty list for new contact
-          );
-          _updateControllersFromLocalContact(); // Update controllers for new contact defaults
-          _updateEmailControllers(); // Ensure email controllers are synced
-          _initialized = true;
-        });
+
+        // Dispatch an event to prepare the BLoC for a new contact
         context.read<ContactDetailsBloc>().add(
-            ContactDetailsEvent.updateContactLocally(contact: _localContact));
+            ContactDetailsEvent.prepareNewContact(
+                defaultFrequency: fetchedDefaultFrequency));
+        // --- End NEW contact logic ---
       }
     });
   }
@@ -172,20 +171,28 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Determine title dynamically (remains the same logic)
+    // Determine title dynamically
     final appBarTitle = BlocBuilder<ContactDetailsBloc, ContactDetailsState>(
       builder: (context, state) {
         // Decide title based on nickname presence
         String nameToShow = '';
-        state.mapOrNull(
-          loaded: (loadedState) {
-            nameToShow = (loadedState.contact.nickname != null &&
-                    loadedState.contact.nickname!.isNotEmpty)
-                ? loadedState.contact.nickname! // Use nickname if available
-                : '${loadedState.contact.firstName} ${loadedState.contact.lastName}';
-          },
-          cleared: (_) => nameToShow = 'Add Contact',
-        );
+        switch (state) {
+          case _Loaded(contact: final contact): // Use _Loaded and extract contact
+            nameToShow = (contact.nickname != null &&
+                    contact.nickname!.isNotEmpty)
+                ? contact.nickname!
+                : '${contact.firstName} ${contact.lastName}';
+            break;
+          case _Cleared(): // Use _Cleared
+            nameToShow = 'Add Contact';
+            break;
+          default:
+            // Keep existing fallback logic
+             if (nameToShow.isEmpty) {
+               nameToShow = _isEditMode ? 'Add/Edit Contact' : 'Contact Details';
+             }
+        }
+
         // If name is still empty (e.g., initial state before load or clear), use defaults
         if (nameToShow.isEmpty) {
           nameToShow = _isEditMode ? 'Add/Edit Contact' : 'Contact Details';
@@ -195,7 +202,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       },
     );
 
-    // Determine if popping should be prevented *right now*
     // Prevent pop if we are in edit mode AND have unsaved changes
     final bool preventPop = _isEditMode && _hasUnsavedChanges;
 
@@ -216,123 +222,129 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   ? () => _onDeleteButtonPressed(context)
                   : null,
             ),
-            // EDIT/SAVE
+// EDIT/SAVE IconButton
             BlocBuilder<ContactDetailsBloc, ContactDetailsState>(
-                builder: (context, state) {
-              final bool isLoaded =
-                  state.maybeMap(loaded: (_) => true, orElse: () => false);
-              final bool isNewContactMode = state.maybeMap(
-                      cleared: (_) => _isEditMode, orElse: () => false) ||
-                  (_localContact.id == 0 && _isEditMode);
-              final bool canEditOrSave = isLoaded || isNewContactMode;
-              final bool isDisabledByState = state.maybeMap(
-                  loading: (_) => true,
-                  initial: (_) => true,
-                  orElse: () => false);
-              final bool canSaveChanges = canEditOrSave &&
-                  !isDisabledByState &&
-                  _isEditMode &&
-                  _hasUnsavedChanges;
-              final bool canEnterEdit =
-                  canEditOrSave && !isDisabledByState && !_isEditMode;
+              builder: (context, state) {
+                // Determine if the BLoC state allows interaction
+                final bool blocAllowsInteraction = state is _Loaded;
 
-              return IconButton(
-                icon: Icon(_isEditMode ? Icons.save : Icons.edit),
-                tooltip: _isEditMode ? 'Save Changes' : 'Edit Contact',
-                onPressed: _isEditMode
-                    ? (canSaveChanges
-                        ? () => _onSaveButtonPressed(context)
-                        : null)
-                    : (canEnterEdit
-                        ? () {
-                            state.mapOrNull(loaded: (loadedState) {
-                              setState(() {
-                                _isEditMode = true;
-                                // Load state into local contact and update controllers
-                                _localContact = loadedState.contact;
-                                _updateControllersFromLocalContact();
-                              });
-                            });
-                          }
-                        : null),
-              );
-            }),
-          ],
+                // Can enter edit mode if BLoC is loaded and we're not already editing
+                final bool canEnterEdit = blocAllowsInteraction && !_isEditMode;
+
+                // Can save changes if we ARE in edit mode AND have unsaved changes
+                final bool canSaveChanges = _isEditMode && _hasUnsavedChanges;
+
+                return IconButton(
+                  icon: Icon(_isEditMode ? Icons.save : Icons.edit),
+                  tooltip: _isEditMode ? 'Save Changes' : 'Edit Contact',
+                  // Enable Save only if in edit mode with changes
+                  // Enable Edit only if bloc allows interaction and not already editing
+                  onPressed: _isEditMode
+                      ? (canSaveChanges ? () => _onSaveButtonPressed(context) : null) // Save action
+                      : (canEnterEdit ? () {
+                          // Entering edit mode
+                          setState(() {
+                            // _localContact should already be correct from the listener
+                            _isEditMode = true;
+                            _hasUnsavedChanges = false; // Reset flag when starting edit
+                          });
+                           logger.d("Edit button pressed. Entering edit mode.");
+                        } : null), // Edit action
+                );
+              },
+            ),          ],
         ),
         body: BlocConsumer<ContactDetailsBloc, ContactDetailsState>(
           listener: (context, state) {
-            state.mapOrNull(loaded: (loadedState) {
-              if (!_isEditMode ||
-                  (loadedState.contact.id != _localContact.id)) {
-                // Update local state and controllers ONLY if not editing
-                // or if the loaded contact is different from the one being edited
+            if (state is _Loaded) {
+              final bool isNewContactForm = state.contact.id == 0;
+
+              // If we are not currently editing, OR if the loaded contact ID
+              // is different from our local one (meaning BLoC loaded a different record),
+              // update the local state and controllers.
+              if (!_isEditMode || state.contact.id != _localContact.id) {
                 setState(() {
-                  _localContact = loadedState.contact;
-                  _updateControllersFromLocalContact(); // Use helper
-                  _hasUnsavedChanges = false; // Reset changes flag on load
-                });
-              }
-              if (!_initialized) {
-                setState(() {
+                  _localContact = state.contact;
+                  _updateControllersFromLocalContact();
+                  _hasUnsavedChanges =
+                      false; // Reset changes flag when loading data
+                  // Enter edit mode automatically for a new contact form
+                  _isEditMode = isNewContactForm;
+                  // Ensure initialized is true once loaded
                   _initialized = true;
                 });
-              }
-            }, error: (errorState) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Error: ${errorState.message}")));
-              logger.e(errorState.message);
-            }, cleared: (_) {
-              // When cleared, ensure local state reflects a new contact if in edit mode
-              if (_isEditMode) {
+                logger.d(
+                    "Listener updated local state from BLoC. isEditMode: $_isEditMode");
+              } else {
+                // If we ARE in edit mode and the BLoC emits the SAME contact
+                // (e.g., after a background save confirmation), do NOT overwrite local state.
+                // We might still want to reset flags if the save was successful.
                 setState(() {
-                  // Reset _localContact to default values (important if user navigated back from edit and then added new)
-                  _localContact = Contact(
-                    id: 0,
-                    firstName: '',
-                    lastName: '',
-                    nickname: null,
-                    frequency: ContactFrequency.never.value,
-                    birthday: null,
-                    lastContacted: null,
-                    phoneNumber: null,
-                    emails: [], // Initialize with empty list
-                    notes: null,
-                    youtubeUrl: null,
-                    instagramHandle: null,
-                    facebookUrl: null,
-                    snapchatHandle: null,
-                    xHandle: null, // Added
-                    linkedInUrl: null, // Added
-                  );
-                  _updateControllersFromLocalContact(); // Update controllers to blank
-                  _hasUnsavedChanges = true; // New contact needs saving
-                  _initialized = true; // Mark as initialized
+                  _hasUnsavedChanges =
+                      false; // Assume save was successful if state re-emitted
+                  _isEditMode =
+                      false; // Exit edit mode after successful save confirmation
+                  _initialized = true; // Ensure initialized
                 });
+                logger.d(
+                    "Listener: In edit mode, BLoC re-emitted same contact. Exiting edit mode.");
               }
-            });
+            } else if (state is _Error) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Error: ${state.message}")));
+              }
+              logger.e(state.message);
+              // Keep existing UI or show error placeholder in builder
+              setState(() {
+                _initialized =
+                    true; // Mark as initialized even on error to show something
+              });
+            } else if (state is _Cleared) {
+              // This state now primarily means a deletion was successful.
+              // The navigation back should handle leaving the screen.
+              // We don't need to reset the form here as we're likely popping.
+              logger.d(
+                  "Listener: _Cleared received (likely post-delete).");
+              setState(() {
+                _initialized = true; // Mark as initialized
+              });
+            } else if (state is _Loading ||
+                state is _Initial) {
+              // Optionally handle loading/initial states (e.g., disable buttons)
+              // The builder already shows a progress indicator.
+              setState(() {
+                // Don't set initialized = true here, wait for Loaded/Error/Cleared
+              });
+            }
           },
           builder: (context, state) {
-            // Delegate building the main content based on state
-            return state.maybeMap(
-              loaded: (loadedState) => _buildLoadedBody(), // Delegate to helper
-              initial: (_) => const Center(child: CircularProgressIndicator()),
-              loading: (_) => const Center(child: CircularProgressIndicator()),
-              cleared: (_) => _isEditMode
-                  ? _buildLoadedBody() // Show form for new contact
-                  : const Center(
-                      child: Text(
-                          'Enter new contact details')), // Placeholder if cleared and not editing
-              error: (errorState) =>
-                  _buildErrorBody(errorState.message), // Delegate
-              orElse: () {
-                // Fallback logic, check if we are setting up a new contact explicitly
-                if (_isEditMode && _localContact.id == 0) {
-                  return _buildLoadedBody(); // Show form for new contact
-                }
+            // Builder logic remains largely the same, relying on the state type
+            // and the _isEditMode flag managed by the listener/button actions.
+            if (state is _Loaded) {
+              // Show loaded body (view or edit mode determined by _isEditMode)
+              return _buildLoadedBody();
+            } else if (state is _Initial) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (state is _Loading) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (state is _Cleared) {
+              // If cleared and in edit mode, show the form for the new contact
+              if (_isEditMode) {
+                return _buildLoadedBody();
+              } else {
+                // If cleared and not in edit mode (e.g., after delete before navigation)
+                // show a placeholder or loading indicator.
                 return const Center(
-                    child: CircularProgressIndicator()); // Default loading
-              },
-            );
+                    child: Text('Contact cleared or not loaded.'));
+              }
+            } else if (state is _Error) {
+              // Show error body, potentially including the form with last known data
+              return _buildErrorBody(state.message);
+            } else {
+              // Fallback for any unexpected state
+              return const Center(child: Text('Unknown state'));
+            }
           },
         ),
         bottomNavigationBar: BottomAppBar(
@@ -849,76 +861,48 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   child: TextFormField(
                     controller: controller,
                     enabled: _isEditMode,
-                    keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
-                        labelText: 'Email ${index + 1}',
-                        border: const OutlineInputBorder()),
-                    validator: (value) {
-                      // Basic email format check (optional)
-                      if (value != null &&
-                          value.isNotEmpty &&
-                          !value.contains('@')) {
-                        return 'Invalid email format';
-                      }
-                      return null;
-                    },
+                      labelText: 'Email ${index + 1}',
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.email),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
                     onChanged: (value) {
-                      // Update immutably
-                      if (_localContact.emails != null &&
-                          index < _localContact.emails!.length) {
-                        // 1. Create a *mutable* copy of the current emails list
-                        //    Using List.from() creates a growable list suitable for modification.
-                        final List<String> mutableEmails =
-                            List<String>.from(_localContact.emails!);
-
-                        // 2. Update the value at the specific index in the *mutable copy*
-                        mutableEmails[index] = value;
-
-                        // 3. Update _localContact using copyWith, providing the modified list
-                        setState(() {
-                          _localContact =
-                              _localContact.copyWith(emails: mutableEmails);
-                          _hasUnsavedChanges = true;
-                        });
-                      }
+                      setState(() {
+                        // Update the email in the list
+                        List<String> updatedEmails =
+                            List<String>.from(_localContact.emails ?? []);
+                        if (index < updatedEmails.length) {
+                          updatedEmails[index] = value;
+                        } else {
+                          updatedEmails.add(value);
+                        }
+                        _localContact =
+                            _localContact.copyWith(emails: updatedEmails);
+                        _hasUnsavedChanges = true;
+                      });
                     },
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.remove_circle_outline,
-                      color: Colors.red),
-                  tooltip: 'Remove Email',
-                  onPressed: () {
-                    // Check if emails list exists and index is valid
-                    if (_localContact.emails != null &&
-                        index >= 0 &&
-                        index < _localContact.emails!.length) {
+                if (_isEditMode)
+                  IconButton(
+                    icon: const Icon(Icons.delete),
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () {
                       setState(() {
-                        // 1. Dispose the controller that's being removed
-                        //    (Make sure 'controller' is accessible here - it should be from the .map entry)
-                        _emailControllers[index]
-                            .dispose(); // Dispose before removing from list
-
-                        // 2. Remove the controller from the mutable UI list
+                        // Remove controller and update model
                         _emailControllers.removeAt(index);
-
-                        // 3. Create a NEW list excluding the item at the specified index
-                        //    Create a mutable copy first
-                        final List<String> mutableEmails =
-                            List<String>.from(_localContact.emails!);
-                        //    Remove the item from the mutable copy
-                        mutableEmails.removeAt(index);
-
-                        // 4. Update _localContact IMMUTABLY using copyWith the new list
-                        _localContact =
-                            _localContact.copyWith(emails: mutableEmails);
-
-                        // 5. Mark changes
-                        _hasUnsavedChanges = true;
+                        List<String> updatedEmails =
+                            List<String>.from(_localContact.emails ?? []);
+                        if (index < updatedEmails.length) {
+                          updatedEmails.removeAt(index);
+                          _localContact =
+                              _localContact.copyWith(emails: updatedEmails);
+                          _hasUnsavedChanges = true;
+                        }
                       });
-                    }
-                  },
-                )
+                    },
+                  ),
               ],
             ),
           );
@@ -929,27 +913,14 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           child: TextButton.icon(
             icon: const Icon(Icons.add),
             label: const Text('Add Email'),
-            onPressed: () {
-              setState(() {
-                // 1. Create the new controller (this part is fine)
-                _emailControllers.add(TextEditingController());
-
-                // 2. Create the *new* list of emails
-                // Get the current list (or an empty list if null)
-                final List<String> currentEmails = _localContact.emails ?? [];
-                // Create a new list by adding an empty string to the current ones
-                final List<String> newEmails = [
-                  ...currentEmails,
-                  ''
-                ]; // Use spread operator
-
-                // 3. Update _localContact *immutably* using copyWith
-                _localContact = _localContact.copyWith(emails: newEmails);
-
-                // 4. Mark changes (this part is fine)
-                _hasUnsavedChanges = true;
-              });
-            },
+            onPressed: _isEditMode
+                ? () {
+                    setState(() {
+                      _emailControllers.add(TextEditingController());
+                      // Don't modify localContact.emails yet - wait for user input first
+                    });
+                  }
+                : null,
           ),
         ),
       ],

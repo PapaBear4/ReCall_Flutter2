@@ -6,7 +6,8 @@ part of 'contact.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_Contact _$ContactFromJson(Map<String, dynamic> json) => _Contact(
+_$ContactImpl _$$ContactImplFromJson(Map<String, dynamic> json) =>
+    _$ContactImpl(
       id: (json['id'] as num?)?.toInt(),
       firstName: json['firstName'] as String,
       lastName: json['lastName'] as String,
@@ -33,7 +34,8 @@ _Contact _$ContactFromJson(Map<String, dynamic> json) => _Contact(
       linkedInUrl: json['linkedInUrl'] as String?,
     );
 
-Map<String, dynamic> _$ContactToJson(_Contact instance) => <String, dynamic>{
+Map<String, dynamic> _$$ContactImplToJson(_$ContactImpl instance) =>
+    <String, dynamic>{
       'id': instance.id,
       'firstName': instance.firstName,
       'lastName': instance.lastName,

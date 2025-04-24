@@ -26,80 +26,96 @@ class ContactDetailsBloc
         super(const ContactDetailsState.initial()) {
     // Event handler for loading contact details
     on<ContactDetailsEvent>((event, emit) async {
-      await event.map(
-        loadContact: (e) async {
-          // Handles the LoadContact event
+      switch (event) {
+        case _LoadContact e:
           emit(const ContactDetailsState.loading());
           try {
             final contact = await _contactRepository.getById(e.contactId);
             if (contact != null) {
-              // CRUCIAL null check
               emit(ContactDetailsState.loaded(contact));
             } else {
-              emit(const ContactDetailsState.error(
-                  'Contact not found')); // Handle null case
+              emit(const ContactDetailsState.error('Contact not found'));
             }
-          } catch (e) {
-            emit(ContactDetailsState.error(e.toString()));
+          } catch (err) {
+            emit(ContactDetailsState.error(err.toString()));
           }
-        },
-        saveContact: (e) async {
+          break;
+
+        case _SaveContact e:
           emit(const ContactDetailsState.loading());
           try {
+            Contact savedContact;
             if (e.contact.id == null) {
-              await _contactRepository.add(e.contact);
+              savedContact = await _contactRepository.add(e.contact);
             } else {
               await _contactRepository.update(e.contact);
+              savedContact = (await _contactRepository.getById(e.contact.id!))!;
             }
-            final updatedContact =
-                await _contactRepository.getById(e.contact.id!);
-            if (updatedContact != null) {
-              emit(ContactDetailsState.loaded(updatedContact));
-              _notificationService.scheduleReminder(updatedContact);
-            } else {
-              emit(const ContactDetailsState.error(
-                  'Failed to reload updated contact'));
-            }
+            emit(ContactDetailsState.loaded(savedContact));
+            await _notificationService.scheduleReminder(savedContact);
           } catch (error) {
             emit(ContactDetailsState.error(error.toString()));
           }
-        },
-        updateContactLocally: (e) async {
-          // No need to emit loading state if it is not going to the repository
+          break;
+
+        case _UpdateContactLocally e:
           try {
             emit(ContactDetailsState.loaded(e.contact));
           } catch (error) {
             emit(ContactDetailsState.error(error.toString()));
           }
-        },
-        addContact: (e) async {
+          break;
+
+        case _AddContact e:
           emit(const ContactDetailsState.loading());
           try {
             final newContact = await _contactRepository.add(e.contact);
-            emit(ContactDetailsState.loaded(
-                newContact)); // Emit loaded state with the NEW contact
-            _notificationService.scheduleReminder(newContact);
+            emit(ContactDetailsState.loaded(newContact));
+            await _notificationService.scheduleReminder(newContact);
           } catch (error) {
             emit(ContactDetailsState.error(error.toString()));
           }
-        },
-        deleteContact: (e) async {
+          break;
+
+        case _DeleteContact e:
           emit(const ContactDetailsState.loading());
           try {
+            await _notificationService.cancelNotification(e.contactId);
             await _contactRepository.delete(e.contactId);
-            emit(const ContactDetailsState
-                .cleared()); // Emit cleared state after successful deletion
-            _notificationService.cancelNotification(e.contactId);
+            emit(const ContactDetailsState.cleared());
           } catch (error) {
             emit(ContactDetailsState.error(error.toString()));
           }
-        },
-        clearContact: (e) async {
+          break;
+
+        case _ClearContact e:
           logger.i('Log: Clearing contact details');
           emit(const ContactDetailsState.cleared());
-        },
-        // ... other event handlers (for updateContact, addContact, etc.)
-      );
+          break;
+
+        // Add this case within the switch (event) { ... } block
+        case _PrepareNewContact e:
+          emit(const ContactDetailsState.loading()); // Show loading briefly
+          try {
+            // Create a new, empty contact with the default frequency
+            final newContact = Contact(
+              id: 0, // Use 0 to signify a new contact
+              firstName: '',
+              lastName: '',
+              frequency: e.defaultFrequency, // Use the passed default
+              // Initialize other fields as needed (null or default)
+              emails: [],
+            );
+            emit(ContactDetailsState.loaded(
+                newContact)); // Emit loaded with the blank contact
+            logger.i(
+                'Prepared BLoC for new contact with default frequency: ${e.defaultFrequency}');
+          } catch (error) {
+            emit(ContactDetailsState.error(
+                'Error preparing new contact: ${error.toString()}'));
+          }
+          break;
+      }
     });
   }
 }
