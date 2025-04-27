@@ -81,17 +81,6 @@ BackupData parseAndMigrateBackupData(String jsonData) {
         final Map<String, dynamic>? oldSocialMap =
             contactMap['socialMediaHandles'] as Map<String, dynamic>?;
 
-        // 3. Migrate data using copyWith
-        if (oldSocialMap != null) {
-          // Define the mapping from old keys to new field names.
-          // Adjust keys ('youtubeUrl', etc.) if they were different in your V2 map.
-          basicContact = basicContact.copyWith(
-            youtubeUrl: oldSocialMap['youtubeUrl']?.toString(),
-            instagramHandle: oldSocialMap['instagramHandle']?.toString(),
-            facebookUrl: oldSocialMap['facebookUrl']?.toString(),
-            snapchatHandle: oldSocialMap['snapchatHandle']?.toString(),
-          );
-        }
         migratedContacts.add(basicContact);
       } else {
         logger

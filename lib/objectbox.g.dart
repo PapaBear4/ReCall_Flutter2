@@ -24,7 +24,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(1, 2880320336740233460),
     name: 'Contact',
-    lastPropertyId: const obx_int.IdUid(18, 92743786241616720),
+    lastPropertyId: const obx_int.IdUid(19, 368197346621133073),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -94,45 +94,15 @@ final _entities = <obx_int.ModelEntity>[
         flags: 0,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(12, 1318182758170310109),
-        name: 'youtubeUrl',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(13, 1553841248143349046),
-        name: 'instagramHandle',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(14, 1723202139627553320),
-        name: 'facebookUrl',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(15, 8191253130450763372),
-        name: 'snapchatHandle',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(16, 3238018542597221696),
-        name: 'xHandle',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(17, 2634893898965425767),
-        name: 'linkedInUrl',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
         id: const obx_int.IdUid(18, 92743786241616720),
         name: 'nextContact',
         type: 10,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(19, 368197346621133073),
+        name: 'isActive',
+        type: 1,
         flags: 0,
       ),
     ],
@@ -271,7 +241,14 @@ obx_int.ModelDefinition getObjectBoxModel() {
     lastSequenceId: const obx_int.IdUid(0, 0),
     retiredEntityUids: const [],
     retiredIndexUids: const [],
-    retiredPropertyUids: const [],
+    retiredPropertyUids: const [
+      1318182758170310109,
+      1553841248143349046,
+      1723202139627553320,
+      8191253130450763372,
+      3238018542597221696,
+      2634893898965425767,
+    ],
     retiredRelationUids: const [],
     modelVersion: 5,
     modelVersionParserMinimum: 5,
@@ -305,29 +282,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
                 );
         final notesOffset =
             object.notes == null ? null : fbb.writeString(object.notes!);
-        final youtubeUrlOffset =
-            object.youtubeUrl == null
-                ? null
-                : fbb.writeString(object.youtubeUrl!);
-        final instagramHandleOffset =
-            object.instagramHandle == null
-                ? null
-                : fbb.writeString(object.instagramHandle!);
-        final facebookUrlOffset =
-            object.facebookUrl == null
-                ? null
-                : fbb.writeString(object.facebookUrl!);
-        final snapchatHandleOffset =
-            object.snapchatHandle == null
-                ? null
-                : fbb.writeString(object.snapchatHandle!);
-        final xHandleOffset =
-            object.xHandle == null ? null : fbb.writeString(object.xHandle!);
-        final linkedInUrlOffset =
-            object.linkedInUrl == null
-                ? null
-                : fbb.writeString(object.linkedInUrl!);
-        fbb.startTable(19);
+        fbb.startTable(20);
         fbb.addInt64(0, object.id ?? 0);
         fbb.addOffset(1, firstNameOffset);
         fbb.addOffset(2, lastNameOffset);
@@ -339,13 +294,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
         fbb.addOffset(8, phoneNumberOffset);
         fbb.addOffset(9, emailsOffset);
         fbb.addOffset(10, notesOffset);
-        fbb.addOffset(11, youtubeUrlOffset);
-        fbb.addOffset(12, instagramHandleOffset);
-        fbb.addOffset(13, facebookUrlOffset);
-        fbb.addOffset(14, snapchatHandleOffset);
-        fbb.addOffset(15, xHandleOffset);
-        fbb.addOffset(16, linkedInUrlOffset);
         fbb.addInt64(17, object.nextContact?.millisecondsSinceEpoch);
+        fbb.addBool(18, object.isActive);
         fbb.finish(fbb.endTable());
         return object.id ?? 0;
       },
@@ -415,24 +365,12 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final notesParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 24);
-        final youtubeUrlParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGetNullable(buffer, rootOffset, 26);
-        final instagramHandleParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGetNullable(buffer, rootOffset, 28);
-        final facebookUrlParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGetNullable(buffer, rootOffset, 30);
-        final snapchatHandleParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGetNullable(buffer, rootOffset, 32);
-        final xHandleParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGetNullable(buffer, rootOffset, 34);
-        final linkedInUrlParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGetNullable(buffer, rootOffset, 36);
+        final isActiveParam = const fb.BoolReader().vTableGet(
+          buffer,
+          rootOffset,
+          40,
+          false,
+        );
         final object = Contact(
           id: idParam,
           firstName: firstNameParam,
@@ -446,12 +384,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           phoneNumber: phoneNumberParam,
           emails: emailsParam,
           notes: notesParam,
-          youtubeUrl: youtubeUrlParam,
-          instagramHandle: instagramHandleParam,
-          facebookUrl: facebookUrlParam,
-          snapchatHandle: snapchatHandleParam,
-          xHandle: xHandleParam,
-          linkedInUrl: linkedInUrlParam,
+          isActive: isActiveParam,
         );
 
         return object;
@@ -645,39 +578,14 @@ class Contact_ {
     _entities[0].properties[10],
   );
 
-  /// See [Contact.youtubeUrl].
-  static final youtubeUrl = obx.QueryStringProperty<Contact>(
+  /// See [Contact.nextContact].
+  static final nextContact = obx.QueryDateProperty<Contact>(
     _entities[0].properties[11],
   );
 
-  /// See [Contact.instagramHandle].
-  static final instagramHandle = obx.QueryStringProperty<Contact>(
+  /// See [Contact.isActive].
+  static final isActive = obx.QueryBooleanProperty<Contact>(
     _entities[0].properties[12],
-  );
-
-  /// See [Contact.facebookUrl].
-  static final facebookUrl = obx.QueryStringProperty<Contact>(
-    _entities[0].properties[13],
-  );
-
-  /// See [Contact.snapchatHandle].
-  static final snapchatHandle = obx.QueryStringProperty<Contact>(
-    _entities[0].properties[14],
-  );
-
-  /// See [Contact.xHandle].
-  static final xHandle = obx.QueryStringProperty<Contact>(
-    _entities[0].properties[15],
-  );
-
-  /// See [Contact.linkedInUrl].
-  static final linkedInUrl = obx.QueryStringProperty<Contact>(
-    _entities[0].properties[16],
-  );
-
-  /// See [Contact.nextContact].
-  static final nextContact = obx.QueryDateProperty<Contact>(
-    _entities[0].properties[17],
   );
 }
 

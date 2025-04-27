@@ -1,205 +1,172 @@
-// lib/repositories/user_settings_repository.dart
+import 'dart:async';
 import 'package:recall/models/usersettings.dart';
-import 'package:recall/utils/logger.dart'; // Adjust path if needed
-import 'package:objectbox/objectbox.dart';
+import 'package:recall/utils/logger.dart';
 import 'package:recall/sources/usersettings_ob_source.dart';
-import 'package:recall/sources/usersettings_sp_source.dart';
 import 'package:recall/sources/data_source.dart';
-import 'repository.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'data_repository.dart';
 
+/// Repository for accessing and managing user settings data
+/// 
+/// This class provides a clean API for the rest of the application to interact
+/// with user settings data, delegating the actual storage operations to the
+/// ObjectBox data source.
 class UserSettingsRepository implements Repository<UserSettings> {
-  late final Store? _store;
-  late final Box<UserSettings>? _userSettingsBox;
-  late DataSource<UserSettings> _source;
-  // UserSettings typically only has one entry, but use Map for consistency
-  final Map<int, UserSettings> _userSettings = {};
+  final DataSource<UserSettings> _source;
+  
+  /// Creates a new user settings repository with the specified data source
+  ///
+  /// Uses dependency injection to get the data source
+  UserSettingsRepository(this._source);
 
-  UserSettingsRepository(this._store) {
-    if (!kIsWeb) {
-      try {
-        _userSettingsBox = _store!.box<UserSettings>();
-        _source = UserSettingsObjectBoxSource(_userSettingsBox!);
-      } catch (e) {
-        logger.i("Error opening ObjectBox store: $e");
-        _source = _createInMemorySource();
-      }
-    } else {
-      _source = _createInMemorySource();
-      try {
-        _source = UserSettingsSharedPreferencesSource();
-      } catch (e) {
-        logger.i("Error opening shared preferences: $e");
-      }
-    }
-  }
+  // MARK: - Basic CRUD Operations
 
-  DataSource<UserSettings> _createInMemorySource() {
-    return _InMemoryUserSettingsSource(userSettings: _userSettings);
-  }
-
+  /// Retrieves all user settings
   @override
   Future<List<UserSettings>> getAll() async {
     try {
-      final userSettings = await _source.getAll();
-      _userSettings.clear();
-      for (final setting in userSettings) {
-        if (setting.id != null) {
-          _userSettings[setting.id!] = setting;
-        }
-      }
-      return userSettings;
+      return await _source.getAll();
     } catch (e) {
-      logger.i("Error getting all user settings: $e");
-      return _userSettings.values.toList();
+      logger.e("Error getting all user settings: $e");
+      rethrow;
     }
   }
 
+  /// Gets a user settings object by ID
   @override
   Future<UserSettings?> getById(int id) async {
-    if (_userSettings.containsKey(id)) {
-      return _userSettings[id];
-    }
     try {
       return await _source.getById(id);
     } catch (e) {
-      logger.i("Error getting user settings by id: $e");
-      return null;
+      logger.e("Error getting user settings by id: $e");
+      rethrow;
     }
   }
 
+  /// Adds a new user settings object to the data source
   @override
   Future<UserSettings> add(UserSettings item) async {
     try {
-      final usersettings = await _source.add(item);
-      if (item.id != null) {
-        _userSettings[item.id!] = item;
-      }
-      return usersettings;
+      return await _source.add(item);
     } catch (e) {
-      logger.i("Error adding user settings: $e");
-      return item;
+      logger.e("Error adding user settings: $e");
+      rethrow;
     }
   }
 
+  /// Updates an existing user settings object
   @override
   Future<UserSettings> update(UserSettings item) async {
     try {
-      final usersettings = await _source.update(item);
-      if (item.id != null) {
-        _userSettings[item.id!] = item;
-      }
-      return usersettings;
+      return await _source.update(item);
     } catch (e) {
-      logger.i("Error updating user settings: $e");
-      return item;
+      logger.e("Error updating user settings: $e");
+      rethrow;
     }
   }
 
+  /// Updates multiple user settings objects at once
+  @override
+  Future<List<UserSettings>> updateMany(List<UserSettings> items) async {
+    try {
+      return await _source.updateMany(items);
+    } catch (e) {
+      logger.e("Error updating many user settings: $e");
+      rethrow;
+    }
+  }
+
+  /// Deletes a user settings object by ID
   @override
   Future<void> delete(int id) async {
     try {
       await _source.delete(id);
-      _userSettings.remove(id);
     } catch (e) {
-      logger.i("Error deleting user settings: $e");
+      logger.e("Error deleting user settings: $e");
+      rethrow;
     }
   }
 
-  @override
-  Future<List<UserSettings>> addMany(List<UserSettings> items) async {
-     try {
-      final addedItems = await _source.addMany(items);
-      // Update cache with items returned from source (which have IDs)
-      for (final item in addedItems) {
-        if (item.id != null) {
-          _userSettings[item.id!] = item;
-        }
-      }
-      return addedItems;
-    } catch (e) {
-      logger.i("Error adding many user settings: $e");
-      return []; // Or handle error appropriately
-    }
-  }
-
-  @override
-  Future<void> deleteAll() async {
-     try {
-      await _source.deleteAll();
-      _userSettings.clear(); // Clear cache
-    } catch (e) {
-      logger.i("Error deleting all user settings: $e");
-    }
-  }
-}
-
-class _InMemoryUserSettingsSource implements DataSource<UserSettings> {
-  final Map<int, UserSettings> userSettings;
-  int _nextId = 1; // Add ID tracking
-
-  _InMemoryUserSettingsSource({required this.userSettings}) {
-     // Initialize _nextId based on existing items if any
-     if (userSettings.isNotEmpty) {
-       _nextId = userSettings.keys.reduce((a, b) => a > b ? a : b) + 1;
-     }
-  }
-
-  @override
-  Future<UserSettings> add(UserSettings item) async {
-    final newItem = item.copyWith(id: _nextId++);
-    userSettings[newItem.id!] = newItem;
-    return newItem;
-  }
-
-  @override
-  Future<List<UserSettings>> addMany(List<UserSettings> items) async {
-    final updatedItems = <UserSettings>[];
-    for (final item in items) {
-      final newItem = item.copyWith(id: _nextId++);
-      userSettings[newItem.id!] = newItem;
-      updatedItems.add(newItem);
-    }
-    return updatedItems;
-  }
-
-  @override
-  Future<void> delete(int id) async {
-    userSettings.remove(id);
-  }
-
+  /// Deletes multiple user settings objects by their IDs
   @override
   Future<void> deleteMany(List<int> ids) async {
-    for (final id in ids) {
-      userSettings.remove(id);
+    try {
+      await _source.deleteMany(ids);
+    } catch (e) {
+      logger.e("Error deleting multiple user settings: $e");
+      rethrow;
     }
   }
 
+  /// Adds multiple user settings objects at once
   @override
-  Future<int> count() async {
-    return userSettings.length;
+  Future<List<UserSettings>> addMany(List<UserSettings> items) async {
+    try {
+      return await _source.addMany(items);
+    } catch (e) {
+      logger.e("Error adding many user settings: $e");
+      rethrow;
+    }
   }
 
-  @override
-  Future<List<UserSettings>> getAll() async {
-    return userSettings.values.toList();
-  }
-
-  @override
-  Future<UserSettings?> getById(int id) async {
-    return userSettings[id];
-  }
-
-  @override
-  Future<UserSettings> update(UserSettings item) async {
-    if (item.id == null) return item;
-    userSettings[item.id!] = item;
-    return item;
-  }
-
+  /// Deletes all user settings
   @override
   Future<void> deleteAll() async {
-    userSettings.clear();
-    _nextId = 1; // Reset ID counter
+    try {
+      await _source.deleteAll();
+    } catch (e) {
+      logger.e("Error deleting all user settings: $e");
+      rethrow;
+    }
+  }
+
+  /// Gets the count of user settings objects
+  @override
+  Future<int> count() async {
+    try {
+      return await _source.count();
+    } catch (e) {
+      logger.e("Error counting user settings: $e");
+      rethrow;
+    }
+  }
+
+  // MARK: - Stream Methods
+  
+  /// Returns a filtered stream of user settings based on query name
+  @override
+  Stream<List<UserSettings>> getAllStream() {
+    return _source.getAllStream();
+  }
+  
+  /// Returns a count stream based on query name
+  @override
+  Stream<int> getCountStream(String queryName) {
+    return _source.getCountStream(queryName);
+  }
+    
+  /// Returns a stream with the count of settings
+  Stream<int> getSettingsCount() {
+    return _source.getCountStream(UserSettingsQueryNames.all);
+  }
+  
+  // MARK: - Convenience Methods
+  
+  /// Gets the first user settings object, creating one if none exists
+  Future<UserSettings> getFirstOrCreate() async {
+    final settings = await getAll();
+    if (settings.isNotEmpty) {
+      return settings.first;
+    }
+    
+    // Create default settings if none exist
+    final newSettings = UserSettings();
+    return add(newSettings);
+  }
+  
+  // MARK: - Resource Management
+  
+  /// Releases resources used by this repository
+  void dispose() {
+    _source.dispose();
   }
 }

@@ -38,9 +38,20 @@ enum ContactListSortField {
   nextContact,
 }
 
-/// Enum defining the available filters to apply to the contact list.
+/// Enum for predefined filters in the contact list.
 enum ContactListFilter {
-  none,     // Show all contacts
-  overdue,  // Show only overdue contacts
-  dueSoon,  // Show contacts due for communication soon
+  /// No filter applied
+  none,
+  
+  /// Shows only overdue contacts
+  overdue,
+  
+  /// Shows only contacts due soon
+  dueSoon,
+  
+  /// Shows only active contacts (not archived)
+  active,
+  
+  /// Shows only archived contacts
+  archived
 }

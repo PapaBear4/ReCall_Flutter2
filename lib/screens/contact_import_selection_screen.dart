@@ -579,36 +579,6 @@ class _ContactImportSelectionScreenState
           }
         }
 
-        // Map Social Media Handles / Links
-        // TODO: These mappings might need adjustments based on exact labels used by flutter_contacts
-        String? xHandle;
-        String? linkedInUrl;
-
-        // Look in SocialMedia first (case-insensitive check for label)
-        for (final social in fcContact.socialMedias) {
-          final labelLower = social.label
-              .toString()
-              .toLowerCase(); // e.g., "socialmedialabel.twitter"
-          if (labelLower.contains('twitter')) {
-            xHandle = social.userName;
-          } else if (labelLower.contains('linkedin')) {
-            // SocialMedia typically stores username, Website stores URL
-            // Maybe store username if URL isn't found in websites?
-            // linkedInUrl = social.userName; // Less likely to be the URL
-          }
-        }
-        // Look in Websites for LinkedIn URL
-        for (final website in fcContact.websites) {
-          final labelLower = website.label
-              .toString()
-              .toLowerCase(); // e.g., "websitelabel.linkedin"
-          final urlLower = website.url.toLowerCase();
-          if (labelLower.contains('linkedin') ||
-              urlLower.contains('linkedin.com')) {
-            linkedInUrl = website.url;
-            break; // Found one, stop looking in websites
-          }
-        }
 
         // Create the app's Contact object
         final appContact = app_contact.Contact(
@@ -625,8 +595,6 @@ class _ContactImportSelectionScreenState
           notes: fcContact.notes.isNotEmpty
               ? fcContact.notes.first.note
               : null, // Use first note if exists
-          xHandle: xHandle,
-          linkedInUrl: linkedInUrl,
           // Set lastContacted to now for newly imported contacts
           lastContacted: now,
           // Map other fields if needed (youtube, instagram, facebook, snapchat)

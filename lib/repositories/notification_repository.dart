@@ -1,208 +1,169 @@
 // lib/repositories/notification_repository.dart
+import 'dart:async';
 import 'package:recall/models/notification.dart';
-import 'package:recall/utils/logger.dart'; // Adjust path if needed
-import 'package:objectbox/objectbox.dart';
+import 'package:recall/utils/logger.dart';
 import 'package:recall/sources/notification_ob_source.dart';
-import 'package:recall/sources/notification_sp_source.dart';
 import 'package:recall/sources/data_source.dart';
-import 'repository.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'data_repository.dart';
 
+/// Repository for accessing and managing notification data
 class NotificationRepository implements Repository<Notification> {
-  late final Store? _store;
-  late final Box<Notification>? _notificationBox;
-  late DataSource<Notification> _source;
-  final Map<int, Notification> _notifications = {};
+  final DataSource<Notification> _source;
+  
+  /// Creates a new notification repository with the specified data source
+  ///
+  /// Uses dependency injection to get the data source
+  NotificationRepository(this._source);
 
-  NotificationRepository(this._store) {
-    if (!kIsWeb) {
-      try {
-        _notificationBox = _store!.box<Notification>();
-        _source = NotificationObjectBoxSource(_notificationBox!);
-      } catch (e) {
-        logger.i("Error opening ObjectBox store: $e");
-        _source = _createInMemorySource();
-      }
-    } else {
-      _source = _createInMemorySource();
-      try {
-        _source = NotificationSharedPreferencesSource();
-      } catch (e) {
-        logger.i("Error opening shared preferences: $e");
-      }
-    }
-  }
+  // MARK: - Basic CRUD Operations
 
-  DataSource<Notification> _createInMemorySource() {
-    return _InMemoryNotificationSource(notifications: _notifications);
-  }
-
+  /// Retrieves all notifications
   @override
   Future<List<Notification>> getAll() async {
     try {
-      final notifications = await _source.getAll();
-      _notifications.clear();
-      for (final notification in notifications) {
-        if (notification.id != null) {
-          _notifications[notification.id!] = notification;
-        }
-      }
-      return notifications;
+      return await _source.getAll();
     } catch (e) {
-      logger.i("Error getting all notifications: $e");
-      return _notifications.values.toList();
+      logger.e("Error getting all notifications: $e");
+      rethrow; // Propagate error to caller for handling
     }
   }
 
+  /// Gets a notification by ID
   @override
   Future<Notification?> getById(int id) async {
-    if (_notifications.containsKey(id)) {
-      return _notifications[id];
-    }
     try {
       return await _source.getById(id);
     } catch (e) {
-      logger.i("Error getting notification by id: $e");
-      return null;
+      logger.e("Error getting notification by id: $e");
+      rethrow;
     }
   }
 
+  /// Adds a new notification to the data source
   @override
   Future<Notification> add(Notification item) async {
     try {
-      final notification = await _source.add(item);
-      if (item.id != null) {
-        _notifications[item.id!] = item;
-      }
-      return notification;
+      return await _source.add(item);
     } catch (e) {
-      logger.i("Error adding notification: $e");
-      return item;
+      logger.e("Error adding notification: $e");
+      rethrow;
     }
   }
 
+  /// Updates an existing notification
   @override
   Future<Notification> update(Notification item) async {
     try {
-      final notification = await _source.update(item);
-      if (item.id != null) {
-        _notifications[item.id!] = item;
-      }
-      return notification;
+      return await _source.update(item);
     } catch (e) {
-      logger.i("Error updating notification: $e");
-      return item;
+      logger.e("Error updating notification: $e");
+      rethrow;
     }
   }
 
+  /// Updates multiple notifications at once
+  @override
+  Future<List<Notification>> updateMany(List<Notification> items) async {
+    try {
+      return await _source.updateMany(items);
+    } catch (e) {
+      logger.e("Error updating many notifications: $e");
+      rethrow;
+    }
+  }
+
+  /// Deletes a notification by ID
   @override
   Future<void> delete(int id) async {
     try {
       await _source.delete(id);
-      _notifications.remove(id);
     } catch (e) {
-      logger.i("Error deleting notification: $e");
+      logger.e("Error deleting notification: $e");
+      rethrow;
     }
   }
 
+  /// Deletes multiple notifications by their IDs
+  @override
+  Future<void> deleteMany(List<int> ids) async {
+    try {
+      await _source.deleteMany(ids);
+    } catch (e) {
+      logger.e("Error deleting multiple notifications: $e");
+      rethrow;
+    }
+  }
+
+  /// Adds multiple notifications at once
   @override
   Future<List<Notification>> addMany(List<Notification> items) async {
     try {
-      final addedItems = await _source.addMany(items);
-      // Update cache with items returned from source (which have IDs)
-      for (final item in addedItems) {
-        if (item.id != null) {
-          _notifications[item.id!] = item;
-        }
-      }
-      return addedItems;
+      return await _source.addMany(items);
     } catch (e) {
-      logger.i("Error adding many notifications: $e");
-      return []; // Or handle error appropriately
+      logger.e("Error adding many notifications: $e");
+      rethrow;
     }
   }
 
+  /// Deletes all notifications
   @override
   Future<void> deleteAll() async {
     try {
       await _source.deleteAll();
-      _notifications.clear(); // Clear cache
     } catch (e) {
-      logger.i("Error deleting all notifications: $e");
+      logger.e("Error deleting all notifications: $e");
+      rethrow;
     }
   }
 
-}
-
-class _InMemoryNotificationSource implements DataSource<Notification> {
-  final Map<int, Notification> notifications;
-  int _nextId = 1; // Add ID tracking
-
-   _InMemoryNotificationSource({required this.notifications}) {
-     // Initialize _nextId based on existing items if any
-     if (notifications.isNotEmpty) {
-       _nextId = notifications.keys.reduce((a, b) => a > b ? a : b) + 1;
-     }
-   }
-
-  @override
-  Future<Notification> add(Notification item) async {
-    final newItem = item.copyWith(id: _nextId++);
-    notifications[newItem.id!] = newItem;
-    return newItem;
-  }
-
-  @override
-  Future<List<Notification>> addMany(List<Notification> items) async {
-    final updatedItems = <Notification>[];
-    for (final item in items) {
-      final newItem = item.copyWith(id: _nextId++);
-      notifications[newItem.id!] = newItem;
-      updatedItems.add(newItem);
-    }
-    return updatedItems;
-  }
-
-  // ... (delete, deleteMany, count, getAll, getById, update remain the same)
-   @override
-  Future<void> delete(int id) async {
-    notifications.remove(id);
-  }
-
-  @override
-  Future<void> deleteMany(List<int> ids) async {
-    for (final id in ids) {
-      notifications.remove(id);
-    }
-  }
-
+  /// Gets the count of notifications
   @override
   Future<int> count() async {
-    return notifications.length;
-  }
-
-  @override
-  Future<List<Notification>> getAll() async {
-    return notifications.values.toList();
-  }
-
-  @override
-  Future<Notification?> getById(int id) async {
-    return notifications[id];
-  }
-
-  @override
-  Future<Notification> update(Notification item) async {
-    if (item.id == null) return item;
-    if (notifications.containsKey(item.id)) {
-        notifications[item.id!] = item;
+    try {
+      return await _source.count();
+    } catch (e) {
+      logger.e("Error counting notifications: $e");
+      rethrow;
     }
-    return item;
   }
 
+  /// Gets all notifications associated with a specific contact
+  Future<List<Notification>> getByContactId(int contactId) async {
+    try {
+      // This method needs to be implemented in your data source
+      // Or you can implement it here by fetching all and filtering
+      final allNotifications = await _source.getAll();
+      return allNotifications.where((notification) => 
+        notification.id == contactId).toList();
+    } catch (e) {
+      logger.e("Error getting notifications by contact ID: $e");
+      rethrow;
+    }
+  }
+
+  // MARK: - Stream Access Methods
+  
+  /// Returns a filtered stream of notifications based on query name
   @override
-  Future<void> deleteAll() async {
-    notifications.clear();
-    _nextId = 1; // Reset ID counter
+  Stream<List<Notification>> getAllStream() {
+    return _source.getAllStream();
+  }
+  
+  /// Returns a count stream based on query name
+  @override
+  Stream<int> getCountStream(String queryName) {
+    return _source.getCountStream(queryName);
+  }
+  
+  /// Returns a stream with the count of active notifications
+  Stream<int> getNotificationCount() {
+    return _source.getCountStream(NotificationQueryNames.active);
+  }
+  
+  // MARK: - Resource Management
+  
+  /// Releases resources used by this repository
+  void dispose() {
+    _source.dispose();
   }
 }

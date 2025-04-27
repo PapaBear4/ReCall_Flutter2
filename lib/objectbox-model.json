@@ -5,7 +5,7 @@
   "entities": [
     {
       "id": "1:2880320336740233460",
-      "lastPropertyId": "18:92743786241616720",
+      "lastPropertyId": "19:368197346621133073",
       "name": "Contact",
       "properties": [
         {
@@ -65,39 +65,14 @@
           "type": 9
         },
         {
-          "id": "12:1318182758170310109",
-          "name": "youtubeUrl",
-          "type": 9
-        },
-        {
-          "id": "13:1553841248143349046",
-          "name": "instagramHandle",
-          "type": 9
-        },
-        {
-          "id": "14:1723202139627553320",
-          "name": "facebookUrl",
-          "type": 9
-        },
-        {
-          "id": "15:8191253130450763372",
-          "name": "snapchatHandle",
-          "type": 9
-        },
-        {
-          "id": "16:3238018542597221696",
-          "name": "xHandle",
-          "type": 9
-        },
-        {
-          "id": "17:2634893898965425767",
-          "name": "linkedInUrl",
-          "type": 9
-        },
-        {
           "id": "18:92743786241616720",
           "name": "nextContact",
           "type": 10
+        },
+        {
+          "id": "19:368197346621133073",
+          "name": "isActive",
+          "type": 1
         }
       ],
       "relations": []
@@ -184,7 +159,14 @@
   "modelVersionParserMinimum": 5,
   "retiredEntityUids": [],
   "retiredIndexUids": [],
-  "retiredPropertyUids": [],
+  "retiredPropertyUids": [
+    1318182758170310109,
+    1553841248143349046,
+    1723202139627553320,
+    8191253130450763372,
+    3238018542597221696,
+    2634893898965425767
+  ],
   "retiredRelationUids": [],
   "version": 1
 }

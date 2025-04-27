@@ -1,246 +1,297 @@
-// lib/repositories/contact_repository.dart
-import 'package:recall/models/contact.dart'; // Import the Contact model
-import 'package:recall/utils/logger.dart'; // Adjust path if needed
-import 'package:objectbox/objectbox.dart';
+import 'dart:async';
+import 'package:recall/models/contact.dart';
+import 'package:recall/utils/debug_utils.dart';
+import 'package:recall/utils/logger.dart';
 import 'package:recall/sources/contact_ob_source.dart';
-import 'package:recall/sources/contact_sp_source.dart';
 import 'package:recall/sources/data_source.dart';
-import 'repository.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:recall/repositories/notification_repository.dart';
+import 'package:recall/services/service_locator.dart'; // To access the notification repository
+import 'package:recall/services/notification_helper.dart'; // Import the notification_helper.dart
+import 'data_repository.dart';
 
+/// Repository for accessing and managing contact data
+///
+/// This class provides a clean API for the rest of the application to interact
+/// with contact data, delegating the actual storage operations to the underlying
+/// data source.
 class ContactRepository implements Repository<Contact> {
-  late final Store? _store;
-  late final Box<Contact>? _contactBox;
-  late final DataSource<Contact> _source;
-  final Map<int, Contact> _contacts = {};
+  final DataSource<Contact> _source;
 
-  // Initialize the repository
-  ContactRepository(this._store) {
-    if (!kIsWeb) {
-      try {
-        _contactBox = _store!.box<Contact>();
-        _source = ContactObjectBoxSource(_contactBox!);
-      } catch (e) {
-        logger.i("Error opening ObjectBox store: $e");
-        _source = _createInMemorySource();
-      }
-    } else {
-      _source = _createInMemorySource();
-      try {
-        _source = ContactsSharedPreferencesSource();
-      } catch (e) {
-        logger.i("Error opening shared preferences: $e");
-      }
-    }
-  }
+  /// Creates a new contact repository with the specified data source
+  ///
+  /// Uses dependency injection to get the data source
+  ContactRepository(this._source);
 
-  DataSource<Contact> _createInMemorySource() {
-    return _InMemoryContactSource(contacts: _contacts);
-  }
+  // MARK: - Basic CRUD Operations
 
+  /// Retrieves all contacts
   @override
   Future<List<Contact>> getAll() async {
-    final contacts = await _source.getAll();
-    _contacts.clear();
-    for (final contact in contacts) {
-      if (contact.id != null) {
-        _contacts[contact.id!] = contact;
-      }
+    try {
+      return await _source.getAll();
+    } catch (e) {
+      logger.e("Error getting all contacts: $e");
+      rethrow; // Propagate error to caller for handling
     }
-    return contacts;
   }
 
+  /// Gets a contact by ID
   @override
   Future<Contact?> getById(int id) async {
-    if (_contacts.containsKey(id)) {
-      final foundContact = _contacts[id];
-      return foundContact;
-    }
-    final foundContact = _source.getById(id);
-    return foundContact;
-  }
-
-  @override
-  Future<Contact> add(Contact item) async {
-    logger.i('LOG: repo received from call: $item');
-    final contact = await _source.add(item);
-    logger.i('LOG: repo got back from source: $contact');
-    final addedContact = await _source.getById(contact.id!);
-    logger.i('LOG: repo retrieved: $addedContact');
-
-    if (item.id != null) {
-      _contacts[item.id!] = item;
-    }
-    return contact;
-  }
-
-  @override
-  Future<Contact> update(Contact item) async {
-    final contact = await _source.update(item);
-    if (item.id != null) {
-      _contacts[item.id!] = item;
-    }
-    return contact;
-  }
-
-  @override
-  Future<void> delete(int id) async {
-    await _source.delete(id);
-    _contacts.remove(id);
-  }
-
-  @override
-  Future<List<Contact>> addMany(List<Contact> items) async {
-    // We expect items here NOT to have IDs yet,
-    // the source should assign them.
-    final addedContacts = await _source.addMany(items);
-    // Update cache with the contacts returned from the source (which now have IDs)
-    for (final contact in addedContacts) {
-      if (contact.id != null) {
-        _contacts[contact.id!] = contact;
-      }
-    }
-    return addedContacts;
-  }
-
-  Future<void> deleteMany(List<int> ids) async {
     try {
-      await _source.deleteMany(ids); // Call the data source's deleteMany
-      // Remove deleted contacts from the cache
-      for (final id in ids) {
-        _contacts.remove(id);
-      }
-      logger.i(
-          "Successfully deleted ${ids.length} contacts from repository and cache.");
+      return await _source.getById(id);
     } catch (e) {
-      logger.e("Error deleting multiple contacts (${ids.join(', ')}): $e");
-      // Optionally re-throw the error if the caller needs to handle it
+      logger.e("Error getting contact by id: $e");
       rethrow;
     }
   }
 
-  /// Returns the total number of contacts in the data source.
-  Future<int> getContactsCount() async {
-    try {
-      // Delegates the call to the active data source's count method.
-      return await _source.count();
-    } catch (e) {
-      logger.e("Error getting contact count from repository: $e");
-      // Return 0 or rethrow, depending on how you want to handle errors.
-      return 0;
-    }
-  }
-
-  @override
-  Future<void> deleteAll() async {
-    await _source.deleteAll();
-    _contacts.clear(); // Clear the cache
-  }
-
-  Future<void> addSampleContacts() async {
-    // Implementation to add sample contacts
-    // For example:
-    final sampleContacts = [
-      Contact(
-        firstName: "John",
-        lastName: "Doe",
-        phoneNumber: "1234567890",
-        frequency: "weekly",
-        // ...other required fields...
-      ),
-      Contact(
-        firstName: "Jane",
-        lastName: "Smith",
-        phoneNumber: "0987654321",
-        frequency: "monthly",
-        // ...other required fields...
-      ),
-      // Add more sample contacts as needed
-    ];
-    
-    for (final contact in sampleContacts) {
-      await add(contact);
-    }
-  }
-
-  Future<void> clearAllData() async {
-    // Implementation to clear all data
-    // For example:
-    await deleteAll();
-    // You might also want to clear preferences, etc.
-  }
-}
-
-class _InMemoryContactSource implements DataSource<Contact> {
-  final Map<int, Contact> contacts;
-
-  // Keep track of the next ID for in-memory source
-  int _nextId = 1;
-
-  _InMemoryContactSource({required this.contacts}) {
-    // Initialize _nextId based on existing contacts if any
-    if (contacts.isNotEmpty) {
-      _nextId = contacts.keys.reduce((a, b) => a > b ? a : b) + 1;
-    }
-  }
-
+  /// Adds a new contact to the data source
   @override
   Future<Contact> add(Contact item) async {
-    // Use and increment _nextId
-    final newItem = item.copyWith(id: _nextId++);
-    contacts[newItem.id!] = newItem;
-    return newItem;
+    try {
+      return await _source.add(item);
+    } catch (e) {
+      logger.e("Error adding contact: $e");
+      rethrow;
+    }
   }
 
+  /// Adds multiple contacts at once
   @override
   Future<List<Contact>> addMany(List<Contact> items) async {
-    final updatedItems = <Contact>[];
-    for (final item in items) {
-      // Use and increment _nextId for each item
-      final newItem = item.copyWith(id: _nextId++);
-      contacts[newItem.id!] = newItem;
-      updatedItems.add(newItem);
-    }
-    return updatedItems;
-  }
-
-  @override
-  Future<void> delete(int id) async {
-    contacts.remove(id);
-  }
-
-  @override
-  Future<void> deleteMany(List<int> ids) async {
-    for (final id in ids) {
-      contacts.remove(id);
+    try {
+      return await _source.addMany(items);
+    } catch (e) {
+      logger.e("Error adding many contacts: $e");
+      rethrow;
     }
   }
 
-  @override
-  Future<int> count() async {
-    return contacts.length;
-  }
-
-  @override
-  Future<List<Contact>> getAll() async {
-    return contacts.values.toList();
-  }
-
-  @override
-  Future<Contact?> getById(int id) async {
-    return contacts[id];
-  }
-
+  /// Updates an existing contact
   @override
   Future<Contact> update(Contact item) async {
-    if (item.id == null) return item;
-    contacts[item.id!] = item;
-    return item;
+    try {
+      return await _source.update(item);
+    } catch (e) {
+      logger.e("Error updating contact: $e");
+      rethrow;
+    }
   }
 
+  /// Updates multiple contacts at once
+  @override
+  Future<List<Contact>> updateMany(List<Contact> items) async {
+    try {
+      return await _source.updateMany(items);
+    } catch (e) {
+      logger.e("Error updating many contacts: $e");
+      rethrow;
+    }
+  }
+
+  /// Deletes a contact by ID and its associated notifications
+  @override
+  Future<void> delete(int id) async {
+    try {
+      // Get the contact before deleting it (to have its info for logging)
+      final contact = await _source.getById(id);
+
+      // Delete the contact from the database
+      await _source.delete(id);
+
+      // Now clean up associated notifications
+      await _deleteAssociatedNotification(id);
+
+      logger.i(
+          "Deleted contact ${contact?.firstName} ${contact?.lastName} (ID: $id) and its notifications");
+    } catch (e) {
+      logger.e("Error deleting contact: $e");
+      rethrow;
+    }
+  }
+
+  /// Deletes multiple contacts by their IDs and their associated notifications
+  @override
+  Future<void> deleteMany(List<int> ids) async {
+    try {
+      // Delete contacts from the database
+      await _source.deleteMany(ids);
+
+      // Clean up associated notifications for each contact
+      for (final id in ids) {
+        await _deleteAssociatedNotification(id);
+      }
+
+      logger.i(
+          "Deleted ${ids.length} contacts and their associated notifications");
+    } catch (e) {
+      logger.e("Error deleting multiple contacts: $e");
+      rethrow;
+    }
+  }
+
+  /// Deletes all contacts and their associated notifications
   @override
   Future<void> deleteAll() async {
-    contacts.clear();
-    _nextId = 1; // Reset ID counter for in-memory
+    try {
+      // Delete all contacts from the database
+      await _source.deleteAll();
+
+      // Get notification repository to delete notifications
+      final notificationRepo = getIt<NotificationRepository>();
+
+      // Delete all notifications (simplest approach if we're deleting all contacts)
+      await notificationRepo.deleteAll();
+
+      logger.i("Deleted all contacts and their associated notifications");
+    } catch (e) {
+      logger.e("Error deleting all contacts: $e");
+      rethrow;
+    }
+  }
+
+  /// Helper method to delete notifications associated with a specific contact
+  Future<void> _deleteAssociatedNotification(int contactId) async {
+    try {
+      // Get notification repository from service locator
+      final notificationRepo = getIt<NotificationRepository>();
+
+      // Query notifications related to this contact
+      final notifications = await notificationRepo.getByContactId(contactId);
+
+      // Cancel each notification from the device system
+      for (final notification in notifications) {
+        // Cancel the device notification
+        await _cancelDeviceNotification(notification.id!);
+      }
+
+      // Delete from database
+      await notificationRepo.delete(contactId);
+    } catch (e) {
+      logger.e(
+          "Error deleting associated notifications for contact ID $contactId: $e");
+      // We don't rethrow here to prevent a failure here from blocking the contact deletion
+    }
+  }
+
+  /// Cancels a notification from the device notification system
+  Future<void> _cancelDeviceNotification(int notificationId) async {
+    try {
+      // Use the NotificationHelper to cancel the notification
+      final notificationHelper = NotificationHelper();
+      await notificationHelper.cancelNotification(notificationId);
+
+      logger.i("Cancelled device notification ID $notificationId");
+    } catch (e) {
+      logger.e("Error cancelling device notification: $e");
+    }
+  }
+
+  /// Gets the count of contacts
+  @override
+  Future<int> count() async {
+    try {
+      return await _source.count();
+    } catch (e) {
+      logger.e("Error counting contacts: $e");
+      rethrow;
+    }
+  }
+
+  // MARK: - Stream Access Methods
+
+  // Stream for all contacts
+  @override
+  Stream<List<Contact>> getAllStream() {
+    return _source.getAllStream();
+  }
+
+  /// Returns a count stream based on query name
+  @override
+  Stream<int> getCountStream(String queryName) {
+    return _source.getCountStream(queryName);
+  }
+
+  /// Returns a stream with the count of overdue contacts
+  Stream<int> getOverdueContactCount() {
+    return _source.getCountStream(ContactQueryNames.overdue);
+  }
+
+  // MARK: - Status Update Methods
+
+  /// Updates a contact's active status (archive/unarchive)
+  Future<Contact> updateContactStatus(int id, bool isActive) async {
+    try {
+      final contact = await _source.getById(id);
+      if (contact == null) {
+        throw Exception('Contact not found with ID: $id');
+      }
+
+      final updatedContact = contact.copyWith(isActive: isActive);
+      return await _source.update(updatedContact);
+    } catch (e) {
+      logger.e("Error updating contact status: $e");
+      rethrow;
+    }
+  }
+
+  // MARK: - Active Contact Management
+
+  /// The maximum number of active contacts allowed
+  static const int maxActiveContacts = 18;
+
+  /// Gets the current count of active contacts
+  Future<int> getActiveContactCount() async {
+    if (_source is ContactObjectBoxSource) {
+      return await (_source).getActiveContactCount();
+    }
+
+    // Fallback for other data sources
+    final allContacts = await getAll();
+    return allContacts.where((contact) => contact.isActive).length;
+  }
+
+  /// Checks if the active contacts limit has been reached
+  Future<bool> isActiveContactLimitReached() async {
+    final count = await getActiveContactCount();
+    return count >= maxActiveContacts;
+  }
+
+  /// Returns the number of additional active contacts that can be added
+  /// before reaching the limit
+  Future<int> getRemainingActiveContactSlots() async {
+    final count = await getActiveContactCount();
+    return maxActiveContacts - count;
+  }
+
+  /// Returns a stream with the count of active contacts
+  Stream<int> getActiveContactCountStream() {
+    return getCountStream(ContactQueryNames.active);
+  }
+
+  // MARK: - Sample Data
+
+  /// Adds sample contacts to the database for testing/demo purposes
+  ///
+  /// This is a convenience method that delegates to the DebugUtils class
+  Future<List<Contact>> addSampleAppContacts({int count = 10}) async {
+    try {
+      // Call the debug utility function to generate and add sample contacts
+      await DebugUtils.addSampleAppContacts(this, count: count);
+
+      // Return all contacts (including the newly added ones)
+      return await getAll();
+    } catch (e) {
+      logger.e("Error adding sample contacts: $e");
+      throw Exception("Failed to add sample contacts: $e");
+    }
+  }
+
+  // MARK: - Resource Management
+
+  /// Releases resources used by this repository
+  void dispose() {
+    _source.dispose();
   }
 }
