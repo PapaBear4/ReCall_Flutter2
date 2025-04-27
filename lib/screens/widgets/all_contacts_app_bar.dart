@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:recall/models/contact_enums.dart'; // For ContactListFilter
-import 'package:recall/screens/contact_list_screen.dart'; // For ListAction
+import 'package:recall/screens/all_contacts_screen.dart'; // For ListAction
 
 typedef ListActionCallback = void Function(ListAction action);
 typedef VoidCallback = void Function();

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 /// Displays list of email addresses with tap-to-mail functionality
 class EmailDisplayList extends StatelessWidget {

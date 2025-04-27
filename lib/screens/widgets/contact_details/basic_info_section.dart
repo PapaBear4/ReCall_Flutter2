@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:recall/models/contact.dart';
 import 'package:recall/utils/logger.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'common_components.dart';
 
 /// Displays contact's basic information in view mode

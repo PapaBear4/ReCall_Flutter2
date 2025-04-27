@@ -14,10 +14,10 @@ import 'package:recall/screens/widgets/contact_list_item.dart';
 import 'package:recall/main.dart' as main_app;
 
 // Import the new widget files
-import 'package:recall/screens/widgets/contact_list_app_bar.dart';
-import 'package:recall/screens/widgets/contact_list_drawer.dart';
-import 'package:recall/screens/widgets/contact_list_speed_dial.dart';
-import 'package:recall/screens/widgets/contact_list_filter_chips.dart';
+import 'package:recall/screens/widgets/all_contacts_app_bar.dart';
+import 'package:recall/screens/widgets/navigation_drawer.dart';
+import 'package:recall/screens/widgets/all_contacts_speed_dial.dart';
+import 'package:recall/screens/widgets/all_contacts_filter_chips.dart';
 
 // Enum to represent the combined Sort/Filter action
 enum ListAction {
