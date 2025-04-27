@@ -18,7 +18,6 @@ import 'package:recall/services/notification_helper.dart';
 import 'package:recall/services/notification_service.dart';
 import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:recall/utils/backup_restore_utils.dart'; // <-- ADD THIS IMPORT
-import 'package:recall/utils/debug_utils.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
