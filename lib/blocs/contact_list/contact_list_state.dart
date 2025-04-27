@@ -43,8 +43,8 @@ class Loaded extends ContactListState {
   /// The current search term applied to filter contacts.
   final String searchTerm;
   
-  /// The current filter applied to the contact list.
-  final ContactListFilter currentFilter;
+  /// The currently active filters.
+  final Set<ContactListFilter> appliedFilters;
 
   const Loaded({
     required this.originalContacts,
@@ -52,19 +52,17 @@ class Loaded extends ContactListState {
     this.sortField = ContactListSortField.dueDate,
     this.ascending = true,
     this.searchTerm = '',
-    this.currentFilter = ContactListFilter.none,
+    this.appliedFilters = const {ContactListFilter.active}, // Default to showing active contacts
   });
 
   /// Creates a copy of this state with the specified fields replaced.
-  ///
-  /// This follows the immutable state pattern for BLoC.
   Loaded copyWith({
     List<Contact>? originalContacts,
     List<Contact>? displayedContacts,
     ContactListSortField? sortField,
     bool? ascending,
     String? searchTerm,
-    ContactListFilter? currentFilter,
+    Set<ContactListFilter>? appliedFilters,
   }) {
     return Loaded(
       originalContacts: originalContacts ?? this.originalContacts,
@@ -72,7 +70,7 @@ class Loaded extends ContactListState {
       sortField: sortField ?? this.sortField,
       ascending: ascending ?? this.ascending,
       searchTerm: searchTerm ?? this.searchTerm,
-      currentFilter: currentFilter ?? this.currentFilter,
+      appliedFilters: appliedFilters ?? this.appliedFilters,
     );
   }
 
@@ -83,7 +81,7 @@ class Loaded extends ContactListState {
         sortField,
         ascending,
         searchTerm,
-        currentFilter,
+        appliedFilters,
       ];
 }
 

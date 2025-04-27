@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
 import 'package:recall/blocs/contact_list/contact_list_event.dart';
 import 'package:recall/main.dart';
+import 'package:recall/services/service_locator.dart';
 import 'package:recall/repositories/contact_repository.dart';
 import 'package:recall/repositories/usersettings_repository.dart';
 import 'package:recall/screens/about_screen.dart';
@@ -16,53 +17,40 @@ import 'package:recall/services/notification_service.dart';
 import 'package:recall/screens/settings_screen.dart';
 
 class ReCall extends StatelessWidget {
-  final ContactRepository _contactRepository;
-  final UserSettingsRepository _userSettingsRepository;
-
-  const ReCall({
-    super.key,
-    required ContactRepository contactRepository,
-    required UserSettingsRepository userSettingsRepository,
-  })  : _contactRepository = contactRepository,
-        _userSettingsRepository = userSettingsRepository;
+  const ReCall({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final contactRepository = getIt<ContactRepository>();
+    final userSettingsRepository = getIt<UserSettingsRepository>();
+    final notificationService = getIt<NotificationService>();
+
     return ChangeNotifierProvider.value(
-        value: context.read<NotificationService>(),
+        value: notificationService,
         child: MultiRepositoryProvider(
           providers: [
             RepositoryProvider<ContactRepository>.value(
-                value: _contactRepository),
+                value: contactRepository),
             RepositoryProvider<UserSettingsRepository>.value(
-                value: _userSettingsRepository),
+                value: userSettingsRepository),
             BlocProvider(
-              create: (context) => ContactListBloc(
-                contactRepository: _contactRepository,
-                notificationService: context.read<NotificationService>(),
-              )..add(const LoadContacts()),
+              create: (context) => ContactListBloc()
+                ..add(const LoadContacts()),
             ),
             BlocProvider(
-              create: (context) => ContactDetailsBloc(
-                contactRepository: _contactRepository,
-              ),
+              create: (context) => ContactDetailsBloc(),
             ),
           ],
           child: MaterialApp(
-            navigatorKey: navigatorKey, // Assign the global key here
-            // Set the title of the app.
+            navigatorKey: navigatorKey,
             title: 'reCall App',
-            // Set the theme of the app.
             theme: ThemeData(
-              // Use ColorScheme.fromSeed for Material 3
               colorScheme: ColorScheme.fromSeed(
-                seedColor: const Color(0xFF5592D9), // Use hex code from SCSS
+                seedColor: const Color(0xFF5592D9),
               ),
-              useMaterial3: true, // Keep this enabled
+              useMaterial3: true,
             ),
-            // Set the initial route of the app.
             home: const ContactListScreen(),
-            // Define the routes for the app.
             routes: {
               '/contactDetails': (context) =>
                   const ContactDetailsScreen(contactId: 0),

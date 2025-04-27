@@ -3,6 +3,7 @@ import 'package:bloc/bloc.dart';
 import 'package:recall/models/contact.dart';
 import 'package:recall/repositories/contact_repository.dart';
 import 'package:recall/utils/logger.dart';
+import 'package:recall/services/service_locator.dart';
 
 import 'contact_details_event.dart';
 import 'contact_details_state.dart';
@@ -16,9 +17,9 @@ class ContactDetailsBloc extends Bloc<ContactDetailsEvent, ContactDetailsState> 
 
   /// Creates a new ContactDetailsBloc.
   ///
-  /// Requires a [contactRepository] for data access.
-  ContactDetailsBloc({required ContactRepository contactRepository})
-      : _contactRepository = contactRepository,
+  /// Uses GetIt to resolve dependencies for [ContactRepository].
+  ContactDetailsBloc()
+      : _contactRepository = getIt<ContactRepository>(),
         super(const Initial()) {
     on<LoadContact>(_onLoadContact);
     on<SaveContact>(_onSaveContact);

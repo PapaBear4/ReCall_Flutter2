@@ -9,7 +9,7 @@ part 'contact.g.dart';
 /// Contact model represents an individual contact in the application.
 /// 
 /// This class stores personal information about contacts including basic details,
-/// important dates, and social media profiles. It's used for storing and 
+/// important dates, and notes. It's used for storing and 
 /// retrieving contact information from the ObjectBox database.
 @JsonSerializable()
 @Entity()
@@ -24,6 +24,8 @@ class Contact extends Equatable {
   final String firstName;
   
   /// Last name of the contact.
+  /// 
+  /// This field is optional and will default to an empty string if not provided.
   final String lastName;
   
   /// Optional nickname for the contact.
@@ -61,32 +63,20 @@ class Contact extends Equatable {
   /// Additional notes about the contact.
   final String? notes;
   
-  /// URL to the contact's YouTube channel.
-  final String? youtubeUrl;
-  
-  /// Instagram handle of the contact.
-  final String? instagramHandle;
-  
-  /// URL to the contact's Facebook profile.
-  final String? facebookUrl;
-  
-  /// Snapchat username of the contact.
-  final String? snapchatHandle;
-  
-  /// Twitter/X handle of the contact.
-  final String? xHandle;
-  
-  /// URL to the contact's LinkedIn profile.
-  final String? linkedInUrl;
+  /// Indicates whether the contact is active.
+  /// 
+  /// Defaults to true. Can be used to hide contacts without deleting them.
+  final bool isActive;
 
   /// Creates a new contact with the specified properties.
   /// 
-  /// Only [firstName] and [lastName] are required. The [frequency] defaults
+  /// Only [firstName] is required. The [frequency] defaults
   /// to the value specified in [ContactFrequency.defaultValue].
+  /// The [lastName] defaults to an empty string.
   Contact({
     this.id,
     required this.firstName,
-    required this.lastName,
+    this.lastName = '',
     this.nickname,
     this.frequency = ContactFrequency.defaultValue, // Default value
     this.birthday,
@@ -96,12 +86,7 @@ class Contact extends Equatable {
     this.phoneNumber,
     this.emails,
     this.notes,
-    this.youtubeUrl,
-    this.instagramHandle,
-    this.facebookUrl,
-    this.snapchatHandle,
-    this.xHandle,
-    this.linkedInUrl,
+    this.isActive = true,
   });
 
   /// Creates a new instance of Contact with optional updated properties.
@@ -121,12 +106,7 @@ class Contact extends Equatable {
     String? phoneNumber,
     List<String>? emails,
     String? notes,
-    String? youtubeUrl,
-    String? instagramHandle,
-    String? facebookUrl,
-    String? snapchatHandle,
-    String? xHandle,
-    String? linkedInUrl,
+    bool? isActive,
   }) {
     return Contact(
       id: id ?? this.id,
@@ -140,13 +120,8 @@ class Contact extends Equatable {
       anniversary: anniversary ?? this.anniversary,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       emails: emails ?? this.emails,
-      notes: notes ?? this.notes,
-      youtubeUrl: youtubeUrl ?? this.youtubeUrl,
-      instagramHandle: instagramHandle ?? this.instagramHandle,
-      facebookUrl: facebookUrl ?? this.facebookUrl,
-      snapchatHandle: snapchatHandle ?? this.snapchatHandle,
-      xHandle: xHandle ?? this.xHandle,
-      linkedInUrl: linkedInUrl ?? this.linkedInUrl,
+      notes: notes ?? this.notes, // Uses null-coalescing operator
+      isActive: isActive ?? this.isActive,
     );
   }
 
@@ -167,12 +142,7 @@ class Contact extends Equatable {
         phoneNumber,
         emails,
         notes,
-        youtubeUrl,
-        instagramHandle,
-        facebookUrl,
-        snapchatHandle,
-        xHandle,
-        linkedInUrl,
+        isActive,
       ];
 
   /// Creates a Contact instance from a JSON map.

@@ -13,15 +13,14 @@ import 'package:recall/utils/logger.dart';
 import 'package:recall/models/contact_enums.dart';
 import 'package:recall/repositories/usersettings_repository.dart';
 import 'package:recall/services/notification_helper.dart';
-import '../utils/last_contacted_utils.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 // Import widget components
-import '../widgets/contact_details/common_components.dart';
-import '../widgets/contact_details/basic_info_section.dart';
-import '../widgets/contact_details/email_section.dart';
-import '../widgets/contact_details/dates_section.dart';
-import '../widgets/contact_details/schedule_section.dart';
+import 'widgets/contact_details/common_components.dart';
+import 'widgets/contact_details/basic_info_section.dart';
+import 'widgets/contact_details/email_section.dart';
+import 'widgets/contact_details/dates_section.dart';
+import 'widgets/contact_details/schedule_section.dart';
 
 /// Main screen for viewing and editing contact details
 class ContactDetailsScreen extends StatefulWidget {
@@ -84,12 +83,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       phoneNumber: null,
       emails: [],
       notes: null,
-      youtubeUrl: null,
-      instagramHandle: null,
-      facebookUrl: null,
-      snapchatHandle: null,
-      xHandle: null,
-      linkedInUrl: null,
     );
   }
 

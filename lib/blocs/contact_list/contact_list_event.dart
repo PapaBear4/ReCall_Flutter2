@@ -52,15 +52,34 @@ class ApplySearch extends ContactListEvent {
   List<Object?> get props => [searchTerm];
 }
 
-/// Event to apply a preset filter to the contact list.
-class ApplyFilter extends ContactListEvent {
-  /// The filter to apply to the contacts.
+/// Event to toggle a specific filter on/off in the contact list.
+///
+/// This is the primary way to modify filters in the new multi-filter system.
+/// For active/archive filters, this will handle the mutual exclusivity.
+class ToggleFilter extends ContactListEvent {
+  /// The filter to toggle on/off
   final ContactListFilter filter;
+  
+  /// Whether to add (true) or remove (false) the filter
+  final bool enabled;
 
-  const ApplyFilter({required this.filter});
+  const ToggleFilter({required this.filter, required this.enabled});
 
   @override
-  List<Object?> get props => [filter];
+  List<Object?> get props => [filter, enabled];
+}
+
+/// Event to clear all filters except the specified ones.
+///
+/// Useful for "Clear Filters" operations while preserving active/archived status.
+class ClearFilters extends ContactListEvent {
+  /// Optional filters to keep after clearing (e.g., keep active/archived status)
+  final Set<ContactListFilter> filtersToKeep;
+
+  const ClearFilters({this.filtersToKeep = const {}});
+
+  @override
+  List<Object?> get props => [filtersToKeep];
 }
 
 /// Event to delete one or more contacts from the list.
@@ -84,23 +103,30 @@ class DeleteContacts extends ContactListEvent {
 ///
 /// Can handle both single contact updates and batch operations like marking
 /// multiple contacts as contacted.
+/// Event to update one or more contacts in the list.
+///
+/// Can handle various batch operations including contact data updates,
+/// marking as contacted, and toggling archived status.
 class UpdateContacts extends ContactListEvent {
-  /// The contacts to update, or null if this is a "mark as contacted" operation.
+  /// The contacts to update, or null if this is a special operation.
   final List<Contact>? contacts;
   
-  /// IDs of contacts to mark as contacted, or null if providing full contacts.
+  /// IDs of contacts to update, or null if providing full contacts.
   final List<int>? contactIds;
   
   /// Whether this update should set lastContacted to current time.
-  final bool markAsContacted;
+  final bool? markAsContacted;
+  
+  /// Whether to update archive status (null = don't change).
+  final bool? setArchived;
 
   /// Private constructor for flexibility in factory methods.
   const UpdateContacts._({
     this.contacts,
     this.contactIds,
-    this.markAsContacted = false,
-  }) : assert((contacts != null) != (contactIds != null), 
-        'Either contacts or contactIds must be provided, but not both');
+    this.markAsContacted,
+    this.setArchived,
+  }) : assert(contacts != null || contactIds != null, 'Either contacts or contactIds must be provided');
 
   /// Creates an event to update specific contacts.
   factory UpdateContacts({required List<Contact> contacts}) => 
@@ -118,15 +144,34 @@ class UpdateContacts extends ContactListEvent {
   factory UpdateContacts.markSingleAsContacted({required int contactId}) => 
       UpdateContacts._(contactIds: [contactId], markAsContacted: true);
 
+  /// Creates an event to toggle archive status for multiple contacts.
+  factory UpdateContacts.setArchiveStatus({
+    required List<int> contactIds,
+    required bool archived,
+  }) => UpdateContacts._(contactIds: contactIds, setArchived: archived);
+  
+  /// Creates an event to toggle archive status for a single contact.
+  factory UpdateContacts.setArchiveStatusSingle({
+    required int contactId,
+    required bool archived,
+  }) => UpdateContacts._(contactIds: [contactId], setArchived: archived);
+
   @override
-  List<Object?> get props => [contacts, contactIds, markAsContacted];
+  List<Object?> get props => [contacts, contactIds, markAsContacted, setArchived];
 }
+
 
 /// Event to add sample contacts for testing
 class AddSampleContacts extends ContactListEvent {
-  const AddSampleContacts();
-}
+  /// The number of sample contacts to add
+  final int count;
+  
+  /// Creates an event to add sample contacts
+  const AddSampleContacts({this.count = 10});
 
+  @override
+  List<Object?> get props => [count];
+}
 /// Event to clear all app data
 class ClearAllData extends ContactListEvent {
   const ClearAllData();

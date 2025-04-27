@@ -289,6 +289,24 @@ class NotificationHelper {
     return pendingNotificationRequests;
   }
 
+  /// Retrieves details about the notification that launched the app, if any.
+  ///
+  /// Returns null if the app was not launched by a notification.
+  Future<NotificationAppLaunchDetails?> getNotificationAppLaunchDetails() async {
+    try {
+      final details = await flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
+      if (details != null && (details.didNotificationLaunchApp ?? false)) {
+        logger.i("App launched via notification. Details: ${details.notificationResponse?.payload}");
+      } else {
+        logger.i("App not launched via notification.");
+      }
+      return details;
+    } catch (e) {
+      logger.e("Error getting notification app launch details: $e");
+      return null;
+    }
+  }
+
   void _handleNotificationTap(String? payload) {
     // --- ADD LOGGING HERE ---
     logger.i(
