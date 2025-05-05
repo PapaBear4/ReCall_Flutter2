@@ -30,13 +30,7 @@ class Contact {
   final List<String>? emails; // List of emails (optional)
   final String? notes; // Notes field (optional)
   
-  // Social Media Fields (based on your imports)
-  final String? youtubeUrl;
-  final String? instagramHandle;
-  final String? facebookUrl;
-  final String? snapchatHandle;
-  final String? xHandle;
-  final String? linkedInUrl;
+  // Social Media Fields have been removed
 
   Contact({
     this.id,
@@ -50,12 +44,6 @@ class Contact {
     this.phoneNumber,
     this.emails,
     this.notes,
-    this.youtubeUrl,
-    this.instagramHandle,
-    this.facebookUrl,
-    this.snapchatHandle,
-    this.xHandle,
-    this.linkedInUrl,
   });
   
   // Manual implementation of copyWith
@@ -71,12 +59,6 @@ class Contact {
     String? phoneNumber,
     List<String>? emails,
     String? notes,
-    String? youtubeUrl,
-    String? instagramHandle,
-    String? facebookUrl,
-    String? snapchatHandle,
-    String? xHandle,
-    String? linkedInUrl,
     // Add parameters for clearing nullable fields
     bool clearNickname = false,
     bool clearBirthday = false,
@@ -85,12 +67,6 @@ class Contact {
     bool clearPhoneNumber = false,
     bool clearEmails = false,
     bool clearNotes = false,
-    bool clearYoutubeUrl = false,
-    bool clearInstagramHandle = false,
-    bool clearFacebookUrl = false,
-    bool clearSnapchatHandle = false,
-    bool clearXHandle = false,
-    bool clearLinkedInUrl = false,
   }) {
     return Contact(
       id: id ?? this.id,
@@ -104,12 +80,6 @@ class Contact {
       phoneNumber: clearPhoneNumber ? null : (phoneNumber ?? this.phoneNumber),
       emails: clearEmails ? null : (emails ?? this.emails),
       notes: clearNotes ? null : (notes ?? this.notes),
-      youtubeUrl: clearYoutubeUrl ? null : (youtubeUrl ?? this.youtubeUrl),
-      instagramHandle: clearInstagramHandle ? null : (instagramHandle ?? this.instagramHandle),
-      facebookUrl: clearFacebookUrl ? null : (facebookUrl ?? this.facebookUrl),
-      snapchatHandle: clearSnapchatHandle ? null : (snapchatHandle ?? this.snapchatHandle),
-      xHandle: clearXHandle ? null : (xHandle ?? this.xHandle),
-      linkedInUrl: clearLinkedInUrl ? null : (linkedInUrl ?? this.linkedInUrl),
     );
   }
   
@@ -132,13 +102,7 @@ class Contact {
       other.anniversary == anniversary &&
       other.phoneNumber == phoneNumber &&
       listEquals(other.emails, emails) &&
-      other.notes == notes &&
-      other.youtubeUrl == youtubeUrl &&
-      other.instagramHandle == instagramHandle &&
-      other.facebookUrl == facebookUrl &&
-      other.snapchatHandle == snapchatHandle &&
-      other.xHandle == xHandle &&
-      other.linkedInUrl == linkedInUrl;
+      other.notes == notes;
   }
 
   @override
@@ -155,12 +119,6 @@ class Contact {
       phoneNumber,
       Object.hashAll(emails ?? []),
       notes,
-      youtubeUrl,
-      instagramHandle,
-      facebookUrl,
-      snapchatHandle,
-      xHandle,
-      linkedInUrl,
     );
   }
   
