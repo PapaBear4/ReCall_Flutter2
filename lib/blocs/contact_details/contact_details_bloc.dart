@@ -1,6 +1,5 @@
 // lib/blocs/contact_details/contact_detals_bloc.dart
 import 'package:bloc/bloc.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:recall/models/contact.dart';
 import 'package:recall/repositories/contact_repository.dart';
 import 'package:recall/utils/logger.dart'; // Adjust path if needed
@@ -8,7 +7,6 @@ import 'package:recall/services/notification_service.dart';
 
 part 'contact_details_event.dart';
 part 'contact_details_state.dart';
-part 'contact_details_bloc.freezed.dart';
 
 // Bloc responsible for managing the state of Contact Details screen
 class ContactDetailsBloc
@@ -23,83 +21,69 @@ class ContactDetailsBloc
     required NotificationService notificationService,
   })  : _contactRepository = contactRepository,
         _notificationService = notificationService,
-        super(const ContactDetailsState.initial()) {
-    // Event handler for loading contact details
+        super(const InitialContactDetailsState()) {
+    // Event handler using instanceof checks instead of pattern matching
     on<ContactDetailsEvent>((event, emit) async {
-      await event.map(
-        loadContact: (e) async {
-          // Handles the LoadContact event
-          emit(const ContactDetailsState.loading());
-          try {
-            final contact = await _contactRepository.getById(e.contactId);
-            if (contact != null) {
-              // CRUCIAL null check
-              emit(ContactDetailsState.loaded(contact));
-            } else {
-              emit(const ContactDetailsState.error(
-                  'Contact not found')); // Handle null case
-            }
-          } catch (e) {
-            emit(ContactDetailsState.error(e.toString()));
+      // LOAD CONTACT DETAILS
+      if (event is LoadContactEvent) {
+        emit(const LoadingContactDetailsState());
+        try {
+          // Fetch contact details from the repository using the provided ID
+          final contact = await _contactRepository.getById(event.contactId);
+          if (contact != null) {
+            emit(LoadedContactDetailsState(contact));
+          } else {
+            emit(const ErrorContactDetailsState('Contact not found'));
           }
-        },
-        saveContact: (e) async {
-          emit(const ContactDetailsState.loading());
-          try {
-            if (e.contact.id == null) {
-              await _contactRepository.add(e.contact);
-            } else {
-              await _contactRepository.update(e.contact);
-            }
-            final updatedContact =
-                await _contactRepository.getById(e.contact.id!);
-            if (updatedContact != null) {
-              emit(ContactDetailsState.loaded(updatedContact));
-              _notificationService.scheduleReminder(updatedContact);
-            } else {
-              emit(const ContactDetailsState.error(
-                  'Failed to reload updated contact'));
-            }
-          } catch (error) {
-            emit(ContactDetailsState.error(error.toString()));
-          }
-        },
-        updateContactLocally: (e) async {
-          // No need to emit loading state if it is not going to the repository
-          try {
-            emit(ContactDetailsState.loaded(e.contact));
-          } catch (error) {
-            emit(ContactDetailsState.error(error.toString()));
-          }
-        },
-        addContact: (e) async {
-          emit(const ContactDetailsState.loading());
-          try {
-            final newContact = await _contactRepository.add(e.contact);
-            emit(ContactDetailsState.loaded(
-                newContact)); // Emit loaded state with the NEW contact
-            _notificationService.scheduleReminder(newContact);
-          } catch (error) {
-            emit(ContactDetailsState.error(error.toString()));
-          }
-        },
-        deleteContact: (e) async {
-          emit(const ContactDetailsState.loading());
-          try {
-            await _contactRepository.delete(e.contactId);
-            emit(const ContactDetailsState
-                .cleared()); // Emit cleared state after successful deletion
-            _notificationService.cancelNotification(e.contactId);
-          } catch (error) {
-            emit(ContactDetailsState.error(error.toString()));
-          }
-        },
-        clearContact: (e) async {
-          logger.i('Log: Clearing contact details');
-          emit(const ContactDetailsState.cleared());
-        },
-        // ... other event handlers (for updateContact, addContact, etc.)
-      );
+        } catch (e) {
+          emit(ErrorContactDetailsState(e.toString()));
+        }
+        // SAVE CONTACT DETAILS
+      } else if (event is SaveContactEvent) {
+        emit(const LoadingContactDetailsState());
+        try {
+          // Save the contact details to the repository
+          final updatedContact =
+              (event.contact.id == null || event.contact.id == 0)
+                  ? await _contactRepository.add(event.contact)
+                  : await _contactRepository.update(event.contact);
+          emit(LoadedContactDetailsState(updatedContact));
+          _notificationService.scheduleReminder(updatedContact);
+        } catch (error) {
+          emit(ErrorContactDetailsState(error.toString()));
+        }
+        // UPDATE CONTACT LOCALLY
+      } else if (event is UpdateContactLocallyEvent) {
+        // TODO: I don't think I need this
+        try {
+          emit(LoadedContactDetailsState(event.contact));
+        } catch (error) {
+          emit(ErrorContactDetailsState(error.toString()));
+        }
+      // ADD CONTACT
+      } else if (event is AddContactEvent) {
+        emit(const LoadingContactDetailsState());
+        try {
+          final newContact = await _contactRepository.add(event.contact);
+          emit(LoadedContactDetailsState(newContact));
+          _notificationService.scheduleReminder(newContact);
+        } catch (error) {
+          emit(ErrorContactDetailsState(error.toString()));
+        }
+      // DELETE CONTACT
+      } else if (event is DeleteContactEvent) {
+        emit(const LoadingContactDetailsState());
+        try {
+          await _contactRepository.delete(event.contactId);
+          emit(const ClearedContactDetailsState());
+          _notificationService.cancelNotification(event.contactId);
+        } catch (error) {
+          emit(ErrorContactDetailsState(error.toString()));
+        }
+      } else if (event is ClearContactEvent) {
+        logger.i('Log: Clearing contact details');
+        emit(const ClearedContactDetailsState());
+      }
     });
   }
 }

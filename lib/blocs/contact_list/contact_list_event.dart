@@ -1,34 +1,67 @@
 // lib/blocs/contact_list/contact_list_event.dart
 part of 'contact_list_bloc.dart';
 
-@freezed
-sealed class ContactListEvent with _$ContactListEvent {
-  const factory ContactListEvent.loadContacts() = _LoadContacts;
-  const factory ContactListEvent.deleteContactFromList(int contactId) =
-      _DeleteContactFromList;
-  const factory ContactListEvent.updateContactFromList(Contact contact) =
-      _UpdateContactFromList;
-
-  // Use standard Dart default values for factory parameters
-  const factory ContactListEvent.sortContacts({
-    // Default to dueDate
-    @Default(ContactListSortField.dueDate) ContactListSortField sortField,
-    // Default to true (ascending: earliest due date first)
-    @Default(true) bool ascending,
-  }) = _SortContacts;
-
-  // Events for filtering and searching
-  const factory ContactListEvent.applySearch({required String searchTerm}) =
-      _ApplySearch;
-  const factory ContactListEvent.applyFilter(
-      {required ContactListFilter filter}) = _ApplyFilter;
-  // No ClearFilter event needed if applying 'none' filter achieves the same
-  const factory ContactListEvent.deleteContacts(
-      {required List<int> contactIds}) = _DeleteContacts;
+abstract class ContactListEvent {
+  const ContactListEvent();
 }
 
-//define possible filters
-enum ContactListFilter { none, overdue, dueSoon }
+class LoadContactsEvent extends ContactListEvent {
+  const LoadContactsEvent();
+}
+
+class DeleteContactFromListEvent extends ContactListEvent {
+  final int contactId;
+  
+  const DeleteContactFromListEvent(this.contactId);
+}
+
+class UpdateContactFromListEvent extends ContactListEvent {
+  final Contact contact;
+  
+  const UpdateContactFromListEvent(this.contact);
+}
+
+class SortContactsEvent extends ContactListEvent {
+  final ContactListSortField sortField;
+  final bool ascending;
+  
+  const SortContactsEvent({
+    this.sortField = ContactListSortField.dueDate,
+    this.ascending = true,
+  });
+}
+
+class ApplySearchEvent extends ContactListEvent {
+  final String searchTerm;
+  
+  const ApplySearchEvent({required this.searchTerm});
+}
+
+// Updated to toggle a specific filter on/off
+class ApplyFilterEvent extends ContactListEvent {
+  final ContactListFilterType filterType;
+  final bool isActive; // true to enable filter, false to disable
+  
+  const ApplyFilterEvent({
+    required this.filterType,
+    required this.isActive,
+  });
+}
+
+// New event to clear all filters
+class ClearFiltersEvent extends ContactListEvent {
+  const ClearFiltersEvent();
+}
+
+class DeleteContactsEvent extends ContactListEvent {
+  final List<int> contactIds;
+  
+  const DeleteContactsEvent({required this.contactIds});
+}
+
+// Changed from enum ContactListFilter to enum ContactListFilterType
+// to better represent that these are filter types that can be combined
+enum ContactListFilterType { overdue, dueSoon }
 
 // Define possible sort fields
 enum ContactListSortField {
@@ -36,5 +69,5 @@ enum ContactListSortField {
   birthday,
   contactFrequency,
   lastContacted,
-  dueDate // Add this field
+  dueDate
 }

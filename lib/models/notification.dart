@@ -1,29 +1,82 @@
 // lib/models/notification.dart
 import 'package:objectbox/objectbox.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:flutter/foundation.dart';
 
-part 'notification.freezed.dart';
-part 'notification.g.dart';
+class Notification {
+  @Id(assignable: true)
+  int? id;
+  String title;
+  String body;
+  String? payload;
+  @Property(type: PropertyType.date)
+  DateTime? scheduledTime;
 
-// This class represents a single notification that will be displayed to the user.
-// It contains information such as the title, body, and optional payload data.
-@freezed
-abstract class Notification with _$Notification {
-  const Notification._();
+  Notification({
+    this.id,
+    required this.title,
+    required this.body,
+    this.payload,
+    this.scheduledTime,
+  });
 
-  @Entity(realClass: Notification)
-  factory Notification({
-    @Id(assignable: true) int? id,
-    required String title,
-    required String body,
+  factory Notification.fromJson(Map<String, dynamic> json) {
+    return Notification(
+      id: json['id'] as int?,
+      title: json['title'] as String,
+      body: json['body'] as String,
+      payload: json['payload'] as String?,
+      scheduledTime: json['scheduledTime'] != null
+          ? DateTime.parse(json['scheduledTime'] as String)
+          : null,
+    );
+  }
+
+  Notification copyWith({
+    int? id,
+    String? title,
+    String? body,
     String? payload,
-    @Property(type: PropertyType.date) DateTime? scheduledTime,
-  }) = _Notification;
+    DateTime? scheduledTime,
+  }) {
+    return Notification(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      body: body ?? this.body,
+      payload: payload ?? this.payload,
+      scheduledTime: scheduledTime ?? this.scheduledTime,
+    );
+  }
 
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Notification &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          title == other.title &&
+          body == other.body &&
+          payload == other.payload &&
+          scheduledTime == other.scheduledTime;
 
-    factory Notification.fromJson(Map<String, dynamic> json) =>
-      _$NotificationFromJson(json);
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      title.hashCode ^
+      body.hashCode ^
+      payload.hashCode ^
+      scheduledTime.hashCode;
 
+  @override
+  String toString() {
+    return 'Notification{id: $id, title: $title, body: $body, payload: $payload, scheduledTime: $scheduledTime}';
+  }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'body': body,
+      'payload': payload,
+      'scheduledTime': scheduledTime?.toIso8601String(),
+    };
+  }
 }

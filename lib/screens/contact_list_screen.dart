@@ -66,9 +66,8 @@ class _ContactListScreenState extends State<ContactListScreen> {
       // Wait 500ms
       if (mounted) {
         // Check if still mounted before dispatching
-        // Dispatch search event after delay
         context.read<ContactListBloc>().add(
-            ContactListEvent.applySearch(searchTerm: _searchController.text));
+            ApplySearchEvent(searchTerm: _searchController.text));
       }
     });
   }
@@ -96,7 +95,7 @@ class _ContactListScreenState extends State<ContactListScreen> {
           // Ensure BLoC is ready before pushing route
           context
               .read<ContactDetailsBloc>()
-              .add(ContactDetailsEvent.loadContact(contactId: contactId));
+              .add(LoadContactEvent(contactId: contactId));
           Navigator.pushNamed(context, '/contactDetails', arguments: contactId);
         } else {
           logger.w('>>> Failed to parse contactId from initial payload.');
@@ -113,41 +112,40 @@ class _ContactListScreenState extends State<ContactListScreen> {
     switch (action) {
       // Sorting
       case ListAction.sortByDueDateAsc:
-        context.read<ContactListBloc>().add(const ContactListEvent.sortContacts(
+        context.read<ContactListBloc>().add(SortContactsEvent(
             sortField: ContactListSortField.dueDate, ascending: true));
         break;
       case ListAction.sortByDueDateDesc:
-        context.read<ContactListBloc>().add(const ContactListEvent.sortContacts(
+        context.read<ContactListBloc>().add(SortContactsEvent(
             sortField: ContactListSortField.dueDate, ascending: false));
         break;
       case ListAction.sortByLastNameAsc:
-        context.read<ContactListBloc>().add(const ContactListEvent.sortContacts(
+        context.read<ContactListBloc>().add(SortContactsEvent(
             sortField: ContactListSortField.lastName, ascending: true));
         break;
       case ListAction.sortByLastNameDesc:
-        context.read<ContactListBloc>().add(const ContactListEvent.sortContacts(
+        context.read<ContactListBloc>().add(SortContactsEvent(
             sortField: ContactListSortField.lastName, ascending: false));
         break;
       case ListAction.sortByLastContactedAsc:
-        context.read<ContactListBloc>().add(const ContactListEvent.sortContacts(
+        context.read<ContactListBloc>().add(SortContactsEvent(
             sortField: ContactListSortField.lastContacted, ascending: true));
         break;
       case ListAction.sortByLastContactedDesc:
-        context.read<ContactListBloc>().add(const ContactListEvent.sortContacts(
+        context.read<ContactListBloc>().add(SortContactsEvent(
             sortField: ContactListSortField.lastContacted, ascending: false));
         break;
       // Filtering
       case ListAction.filterOverdue:
-        context.read<ContactListBloc>().add(const ContactListEvent.applyFilter(
-            filter: ContactListFilter.overdue));
+        context.read<ContactListBloc>().add(ApplyFilterEvent(
+            filterType: ContactListFilterType.overdue, isActive: true));
         break;
       case ListAction.filterDueSoon:
-        context.read<ContactListBloc>().add(const ContactListEvent.applyFilter(
-            filter: ContactListFilter.dueSoon));
+        context.read<ContactListBloc>().add(ApplyFilterEvent(
+            filterType: ContactListFilterType.dueSoon, isActive: true));
         break;
       case ListAction.filterClear:
-        context.read<ContactListBloc>().add(const ContactListEvent.applyFilter(
-            filter: ContactListFilter.none)); // Apply 'none' filter
+        context.read<ContactListBloc>().add(const ClearFiltersEvent());
         break;
     }
   }
@@ -206,7 +204,7 @@ class _ContactListScreenState extends State<ContactListScreen> {
 
     if (confirmDelete && mounted) {
       // Process deletion through the bloc
-      context.read<ContactListBloc>().add(ContactListEvent.deleteContacts(
+      context.read<ContactListBloc>().add(DeleteContactsEvent(
           contactIds: _selectedContactIds.toList()));
 
       // Exit selection mode
@@ -255,22 +253,23 @@ class _ContactListScreenState extends State<ContactListScreen> {
           // Dispatch load event which will reset state in BLoC
           context
               .read<ContactListBloc>()
-              .add(const ContactListEvent.loadContacts());
+              .add(const LoadContactsEvent());
         },
         child: BlocBuilder<ContactListBloc, ContactListState>(
             builder: (context, state) {
-          // Handle different states
-          return state.map(
-            initial: (_) => const Center(child: CircularProgressIndicator()),
-            loading: (_) => const Center(child: CircularProgressIndicator()),
-            empty: (_) => const Center(
-                child: Text('No contacts found.')), // Original list empty
-            // Use loadedState.displayedContacts for the list
-            loaded: (loadedState) => _buildContactList(
-                loadedState.displayedContacts), // Pass displayed list
-            error: (errorState) =>
-                Center(child: Text("Error: ${errorState.message}")),
-          );
+          if (state is InitialContactListState) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (state is LoadingContactListState) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (state is EmptyContactListState) {
+            return const Center(child: Text('No contacts found.'));
+          } else if (state is LoadedContactListState) {
+            return _buildContactList(state.displayedContacts);
+          } else if (state is ErrorContactListState) {
+            return Center(child: Text("Error: ${state.message}"));
+          } else {
+            return const Center(child: Text('Unknown state'));
+          }
         }),
       ),
       // BottomAppBar remains largely the same
@@ -280,14 +279,6 @@ class _ContactListScreenState extends State<ContactListScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              // Info text (can be removed if cluttering)
-              // const Expanded(
-              //   child: Text(
-              //     'Swipe/Tap list item to mark as contacted',
-              //     style: TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
-              //     overflow: TextOverflow.ellipsis,
-              //   ),
-              // ),
               const Spacer(), // Pushes buttons to the right
               const SizedBox(width: 10),
               Row(
@@ -305,11 +296,9 @@ class _ContactListScreenState extends State<ContactListScreen> {
                     heroTag: "btn2",
                     tooltip: "Add New Contact",
                     onPressed: () {
-                      // Clear details BLoC for new contact
                       context
                           .read<ContactDetailsBloc>()
-                          .add(const ContactDetailsEvent.clearContact());
-                      // Navigate to add new contact (passing 0 or null)
+                          .add(const ClearContactEvent());
                       Navigator.pushNamed(context, '/contactDetails',
                           arguments: 0);
                     },
@@ -443,24 +432,24 @@ class _ContactListScreenState extends State<ContactListScreen> {
           icon: const Icon(Icons.select_all, color: Colors.white),
           tooltip: 'Select All',
           onPressed: () {
-            final contacts = context.read<ContactListBloc>().state.maybeMap(
-                  loaded: (state) => state.displayedContacts,
-                  orElse: () => <Contact>[],
-                );
+            final contacts = context.read<ContactListBloc>().state;
+            List<Contact> displayedContacts = [];
+            if (contacts is LoadedContactListState) {
+              displayedContacts = contacts.displayedContacts;
+            }
 
             setState(() {
               _selectedContactIds
-                  .addAll(contacts.map((contact) => contact.id!));
+                  .addAll(displayedContacts.map((contact) => contact.id!));
             });
           },
         ),
       ],
     );
   }
-  // End of _ContactListScreenState
 
-// --- Widget for building the list ---
-// Takes the list to display as parameter (now the filtered/searched list)
+  // --- Widget for building the list ---
+  // Takes the list to display as parameter (now the filtered/searched list)
   Widget _buildContactList(List<Contact> contactsToDisplay) {
     if (contactsToDisplay.isEmpty) {
       return const Center(child: Text('No contacts match your search/filter.'));
@@ -490,7 +479,7 @@ class _ContactListScreenState extends State<ContactListScreen> {
               } else {
                 // If not in selection mode, navigate to details
                 context.read<ContactDetailsBloc>().add(
-                    ContactDetailsEvent.loadContact(contactId: contact.id!));
+                    LoadContactEvent(contactId: contact.id!));
                 Navigator.pushNamed(
                   context,
                   '/contactDetails',
@@ -512,7 +501,7 @@ class _ContactListScreenState extends State<ContactListScreen> {
     );
   }
 
-// Function to navigate to scheduled notifications screen (no change needed)
+  // Function to navigate to scheduled notifications screen (no change needed)
   void _viewScheduledNotifications(BuildContext context) {
     Navigator.push(
         context,

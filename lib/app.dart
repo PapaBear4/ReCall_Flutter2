@@ -40,7 +40,7 @@ class ReCall extends StatelessWidget {
               create: (context) => ContactListBloc(
                 contactRepository: _contactRepository,
                 notificationService: context.read<NotificationService>(),
-              )..add(const ContactListEvent.loadContacts()),
+              )..add(const LoadContactsEvent()),
             ),
             BlocProvider(
               create: (context) => ContactDetailsBloc(
