@@ -1,6 +1,10 @@
 // lib/models/notification.dart
 import 'package:objectbox/objectbox.dart';
+import 'package:json_annotation/json_annotation.dart';
 
+part 'notification.g.dart';
+
+@JsonSerializable()
 class Notification {
   @Id(assignable: true)
   int? id;
@@ -18,17 +22,10 @@ class Notification {
     this.scheduledTime,
   });
 
-  factory Notification.fromJson(Map<String, dynamic> json) {
-    return Notification(
-      id: json['id'] as int?,
-      title: json['title'] as String,
-      body: json['body'] as String,
-      payload: json['payload'] as String?,
-      scheduledTime: json['scheduledTime'] != null
-          ? DateTime.parse(json['scheduledTime'] as String)
-          : null,
-    );
-  }
+  factory Notification.fromJson(Map<String, dynamic> json) => 
+      _$NotificationFromJson(json);
+  
+  Map<String, dynamic> toJson() => _$NotificationToJson(this);
 
   Notification copyWith({
     int? id,
@@ -68,15 +65,5 @@ class Notification {
   @override
   String toString() {
     return 'Notification{id: $id, title: $title, body: $body, payload: $payload, scheduledTime: $scheduledTime}';
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'title': title,
-      'body': body,
-      'payload': payload,
-      'scheduledTime': scheduledTime?.toIso8601String(),
-    };
   }
 }

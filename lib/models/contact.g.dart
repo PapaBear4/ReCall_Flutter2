@@ -25,12 +25,6 @@ Contact _$ContactFromJson(Map<String, dynamic> json) => Contact(
       emails:
           (json['emails'] as List<dynamic>?)?.map((e) => e as String).toList(),
       notes: json['notes'] as String?,
-      youtubeUrl: json['youtubeUrl'] as String?,
-      instagramHandle: json['instagramHandle'] as String?,
-      facebookUrl: json['facebookUrl'] as String?,
-      snapchatHandle: json['snapchatHandle'] as String?,
-      xHandle: json['xHandle'] as String?,
-      linkedInUrl: json['linkedInUrl'] as String?,
     );
 
 Map<String, dynamic> _$ContactToJson(Contact instance) => <String, dynamic>{
@@ -45,10 +39,4 @@ Map<String, dynamic> _$ContactToJson(Contact instance) => <String, dynamic>{
       'phoneNumber': instance.phoneNumber,
       'emails': instance.emails,
       'notes': instance.notes,
-      'youtubeUrl': instance.youtubeUrl,
-      'instagramHandle': instance.instagramHandle,
-      'facebookUrl': instance.facebookUrl,
-      'snapchatHandle': instance.snapchatHandle,
-      'xHandle': instance.xHandle,
-      'linkedInUrl': instance.linkedInUrl,
     };

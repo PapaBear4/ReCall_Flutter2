@@ -2,7 +2,11 @@
 import 'package:objectbox/objectbox.dart';
 import 'package:flutter/material.dart';
 import 'package:recall/models/contact_frequency.dart';
+import 'package:json_annotation/json_annotation.dart';
 
+part 'usersettings.g.dart';
+
+@JsonSerializable()
 @Entity(realClass: UserSettings)
 class UserSettings {
   @Id(assignable: true)
@@ -22,16 +26,10 @@ class UserSettings {
     this.defaultFrequency = ContactFrequency.defaultValue,
   });
 
-  factory UserSettings.fromJson(Map<String, dynamic> json) {
-    return UserSettings(
-      id: json['id'] as int?,
-      remindersEnabled: json['remindersEnabled'] as bool,
-      alertsEnabled: json['alertsEnabled'] as bool,
-      notificationHour: json['notificationHour'] as int,
-      notificationMinute: json['notificationMinute'] as int,
-      defaultFrequency: json['defaultFrequency'] as String,
-    );
-  }
+  factory UserSettings.fromJson(Map<String, dynamic> json) => 
+      _$UserSettingsFromJson(json);
+  
+  Map<String, dynamic> toJson() => _$UserSettingsToJson(this);
 
   UserSettings copyWith({
     int? id,
@@ -79,15 +77,4 @@ class UserSettings {
 
   TimeOfDay get notificationTimeOfDay =>
       TimeOfDay(hour: notificationHour, minute: notificationMinute);
-      
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'remindersEnabled': remindersEnabled,
-      'alertsEnabled': alertsEnabled,
-      'notificationHour': notificationHour,
-      'notificationMinute': notificationMinute,
-      'defaultFrequency': defaultFrequency,
-    };
-  }
 }

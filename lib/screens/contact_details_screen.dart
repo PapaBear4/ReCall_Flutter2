@@ -77,12 +77,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       phoneNumber: null,
       emails: [], // Initialize with empty list
       notes: null,
-      youtubeUrl: null,
-      instagramHandle: null,
-      facebookUrl: null,
-      snapchatHandle: null,
-      xHandle: null, // Added
-      linkedInUrl: null, // Added
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -128,12 +122,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     _nicknameController.text = _localContact.nickname ?? '';
     _phoneNumberController.text = _localContact.phoneNumber ?? '';
     _notesController.text = _localContact.notes ?? '';
-    _youtubeController.text = _localContact.youtubeUrl ?? '';
-    _instagramController.text = _localContact.instagramHandle ?? '';
-    _facebookController.text = _localContact.facebookUrl ?? '';
-    _snapchatController.text = _localContact.snapchatHandle ?? '';
-    _xHandleController.text = _localContact.xHandle ?? '';
-    _linkedInController.text = _localContact.linkedInUrl ?? '';
     _updateEmailControllers(); // Update email controllers specifically
   }
 
@@ -310,12 +298,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                     phoneNumber: null,
                     emails: [], // Initialize with empty list
                     notes: null,
-                    youtubeUrl: null,
-                    instagramHandle: null,
-                    facebookUrl: null,
-                    snapchatHandle: null,
-                    xHandle: null, // Added
-                    linkedInUrl: null, // Added
                   );
                   _updateControllersFromLocalContact(); // Update controllers to blank
                   _hasUnsavedChanges = true; // New contact needs saving
@@ -541,20 +523,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
         const Divider(height: 24.0),
 
-        // Social Media
-        _buildDisplayRow(Icons.play_circle_outline, 'YouTube:',
-            _localContact.youtubeUrl ?? 'Not set'),
-        _buildDisplayRow(Icons.photo_camera_outlined, 'Instagram:',
-            _localContact.instagramHandle ?? 'Not set'),
-        _buildDisplayRow(Icons.facebook_outlined, 'Facebook:',
-            _localContact.facebookUrl ?? 'Not set'),
-        _buildDisplayRow(Icons.snapchat_outlined, 'Snapchat:',
-            _localContact.snapchatHandle ?? 'Not set'),
-        _buildDisplayRow(Icons.alternate_email, 'X Handle:',
-            _localContact.xHandle ?? 'Not set'), // Using X icon
-        _buildDisplayRow(Icons.link, 'LinkedIn URL:',
-            _localContact.linkedInUrl ?? 'Not set'), // Using link icon
-
         const SizedBox(height: 16.0),
       ],
     );
@@ -584,9 +552,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
         buildEditSectionHeader('Notes'),
         _buildEditNotes(), // Delegate
-
-        buildEditSectionHeader('Social Media'),
-        _buildEditSocialMedia(), // Delegate
 
         const SizedBox(height: 20), // Spacer at bottom
       ],
@@ -713,61 +678,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     );
   }
 
-  Widget _buildEditSocialMedia() {
-    return Column(
-      children: [
-        _buildSocialMediaInput(
-            Icons.play_circle_outline,
-            'YouTube URL',
-            _youtubeController,
-            (v) => setState(() {
-                  _localContact = _localContact.copyWith(youtubeUrl: v);
-                  _hasUnsavedChanges = true;
-                })),
-        _buildSocialMediaInput(
-            Icons.photo_camera_outlined,
-            'Instagram Handle',
-            _instagramController,
-            (v) => setState(() {
-                  _localContact = _localContact.copyWith(instagramHandle: v);
-                  _hasUnsavedChanges = true;
-                })),
-        _buildSocialMediaInput(
-            Icons.facebook_outlined,
-            'Facebook URL',
-            _facebookController,
-            (v) => setState(() {
-                  _localContact = _localContact.copyWith(facebookUrl: v);
-                  _hasUnsavedChanges = true;
-                })),
-        _buildSocialMediaInput(
-            Icons.snapchat_outlined,
-            'Snapchat Handle',
-            _snapchatController,
-            (v) => setState(() {
-                  _localContact = _localContact.copyWith(snapchatHandle: v);
-                  _hasUnsavedChanges = true;
-                })),
-        _buildSocialMediaInput(
-            Icons.alternate_email,
-            'X Handle',
-            _xHandleController,
-            (v) => setState(() {
-                  _localContact = _localContact.copyWith(xHandle: v);
-                  _hasUnsavedChanges = true;
-                })),
-        _buildSocialMediaInput(
-            Icons.link,
-            'LinkedIn URL',
-            _linkedInController,
-            (v) => setState(() {
-                  _localContact = _localContact.copyWith(linkedInUrl: v);
-                  _hasUnsavedChanges = true;
-                })),
-      ],
-    );
-  }
-
   Widget _buildEditNotes() {
     return TextFormField(
       controller: _notesController,
@@ -817,29 +727,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               : DateFormat.yMd().format(currentValue)),
         ),
       ],
-    );
-  }
-
-  // Helper for Social Media Input Fields
-  Widget _buildSocialMediaInput(IconData icon, String label,
-      TextEditingController controller, Function(String?) onUpdate) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: TextFormField(
-        controller: controller,
-        enabled: _isEditMode,
-        decoration: InputDecoration(
-            labelText: label,
-            border: const OutlineInputBorder(),
-            prefixIcon: Icon(icon)),
-        keyboardType:
-            label.contains('URL') ? TextInputType.url : TextInputType.text,
-        onChanged: (value) => setState(() {
-          onUpdate(value.isNotEmpty ? value : null);
-          _hasUnsavedChanges = true;
-        }),
-        textInputAction: TextInputAction.next,
-      ),
     );
   }
 
