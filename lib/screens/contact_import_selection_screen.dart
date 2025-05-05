@@ -549,7 +549,7 @@ class _ContactImportSelectionScreenState
       // Refresh the main list
       context
           .read<ContactListBloc>()
-          .add(const ContactListEvent.loadContacts());
+          .add(const LoadContactsEvent());
 
       // Navigate back
       Navigator.of(context).pop();

@@ -415,9 +415,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             content: Text(
                 'Successfully restored ${addedContacts.length} contacts.')),
       );
-      context
-          .read<ContactListBloc>()
-          .add(const ContactListEvent.loadContacts());
+      context.read<ContactListBloc>().add(const LoadContactsEvent());
       setState(() => _isBusy = false);
     } catch (e) {
       if (mounted) {
@@ -601,32 +599,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   },
                           ),
                           const Divider(),
-                                                  // --- NEW CLEAR APP DATA TILE ---
+                          // --- NEW CLEAR APP DATA TILE ---
                           ListTile(
                             title: const Text('Clear All App Data'),
                             subtitle: const Text(
                                 'Deletes all contacts, settings (ObjectBox) & cache (SharedPreferences). Requires restart or refresh.'),
-                            leading: const Icon(Icons.delete_forever, color: Colors.red),
+                            leading: const Icon(Icons.delete_forever,
+                                color: Colors.red),
                             enabled: !_isBusy,
                             onTap: _isBusy
                                 ? null
                                 : () async {
                                     // Confirmation Dialog
-                                    final bool? confirmClear = await showDialog<bool>(
+                                    final bool? confirmClear =
+                                        await showDialog<bool>(
                                       context: context,
                                       builder: (BuildContext context) {
                                         return AlertDialog(
-                                          title: const Text('Confirm Clear Data'),
+                                          title:
+                                              const Text('Confirm Clear Data'),
                                           content: const Text(
                                               'This will permanently delete all contacts and settings stored within the app (ObjectBox) and clear cached preferences. This cannot be undone. Are you sure?'),
                                           actions: <Widget>[
                                             TextButton(
                                               child: const Text('Cancel'),
-                                              onPressed: () => Navigator.of(context).pop(false),
+                                              onPressed: () =>
+                                                  Navigator.of(context)
+                                                      .pop(false),
                                             ),
                                             TextButton(
-                                              child: const Text('Clear Data', style: TextStyle(color: Colors.red)),
-                                              onPressed: () => Navigator.of(context).pop(true),
+                                              child: const Text('Clear Data',
+                                                  style: TextStyle(
+                                                      color: Colors.red)),
+                                              onPressed: () =>
+                                                  Navigator.of(context)
+                                                      .pop(true),
                                             ),
                                           ],
                                         );
@@ -634,28 +641,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     );
 
                                     if (confirmClear != true || !mounted) {
-                                      if (mounted && confirmClear == false) { // Only show cancelled if explicitly cancelled
-                                         ScaffoldMessenger.of(context).showSnackBar(
-                                           const SnackBar(content: Text('Clear data cancelled.')),
-                                         );
+                                      if (mounted && confirmClear == false) {
+                                        // Only show cancelled if explicitly cancelled
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                              content: Text(
+                                                  'Clear data cancelled.')),
+                                        );
                                       }
                                       return; // Exit if not confirmed or widget unmounted
                                     }
 
-
                                     if (!mounted) return;
                                     setState(() => _isBusy = true);
-                                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                    ScaffoldMessenger.of(context)
+                                        .hideCurrentSnackBar();
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Clearing all app data...')),
+                                      const SnackBar(
+                                          content:
+                                              Text('Clearing all app data...')),
                                     );
 
                                     // Get repositories
-                                    final contactRepo = context.read<ContactRepository>();
-                                    final settingsRepo = context.read<UserSettingsRepository>();
+                                    final contactRepo =
+                                        context.read<ContactRepository>();
+                                    final settingsRepo =
+                                        context.read<UserSettingsRepository>();
 
                                     // Call the static utility function
-                                    final String resultMessage = await DebugUtils.clearAllAppData(contactRepo, settingsRepo);
+                                    final String resultMessage =
+                                        await DebugUtils.clearAllAppData(
+                                            contactRepo, settingsRepo);
 
                                     if (!mounted) return;
 
@@ -663,8 +680,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     // 1. Reload settings (will create defaults if missing)
                                     await _loadSettings();
                                     // 2. Trigger contact list reload
-                                    context.read<ContactListBloc>().add(const ContactListEvent.loadContacts());
-
+                                    context
+                                        .read<ContactListBloc>()
+                                        .add(const LoadContactsEvent());
 
                                     setState(() => _isBusy = false);
                                     ScaffoldMessenger.of(context).showSnackBar(
@@ -674,7 +692,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                           const Divider(),
                           // --- END NEW CLEAR APP DATA TILE ---
-]
+                        ]
                         // --- END DEBUG SECTION ---
                       ],
                     ),

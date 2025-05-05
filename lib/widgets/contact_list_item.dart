@@ -27,7 +27,7 @@ class ContactListItem extends StatelessWidget {
     // Dispatch event to update contact in BLoC
     context
         .read<ContactListBloc>()
-        .add(ContactListEvent.updateContactFromList(updatedContact));
+        .add(UpdateContactFromListEvent(updatedContact));
     ScaffoldMessenger.of(context).clearSnackBars();
     // Determine name for snackbar based on nickname presence
     final nameForSnackbar =
