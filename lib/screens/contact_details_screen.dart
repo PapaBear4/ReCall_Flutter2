@@ -1,4 +1,5 @@
 // lib/screens/contact_details_screen.dart
+import 'package:flutter/foundation.dart'; // Import kDebugMode
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
@@ -36,7 +37,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
   late Contact _localContact;
   bool _hasUnsavedChanges = false;
-  bool _initialized = false;
   bool _isEditMode = false;
   final NotificationHelper notificationHelper = NotificationHelper();
 
@@ -114,7 +114,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         );
         _updateControllersFromLocalContact();
         _updateEmailControllers();
-        _initialized = true;
       });
       context.read<ContactDetailsBloc>().add(UpdateContactLocallyEvent(contact: _localContact));
     }
@@ -187,7 +186,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           actions: _buildAppBarActions(),
         ),
         body: _buildBody(),
-        bottomNavigationBar: _buildBottomBar(),
+        floatingActionButton: _buildFloatingActionButtons(),
       ),
     );
   }
@@ -269,11 +268,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               _hasUnsavedChanges = false;
             });
           }
-          if (!_initialized) {
-            setState(() {
-              _initialized = true;
-            });
-          }
         } else if (state is ErrorContactDetailsState) {
           ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text("Error: ${state.message}")));
@@ -285,7 +279,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               _updateControllersFromLocalContact();
               _updateEmailControllers();
               _hasUnsavedChanges = true;
-              _initialized = true;
             });
           }
         }
@@ -303,7 +296,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         } else if (state is ErrorContactDetailsState) {
           return _buildErrorBody(state.message);
         } else {
-          if (_isEditMode && _localContact.id == 0) {
+          if (_isEditMode && (_localContact.id == 0 || _localContact.id == null)) {
             return _buildLoadedBody();
           }
           return const Center(child: CircularProgressIndicator());
@@ -312,32 +305,48 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     );
   }
 
-  // MARK: - Bottom Navigation Bar Builder
-  Widget _buildBottomBar() {
-    return BottomAppBar(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          IconButton(
-            tooltip: 'Mark Contacted Today',
-            icon: const Icon(Icons.check_circle_outline),
-            onPressed: _onContactedButtonPressed,
-          ),
-          TextButton(
-            onPressed: () {
-              if (_localContact.id != null && _localContact.id != 0) {
-                notificationHelper.showTestNotification(_localContact);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text('Cannot send test notification for an unsaved contact.')),
-                );
-              }
-            },
-            child: const Text('Test Notification'),
-          ),
-        ],
+  // MARK: - Floating Action Buttons Builder
+  Widget? _buildFloatingActionButtons() {
+    if (_isEditMode || (_localContact.id == null || _localContact.id == 0)) {
+      return null; // Don't show FABs in edit mode or for a new unsaved contact
+    }
+
+    List<Widget> fabs = [
+      FloatingActionButton.extended(
+        heroTag: 'markContactedFab',
+        onPressed: _onContactedButtonPressed,
+        label: const Text('Mark Contacted'),
+        icon: const Icon(Icons.check_circle_outline),
       ),
+    ];
+
+    if (kDebugMode) {
+      fabs.add(const SizedBox(height: 10));
+      fabs.add(
+        FloatingActionButton.extended(
+          heroTag: 'testNotificationFab',
+          onPressed: () {
+            if (_localContact.id != null && _localContact.id != 0) {
+              notificationHelper.showTestNotification(_localContact);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content: Text(
+                        'Cannot send test notification for an unsaved contact.')),
+              );
+            }
+          },
+          label: const Text('Test Notification'),
+          icon: const Icon(Icons.notifications_active_outlined),
+          backgroundColor: Colors.blueGrey,
+        ),
+      );
+    }
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: fabs,
     );
   }
 
@@ -350,7 +359,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           Text("Error: $errorMessage",
               style: const TextStyle(color: Colors.red)),
           const SizedBox(height: 20),
-          if (_initialized)
+          if (_isEditMode)
             Expanded(child: SingleChildScrollView(child: _buildLoadedBody()))
           else
             const Text("Could not load contact details."),
@@ -472,7 +481,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         .where((email) => email.isNotEmpty)
         .toList();
 
-    _localContact = _localContact.copyWith(
+    final contactToSave = _localContact.copyWith(
       firstName: _firstNameController.text.trim(),
       lastName: _lastNameController.text.trim(),
       nickname: _nicknameController.text.trim().isNotEmpty ? _nicknameController.text.trim() : null,
@@ -482,15 +491,15 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     );
 
     if (_formKey.currentState!.validate()) {
-      bool isExistingContact = _localContact.id != null && _localContact.id != 0;
+      bool isExistingContact = contactToSave.id != null && contactToSave.id != 0;
 
       if (!isExistingContact) {
-        context.read<ContactDetailsBloc>().add(AddContactEvent(contact: _localContact));
+        context.read<ContactDetailsBloc>().add(AddContactEvent(contact: contactToSave));
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('New contact saved')));
         }
       } else {
-        context.read<ContactDetailsBloc>().add(SaveContactEvent(contact: _localContact));
+        context.read<ContactDetailsBloc>().add(SaveContactEvent(contact: contactToSave));
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Changes saved')));
         }

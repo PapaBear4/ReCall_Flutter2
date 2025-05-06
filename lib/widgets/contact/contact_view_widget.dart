@@ -12,7 +12,7 @@ class ContactViewWidget extends StatelessWidget {
   final MaskTextInputFormatter phoneMaskFormatter;
   final Function(String) onPhoneActionTap;
   final Function(String) onEmailTap;
-  
+
   const ContactViewWidget({
     Key? key,
     required this.contact,
@@ -23,7 +23,6 @@ class ContactViewWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Format phone number for display
     String formattedPhoneNumber = 'Not set';
     String unmaskedPhoneNumber = '';
     if (contact.phoneNumber != null && contact.phoneNumber!.isNotEmpty) {
@@ -36,74 +35,69 @@ class ContactViewWidget extends StatelessWidget {
       }
     }
 
-    // Determine name display based on nickname
-    final String nameDisplay = (contact.nickname != null && contact.nickname!.isNotEmpty)
-        ? contact.nickname!
-        : '${contact.firstName} ${contact.lastName}';
-    final String fullNameDisplay = '${contact.firstName} ${contact.lastName}';
+    final String nameDisplay;
+    String? subNameDisplay;
+
+    if (contact.nickname != null && contact.nickname!.isNotEmpty) {
+      nameDisplay = '${contact.nickname} ${contact.lastName}';
+      subNameDisplay = '(${contact.firstName})';
+    } else {
+      nameDisplay = '${contact.firstName} ${contact.lastName}';
+    }
+
+    List<Widget> dateChips = [];
+    if (contact.birthday != null) {
+      dateChips.add(Chip(
+        avatar: const Icon(Icons.cake_outlined, size: 18),
+        label: Text('B: ${DateFormat.yMd().format(contact.birthday!)}'),
+      ));
+    }
+    if (contact.anniversary != null) {
+      if (dateChips.isNotEmpty) {
+        dateChips.add(const SizedBox(width: 8));
+      }
+      dateChips.add(Chip(
+        avatar: const Icon(Icons.celebration_outlined, size: 18),
+        label: Text('A: ${DateFormat.yMd().format(contact.anniversary!)}'),
+      ));
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Name display
         Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
+          padding: const EdgeInsets.only(bottom: 4.0),
           child: Text(
             nameDisplay,
             style: Theme.of(context).textTheme.headlineSmall,
           ),
         ),
-        
-        // Show full name if nickname was displayed
-        if (contact.nickname != null && contact.nickname!.isNotEmpty)
+
+        if (subNameDisplay != null)
           Padding(
-            padding: const EdgeInsets.only(bottom: 20.0),
+            padding: const EdgeInsets.only(bottom: 12.0),
             child: Text(
-              '($fullNameDisplay)',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey[600]),
+              subNameDisplay,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(color: Colors.grey[600]),
             ),
           )
         else
-          const SizedBox(height: 24.0),
+          const SizedBox(height: 4.0), // Minimal spacing if no sub-name
 
-        // Status indicator
-        ContactField(
-          icon: contact.isActive ? Icons.check_circle : Icons.cancel,
-          label: 'Status:',
-          value: contact.isActive ? 'Active' : 'Inactive',
-          textColor: contact.isActive ? Colors.green : Colors.red,
-        ),
-
-        // Basic info section
-        ContactField(
-          icon: Icons.cake_outlined,
-          label: 'Birthday:',
-          value: contact.birthday == null ? 'Not set' : DateFormat.yMd().format(contact.birthday!),
-        ),
-        
-        ContactField(
-          icon: Icons.celebration_outlined,
-          label: 'Anniversary:',
-          value: contact.anniversary == null ? 'Not set' : DateFormat.yMd().format(contact.anniversary!),
-        ),
-        
-        ContactField(
-          icon: Icons.access_time,
-          label: 'Last Contacted:',
-          value: formatLastContacted(contact.lastContacted),
-        ),
-        
-        ContactField(
-          icon: Icons.repeat,
-          label: 'Frequency:',
-          value: contact.frequency,
-        ),
-        
-        ContactField(
-          icon: Icons.next_plan_outlined,
-          label: 'Next Due:',
-          value: calculateNextDueDateDisplay(contact.lastContacted, contact.frequency),
-        ),
+        // Date Chips
+        if (dateChips.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16.0),
+            child: Wrap(
+              spacing: 8.0,
+              runSpacing: 4.0,
+              children: dateChips,
+            ),
+          ),
 
         const Divider(height: 24.0),
 
@@ -112,7 +106,9 @@ class ContactViewWidget extends StatelessWidget {
           icon: Icons.phone_outlined,
           label: 'Phone:',
           value: formattedPhoneNumber,
-          onTap: unmaskedPhoneNumber.isNotEmpty ? () => onPhoneActionTap(unmaskedPhoneNumber) : null,
+          onTap: unmaskedPhoneNumber.isNotEmpty
+              ? () => onPhoneActionTap(unmaskedPhoneNumber)
+              : null,
           actions: unmaskedPhoneNumber.isNotEmpty
               ? [
                   IconButton(
@@ -132,7 +128,7 @@ class ContactViewWidget extends StatelessWidget {
                 ]
               : [],
         ),
-        
+
         // Email section
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 6.0),
@@ -143,7 +139,8 @@ class ContactViewWidget extends StatelessWidget {
               const SizedBox(width: 12.0),
               const SizedBox(
                 width: 110,
-                child: Text('Emails:', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: Text('Emails:',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
               ),
               Expanded(
                 child: EmailListWidget(
@@ -166,7 +163,50 @@ class ContactViewWidget extends StatelessWidget {
         ),
 
         const Divider(height: 24.0),
+
+        // Frequency based fields
+        ContactField(
+          icon: Icons.repeat,
+          label: 'Frequency:',
+          value: contact.frequency,
+        ),
+
+        ContactField(
+          icon: Icons.access_time,
+          label: 'Last Contacted:',
+          value: formatLastContacted(contact.lastContacted),
+        ),
+
+        ContactField(
+          icon: Icons.next_plan_outlined,
+          label: 'Next Due:',
+          value: calculateNextDueDateDisplay(
+              contact.lastContacted, contact.frequency),
+        ),
+
         const SizedBox(height: 16.0),
+
+        // Inactive Contact Banner
+        if (!contact.isActive)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+            margin: const EdgeInsets.only(top: 16.0, bottom: 8.0),
+            decoration: BoxDecoration(
+              color: Colors.red.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(4.0),
+              border: Border.all(color: Colors.red.withOpacity(0.3))
+            ),
+            child: Text(
+              'This contact is marked as INACTIVE.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.red.shade700.withOpacity(0.9),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        const SizedBox(height: 70), // Space for FABs
       ],
     );
   }

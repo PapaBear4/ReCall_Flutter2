@@ -21,7 +21,7 @@ class NotificationService extends ChangeNotifier {
       return;
     }
     if (contact.frequency == ContactFrequency.never.value) {
-         logger.i('LOG: Not scheduling notification for contact ${contact.id} with frequency "never". Cancelling any existing.');
+         //logger.i('LOG: Not scheduling notification for contact ${contact.id} with frequency "never". Cancelling any existing.');
          await _notificationHelper.cancelNotification(contact.id!); // Cancel if frequency is set to never
          return;
     }
@@ -47,7 +47,7 @@ class NotificationService extends ChangeNotifier {
       nextDueDate = calculateNextDueDate(contact); // Calculate the ideal date
       baseTitle = "Contact ${contact.firstName} ${contact.lastName}";
       baseBody = "${contact.firstName} is due for contact."; // Simpler body
-       logger.i('LOG: Contact ${contact.id} previously contacted. Next due date calculated as $nextDueDate.');
+      //logger.i('LOG: Contact ${contact.id} previously contacted. Next due date calculated as $nextDueDate.');
     }
 
     // Call the helper, passing the calculated date and the contact

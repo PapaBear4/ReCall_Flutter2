@@ -17,7 +17,7 @@ class ContactEditWidget extends StatelessWidget {
   final List<TextEditingController> emailControllers;
   final Function(Contact) onContactChanged;
   final Function(List<String>) onEmailsChanged;
-  
+
   const ContactEditWidget({
     Key? key,
     required this.contact,
@@ -38,10 +38,11 @@ class ContactEditWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildBasicInfoSection(context),
-        _buildStatusSection(context),
-        _buildScheduleSection(context),
-        _buildEmailSection(context),
+        _buildDatesSection(context),
+        _buildContactMethodsSection(context),
         _buildNotesSection(context),
+        _buildScheduleSection(context),
+        _buildStatusSection(context),
         const SizedBox(height: 20),
       ],
     );
@@ -82,7 +83,33 @@ class ContactEditWidget extends StatelessWidget {
               contact.copyWith(nickname: value.isNotEmpty ? value : null)),
           textInputAction: TextInputAction.next,
         ),
+      ],
+    );
+  }
+
+  Widget _buildDatesSection(BuildContext context) {
+    return ContactSection(
+      title: 'Important Dates',
+      children: [
+        _buildDatePickerButton(
+            context,
+            'Birthday',
+            contact.birthday,
+            (picked) => onContactChanged(contact.copyWith(birthday: picked))),
         const SizedBox(height: 16.0),
+        _buildDatePickerButton(
+            context,
+            'Anniversary',
+            contact.anniversary,
+            (picked) => onContactChanged(contact.copyWith(anniversary: picked))),
+      ],
+    );
+  }
+
+  Widget _buildContactMethodsSection(BuildContext context) {
+    return ContactSection(
+      title: 'Contact Methods',
+      children: [
         TextFormField(
           controller: phoneNumberController,
           keyboardType: TextInputType.phone,
@@ -95,6 +122,14 @@ class ContactEditWidget extends StatelessWidget {
           onChanged: (value) => onContactChanged(
               contact.copyWith(phoneNumber: phoneMaskFormatter.getUnmaskedText())),
           textInputAction: TextInputAction.next,
+        ),
+        const SizedBox(height: 16.0),
+        EmailListWidget(
+          emails: contact.emails,
+          isEditMode: true,
+          controllers: emailControllers,
+          onEmailsChanged: onEmailsChanged,
+          onEmailTap: (_) {}, // Not used in edit mode
         ),
       ],
     );
@@ -149,32 +184,6 @@ class ContactEditWidget extends StatelessWidget {
               .toList(),
           decoration: const InputDecoration(
               labelText: 'Frequency', border: OutlineInputBorder()),
-        ),
-        const SizedBox(height: 16.0),
-        _buildDatePickerButton(
-            context,
-            'Birthday',
-            contact.birthday,
-            (picked) => onContactChanged(contact.copyWith(birthday: picked))),
-        _buildDatePickerButton(
-            context,
-            'Anniversary',
-            contact.anniversary,
-            (picked) => onContactChanged(contact.copyWith(anniversary: picked))),
-      ],
-    );
-  }
-
-  Widget _buildEmailSection(BuildContext context) {
-    return ContactSection(
-      title: 'Emails',
-      children: [
-        EmailListWidget(
-          emails: contact.emails,
-          isEditMode: true,
-          controllers: emailControllers,
-          onEmailsChanged: onEmailsChanged,
-          onEmailTap: (_) {}, // Not used in edit mode
         ),
       ],
     );

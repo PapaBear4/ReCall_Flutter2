@@ -184,8 +184,8 @@ class NotificationHelper {
     } else {
       // It's due in the future. Schedule for the calculated date.
       scheduledDate = targetTimeOnDate(tzCalculatedDueDate); // Use user's time
-      logger
-          .i('LOG: Contact $id due in future. Scheduling for $scheduledDate');
+      //logger
+      //    .i('LOG: Contact $id due in future. Scheduling for $scheduledDate');
     }
 
     // Ensure we don't schedule in the past (safety net)
@@ -233,8 +233,8 @@ class NotificationHelper {
       matchDateTimeComponents:
           null, // Usually null for specific date/time schedules
     );
-    logger.i(
-        'LOG: Notification $id scheduled for $scheduledDate with payload $payload');
+    //logger.i(
+    //    'LOG: Notification $id scheduled for $scheduledDate with payload $payload');
   }
 
   Future<void> cancelNotification(int id) async {

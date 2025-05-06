@@ -71,6 +71,8 @@ class ContactObjectBoxSource implements DataSource<Contact> {
 
   @override
   Future<Contact> update(Contact item) async {
+    logger.i(
+        'ContactObjectBoxSource: Updating contact: $item, isActive: ${item.isActive}');
     final id = _contactBox.put(item);
     return item.copyWith(id: id);
   }
