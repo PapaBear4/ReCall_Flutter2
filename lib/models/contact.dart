@@ -29,6 +29,7 @@ class Contact {
   final String? phoneNumber; // Single phone number (optional)
   final List<String>? emails; // List of emails (optional)
   final String? notes; // Notes field (optional)
+  final bool isActive; // Track if contact is active or archived
   
   // Social Media Fields have been removed
 
@@ -44,6 +45,7 @@ class Contact {
     this.phoneNumber,
     this.emails,
     this.notes,
+    this.isActive = true, // Default to active
   });
   
   // Manual implementation of copyWith
@@ -59,6 +61,7 @@ class Contact {
     String? phoneNumber,
     List<String>? emails,
     String? notes,
+    bool? isActive,
     // Add parameters for clearing nullable fields
     bool clearNickname = false,
     bool clearBirthday = false,
@@ -80,6 +83,7 @@ class Contact {
       phoneNumber: clearPhoneNumber ? null : (phoneNumber ?? this.phoneNumber),
       emails: clearEmails ? null : (emails ?? this.emails),
       notes: clearNotes ? null : (notes ?? this.notes),
+      isActive: isActive ?? this.isActive,
     );
   }
   
@@ -102,7 +106,8 @@ class Contact {
       other.anniversary == anniversary &&
       other.phoneNumber == phoneNumber &&
       listEquals(other.emails, emails) &&
-      other.notes == notes;
+      other.notes == notes &&
+      other.isActive == isActive;
   }
 
   @override
@@ -119,12 +124,13 @@ class Contact {
       phoneNumber,
       Object.hashAll(emails ?? []),
       notes,
+      isActive,
     );
   }
   
   @override
   String toString() {
     return 'Contact(id: $id, firstName: $firstName, lastName: $lastName, '
-           'nickname: $nickname, frequency: $frequency, ...)';
+           'nickname: $nickname, frequency: $frequency, isActive: $isActive, ...)';
   }
 }
