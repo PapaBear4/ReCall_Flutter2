@@ -1,122 +1,122 @@
 // lib/utils/last_contacted_utils.dart
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:recall/models/contact.dart';
 import 'package:recall/models/contact_frequency.dart';
 
-String formatLastContacted(DateTime? lastContacted) {
-  if (lastContacted == null) {
-    return '';
+// This function remains the core logic for calculating the next contact date.
+DateTime calculateNextDueDate(Contact contact) {
+  DateTime baseDate = contact.lastContacted ?? DateTime.now();
+  ContactFrequency freq = ContactFrequency.fromString(contact.frequency);
+
+  if (freq == ContactFrequency.never) {
+    // For "never", return a date far in the future to sort them last.
+    return DateTime(9999, 12, 31);
   }
 
-  final now = DateTime.now();
-  final today = DateTime(now.year, now.month, now.day);
-  final lastContactedDate =
-      DateTime(lastContacted.year, lastContacted.month, lastContacted.day);
+  DateTime nextDate;
+  switch (freq) {
+    case ContactFrequency.daily:
+      nextDate = baseDate.add(const Duration(days: 1));
+      break;
+    case ContactFrequency.weekly:
+      nextDate = baseDate.add(const Duration(days: 7));
+      break;
+    case ContactFrequency.biweekly:
+      nextDate = baseDate.add(const Duration(days: 14));
+      break;
+    case ContactFrequency.monthly:
+      nextDate = DateTime(baseDate.year, baseDate.month + 1, baseDate.day);
+      break;
+    case ContactFrequency.quarterly:
+      nextDate = DateTime(baseDate.year, baseDate.month + 3, baseDate.day);
+      break;
+    case ContactFrequency.yearly:
+      nextDate = DateTime(baseDate.year + 1, baseDate.month, baseDate.day);
+      break;
+    case ContactFrequency.rarely:
+      // Define "rarely" as, for example, 6 months for calculation purposes
+      nextDate = DateTime(baseDate.year, baseDate.month + 6, baseDate.day);
+      break;
+    default: // Should not happen if frequency is validated
+      nextDate = DateTime(9999, 12, 31);
+  }
+  // Return only the date part, time set to midnight
+  return DateTime(nextDate.year, nextDate.month, nextDate.day);
+}
 
-  if (lastContactedDate == today) {
+// Refactored to use nextContactDate primarily
+String calculateNextDueDateDisplay(DateTime? nextContactDate, String frequencyValue) {
+  if (ContactFrequency.fromString(frequencyValue) == ContactFrequency.never || nextContactDate == null) {
+    return 'Never';
+  }
+
+  final DateTime now = DateTime.now();
+  final DateTime today = DateTime(now.year, now.month, now.day);
+  final DateTime tomorrow = today.add(const Duration(days: 1));
+  final DateTime nextContactDay = DateTime(nextContactDate.year, nextContactDate.month, nextContactDate.day);
+
+  if (nextContactDay.isAtSameMomentAs(today)) {
     return 'Today';
-  }
-
-  final difference = now.difference(lastContacted);
-
-  if (difference.inDays <= 13) {
-    final days = difference.inDays;
-    return '$days day${days == 1 ? '' : 's'} ago';
-  } else if (difference.inDays <= 56) {
-    final weeks = difference.inDays ~/ 7;
-    return '$weeks week${weeks == 1 ? '' : 's'} ago';
+  } else if (nextContactDay.isAtSameMomentAs(tomorrow)) {
+    return 'Tomorrow';
+  } else if (nextContactDay.isBefore(today)) {
+    return 'Overdue'; // Or format the date if preferred for overdue
   } else {
-    final months = difference.inDays ~/ 30;
-    return '$months month${months == 1 ? '' : 's'} ago';
+    return DateFormat.yMMMd().format(nextContactDay); // e.g., "Sep 3, 2023"
   }
 }
 
-bool isOverdue(String frequency, DateTime? lastContacted) {
-  if (frequency == ContactFrequency.never.value || lastContacted == null) {
+// Refactored to use nextContactDate
+bool isOverdue(DateTime? nextContactDate, String frequencyValue) {
+  if (ContactFrequency.fromString(frequencyValue) == ContactFrequency.never || nextContactDate == null) {
     return false;
   }
-
-  final now = DateTime.now();
-  final duration = now.difference(lastContacted);
-
-  switch (frequency) {
-    case 'daily':
-      return duration.inDays >= 1;
-    case 'weekly':
-      return duration.inDays >= 7;
-    case 'biweekly':
-      return duration.inDays >= 14;
-    case 'monthly':
-      return duration.inDays >= 30;
-    case 'quarterly':
-      return duration.inDays >= 90;
-    case 'yearly':
-      return duration.inDays >= 365;
-    case 'rarely':
-      return duration.inDays >= 750;
-
-    default:
-      return false;
-  }
+  final DateTime now = DateTime.now();
+  final DateTime today = DateTime(now.year, now.month, now.day);
+  return nextContactDate.isBefore(today);
 }
 
-DateTime calculateNextDueDate(Contact contact) {
-  if (contact.lastContacted == null) {
-    return DateTime.now(); // Or some other default behavior
+// Refactored to use nextContactDate
+Color? getDueDateColor(DateTime? nextContactDate, String frequencyValue, BuildContext context) {
+  if (ContactFrequency.fromString(frequencyValue) == ContactFrequency.never || nextContactDate == null) {
+    return Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.6);
   }
 
-  final frequency = ContactFrequency.fromString(contact.frequency);
-  final lastContacted = DateTime(
-    contact.lastContacted!.year,
-    contact.lastContacted!.month,
-    contact.lastContacted!.day,
-    7, // Set to 7 AM;
-    0, // Set to 0 minutes;
-    0, // Set to 0 seconds; 
-  );
+  final DateTime now = DateTime.now();
+  final DateTime today = DateTime(now.year, now.month, now.day);
+  final DateTime tomorrow = today.add(const Duration(days: 1));
+  final DateTime nextContactDay = DateTime(nextContactDate.year, nextContactDate.month, nextContactDate.day);
 
-  switch (frequency) {
-    case ContactFrequency.daily:
-      return lastContacted.add(const Duration(days: 1));
-    case ContactFrequency.weekly:
-      return lastContacted.add(const Duration(days: 7));
-    case ContactFrequency.biweekly:
-      return lastContacted.add(const Duration(days: 14));
-    case ContactFrequency.monthly:
-      return lastContacted.add(const Duration(days: 30));
-    case ContactFrequency.quarterly:
-      return lastContacted.add(const Duration(days: 90));
-    case ContactFrequency.yearly:
-      return lastContacted.add(const Duration(days: 365));
-    case ContactFrequency.rarely:
-      return lastContacted.add(const Duration(days: 750));
-    case ContactFrequency.never:
-      return DateTime.now()
-          .add(const Duration(days: 365 * 10)); // A long time in the future
+  if (nextContactDay.isBefore(today)) {
+    return Colors.red.shade700; // Overdue
+  } else if (nextContactDay.isAtSameMomentAs(today)) {
+    return Colors.orange.shade800; // Today
+  } else if (nextContactDay.isAtSameMomentAs(tomorrow)) {
+    return Colors.blue.shade700; // Tomorrow
   }
+  return Theme.of(context).textTheme.bodySmall?.color; // Default color for future dates
 }
 
-String calculateNextDueDateDisplay(DateTime? lastContacted, String frequency) {
-  if (lastContacted == null) return 'Never Contacted';
-  final nextDueDate = calculateNextDueDate(Contact(
-      firstName: '',
-      frequency: frequency,
-      id: 0,
-      lastName: '',
-      lastContacted: lastContacted));
-  final now = DateTime.now();
-  final today = DateTime(now.year, now.month, now.day);
-  final tomorrow = today.add(const Duration(days: 1));
-  final nextDueDateDate =
-      DateTime(nextDueDate.year, nextDueDate.month, nextDueDate.day);
+String formatLastContacted(DateTime? lastContactedDate) {
+  if (lastContactedDate == null) {
+    return 'Never';
+  }
 
-  if (nextDueDateDate.isBefore(today)) {
-    return 'Overdue';
-  } else if (nextDueDateDate == today) {
+  final DateTime now = DateTime.now();
+  final DateTime today = DateTime(now.year, now.month, now.day);
+  final DateTime yesterday = today.subtract(const Duration(days: 1));
+  final DateTime lastContactDay = DateTime(lastContactedDate.year, lastContactedDate.month, lastContactedDate.day);
+
+  if (lastContactDay.isAtSameMomentAs(today)) {
     return 'Today';
-  } else if (nextDueDateDate == tomorrow) {
-    return 'Tomorrow';
+  } else if (lastContactDay.isAtSameMomentAs(yesterday)) {
+    return 'Yesterday';
   } else {
-    final difference = nextDueDate.difference(today).inDays;
-    return 'In $difference day${difference == 1 ? '' : 's'}';
+    // Check if it's within the last week to show day name
+    if (now.difference(lastContactDay).inDays < 7) {
+      return DateFormat('EEEE').format(lastContactDay); // e.g., "Monday"
+    }
+    return DateFormat.yMMMd().format(lastContactDay); // e.g., "Sep 3, 2023"
   }
 }

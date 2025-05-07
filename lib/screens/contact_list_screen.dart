@@ -74,7 +74,8 @@ class ContactListScreen extends StatelessWidget {
       filterMenuItems: _buildFilterMenuItems,
       handleListAction: _handleAllContactsListAction,
       fabHeroTagPrefix: 'all_contacts',
-      initialScreenLoadEvent: const LoadContactsEvent(), // Ensure this screen loads its data
+      initialScreenLoadEvent: const LoadContactsEvent(), 
+      displayActiveStatusInList: true, // Show indicator on this screen
     );
   }
 }

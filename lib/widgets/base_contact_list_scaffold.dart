@@ -36,6 +36,10 @@ class BaseContactListScaffold extends StatefulWidget {
   final ListActionCallback handleListAction;
   final String fabHeroTagPrefix;
   final ContactListEvent? initialScreenLoadEvent; // For specific screen first load
+  final bool showSearchBar;
+  final bool showFilterMenu;
+  final bool showSortMenu;
+  final bool displayActiveStatusInList; // New parameter
 
   const BaseContactListScaffold({
     super.key,
@@ -48,6 +52,10 @@ class BaseContactListScaffold extends StatefulWidget {
     required this.handleListAction,
     required this.fabHeroTagPrefix,
     this.initialScreenLoadEvent,
+    this.showSearchBar = true,
+    this.showFilterMenu = true,
+    this.showSortMenu = true,
+    this.displayActiveStatusInList = false, // Default to false
   });
 
   @override
@@ -157,6 +165,20 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
     }
   }
 
+  void _toggleSelectedContactsActiveStatus() {
+    if (_selectedContactIds.isEmpty) return;
+    context.read<ContactListBloc>().add(
+        ToggleContactsActiveStatusEvent(contactIds: _selectedContactIds.toList()));
+    // Exit selection mode after action
+    setState(() {
+      _selectionMode = false;
+      _selectedContactIds.clear();
+    });
+     ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Toggled active status for selected contacts.')),
+    );
+  }
+
   void _onContactLongPress(Contact contact) {
     if (contact.id == null) return;
     if (!_selectionMode) {
@@ -248,20 +270,22 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
     return AppBar(
       title: Text(widget.screenTitle),
       actions: [
-        PopupMenuButton<ListAction>(
-          icon: const Icon(Icons.sort),
-          tooltip: "Sort",
-          onSelected: (action) => widget.handleListAction(action, context, _searchController),
-          itemBuilder: widget.sortMenuItems,
-        ),
-        PopupMenuButton<ListAction>(
-          icon: const Icon(Icons.filter_alt),
-          tooltip: "Filter",
-          onSelected: (action) => widget.handleListAction(action, context, _searchController),
-          itemBuilder: widget.filterMenuItems,
-        ),
+        if (widget.showSortMenu)
+          PopupMenuButton<ListAction>(
+            icon: const Icon(Icons.sort),
+            tooltip: "Sort",
+            onSelected: (action) => widget.handleListAction(action, context, _searchController),
+            itemBuilder: widget.sortMenuItems,
+          ),
+        if (widget.showFilterMenu)
+          PopupMenuButton<ListAction>(
+            icon: const Icon(Icons.filter_alt),
+            tooltip: "Filter",
+            onSelected: (action) => widget.handleListAction(action, context, _searchController),
+            itemBuilder: widget.filterMenuItems,
+          ),
       ],
-      bottom: PreferredSize(
+      bottom: widget.showSearchBar ? PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
@@ -285,7 +309,7 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
             ),
           ),
         ),
-      ),
+      ) : null,
     );
   }
 
@@ -300,6 +324,11 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
         onPressed: _toggleSelectionMode,
       ),
       actions: [
+        IconButton(
+          icon: const Icon(Icons.sync_alt, color: Colors.white), // Icon for toggling
+          tooltip: 'Toggle Active Status',
+          onPressed: _selectedContactIds.isEmpty ? null : _toggleSelectedContactsActiveStatus,
+        ),
         IconButton(
           icon: const Icon(Icons.delete, color: Colors.white),
           tooltip: 'Delete Selected',
@@ -332,6 +361,7 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
         return ContactListItem(
           contact: contact,
           isSelected: isSelected,
+          showActiveStatus: widget.displayActiveStatusInList, // Pass the new param
           onTap: () {
             if (contact.id == null) return;
             if (_selectionMode) {

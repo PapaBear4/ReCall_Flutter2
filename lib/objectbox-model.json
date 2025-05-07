@@ -5,7 +5,7 @@
   "entities": [
     {
       "id": "11:4220768979207252381",
-      "lastPropertyId": "25:1084815822671376793",
+      "lastPropertyId": "26:942234837359264903",
       "name": "Contact",
       "properties": [
         {
@@ -68,6 +68,11 @@
           "id": "25:1084815822671376793",
           "name": "isActive",
           "type": 1
+        },
+        {
+          "id": "26:942234837359264903",
+          "name": "nextContact",
+          "type": 10
         }
       ],
       "relations": []

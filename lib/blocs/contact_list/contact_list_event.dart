@@ -63,8 +63,13 @@ class DeleteContactsEvent extends ContactListEvent {
   const DeleteContactsEvent({required this.contactIds});
 }
 
+class ToggleContactsActiveStatusEvent extends ContactListEvent {
+  final List<int> contactIds;
+
+  const ToggleContactsActiveStatusEvent({required this.contactIds});
+}
+
 // Changed from enum ContactListFilter to enum ContactListFilterType
-// to better represent that these are filter types that can be combined
 enum ContactListFilterType { overdue, dueSoon }
 
 // Define possible sort fields

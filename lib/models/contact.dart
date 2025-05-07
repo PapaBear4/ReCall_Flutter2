@@ -22,6 +22,9 @@ class Contact {
   
   @Property(type: PropertyType.date)
   final DateTime? lastContacted;
+
+  @Property(type: PropertyType.date)
+  final DateTime? nextContact; // New field
   
   @Property(type: PropertyType.date)
   final DateTime? anniversary;
@@ -41,6 +44,7 @@ class Contact {
     this.frequency = ContactFrequency.defaultValue,
     this.birthday,
     this.lastContacted,
+    this.nextContact, // Add to constructor
     this.anniversary,
     this.phoneNumber,
     this.emails,
@@ -57,6 +61,7 @@ class Contact {
     String? frequency,
     DateTime? birthday,
     DateTime? lastContacted,
+    DateTime? nextContact, // Add to copyWith
     DateTime? anniversary,
     String? phoneNumber,
     List<String>? emails,
@@ -79,6 +84,7 @@ class Contact {
       frequency: frequency ?? this.frequency,
       birthday: clearBirthday ? null : (birthday ?? this.birthday),
       lastContacted: clearLastContacted ? null : (lastContacted ?? this.lastContacted),
+      nextContact: nextContact ?? this.nextContact, // Add to copyWith logic
       anniversary: clearAnniversary ? null : (anniversary ?? this.anniversary),
       phoneNumber: clearPhoneNumber ? null : (phoneNumber ?? this.phoneNumber),
       emails: clearEmails ? null : (emails ?? this.emails),
@@ -103,6 +109,7 @@ class Contact {
       other.frequency == frequency &&
       other.birthday == birthday &&
       other.lastContacted == lastContacted &&
+      other.nextContact == nextContact && // Add to equality check
       other.anniversary == anniversary &&
       other.phoneNumber == phoneNumber &&
       listEquals(other.emails, emails) &&
@@ -120,6 +127,7 @@ class Contact {
       frequency,
       birthday,
       lastContacted,
+      nextContact, // Add to hash
       anniversary,
       phoneNumber,
       Object.hashAll(emails ?? []),
@@ -131,6 +139,6 @@ class Contact {
   @override
   String toString() {
     return 'Contact(id: $id, firstName: $firstName, lastName: $lastName, '
-           'nickname: $nickname, frequency: $frequency, isActive: $isActive, ...)';
+           'nickname: $nickname, frequency: $frequency, isActive: $isActive, nextContact: $nextContact, ...)';
   }
 }

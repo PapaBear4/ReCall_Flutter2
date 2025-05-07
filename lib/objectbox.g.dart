@@ -23,7 +23,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(11, 4220768979207252381),
     name: 'Contact',
-    lastPropertyId: const obx_int.IdUid(25, 1084815822671376793),
+    lastPropertyId: const obx_int.IdUid(26, 942234837359264903),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -96,6 +96,12 @@ final _entities = <obx_int.ModelEntity>[
         id: const obx_int.IdUid(25, 1084815822671376793),
         name: 'isActive',
         type: 1,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(26, 942234837359264903),
+        name: 'nextContact',
+        type: 10,
         flags: 0,
       ),
     ],
@@ -309,7 +315,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
                 );
         final nicknameOffset =
             object.nickname == null ? null : fbb.writeString(object.nickname!);
-        fbb.startTable(26);
+        fbb.startTable(27);
         fbb.addInt64(0, object.id ?? 0);
         fbb.addOffset(1, firstNameOffset);
         fbb.addOffset(2, lastNameOffset);
@@ -322,6 +328,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         fbb.addOffset(14, emailsOffset);
         fbb.addOffset(15, nicknameOffset);
         fbb.addBool(24, object.isActive);
+        fbb.addInt64(25, object.nextContact?.millisecondsSinceEpoch);
         fbb.finish(fbb.endTable());
         return object.id ?? 0;
       },
@@ -342,6 +349,11 @@ obx_int.ModelDefinition getObjectBoxModel() {
           buffer,
           rootOffset,
           16,
+        );
+        final nextContactValue = const fb.Int64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          54,
         );
         final idParam = const fb.Int64Reader().vTableGetNullable(
           buffer,
@@ -368,6 +380,10 @@ obx_int.ModelDefinition getObjectBoxModel() {
             lastContactedValue == null
                 ? null
                 : DateTime.fromMillisecondsSinceEpoch(lastContactedValue);
+        final nextContactParam =
+            nextContactValue == null
+                ? null
+                : DateTime.fromMillisecondsSinceEpoch(nextContactValue);
         final anniversaryParam =
             anniversaryValue == null
                 ? null
@@ -396,6 +412,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           frequency: frequencyParam,
           birthday: birthdayParam,
           lastContacted: lastContactedParam,
+          nextContact: nextContactParam,
           anniversary: anniversaryParam,
           phoneNumber: phoneNumberParam,
           emails: emailsParam,
@@ -538,6 +555,11 @@ class Contact_ {
   /// See [Contact.isActive].
   static final isActive = obx.QueryBooleanProperty<Contact>(
     _entities[0].properties[11],
+  );
+
+  /// See [Contact.nextContact].
+  static final nextContact = obx.QueryDateProperty<Contact>(
+    _entities[0].properties[12],
   );
 }
 

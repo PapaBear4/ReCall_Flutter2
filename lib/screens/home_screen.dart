@@ -62,15 +62,18 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BaseContactListScaffold(
-      screenTitle: 'Upcoming Reminders',
+      screenTitle: 'reCall Home',
       emptyListText: 'No upcoming or overdue reminders.',
       onRefreshEvent: const LoadHomeScreenContactsEvent(),
-      drawerWidget: buildAppDrawer(context, true), // Pass true for home
-      sortMenuItems: _buildSortMenuItems,
-      filterMenuItems: _buildFilterMenuItems,
+      drawerWidget: buildAppDrawer(context, true), 
+      sortMenuItems: _buildSortMenuItems, // Still needed if showSortMenu can be true
+      filterMenuItems: _buildFilterMenuItems, // Still needed if showFilterMenu can be true
       handleListAction: _handleHomeScreenListAction,
       fabHeroTagPrefix: 'home',
       // initialScreenLoadEvent is handled by app.dart for HomeScreen
+      showSearchBar: false,
+      showFilterMenu: false,
+      showSortMenu: false, // Set to false as per requirement
     );
   }
 }

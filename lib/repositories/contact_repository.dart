@@ -1,5 +1,8 @@
 // lib/repositories/contact_repository.dart
 import 'package:recall/models/contact.dart'; // Import the Contact model
+import 'package:recall/models/contact_frequency.dart';
+import 'package:recall/objectbox.g.dart';
+import 'package:recall/utils/last_contacted_utils.dart'; // Import the utils
 import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:objectbox/objectbox.dart';
 import 'package:recall/sources/contact_ob_source.dart';
@@ -61,26 +64,40 @@ class ContactRepository implements Repository<Contact> {
   }
 
   @override
-  Future<Contact> add(Contact item) async {
-    logger.i('LOG: repo received from call: $item');
-    final contact = await _source.add(item);
-    logger.i('LOG: repo got back from source: $contact');
-    final addedContact = await _source.getById(contact.id!);
-    logger.i('LOG: repo retrieved: $addedContact');
-
-    if (item.id != null) {
-      _contacts[item.id!] = item;
+  Future<Contact> add(Contact contact) async {
+    Contact contactWithNextDate = contact;
+    if (contact.isActive && contact.frequency != ContactFrequency.never.value) {
+      // Ensure lastContacted is set if null, for calculation
+      final contactToCalc = contact.lastContacted == null ? contact.copyWith(lastContacted: DateTime.now()) : contact;
+      contactWithNextDate = contact.copyWith(nextContact: calculateNextDueDate(contactToCalc));
+    } else if (!contact.isActive || contact.frequency == ContactFrequency.never.value) {
+      contactWithNextDate = contact.copyWith(nextContact: null); // Explicitly null for inactive/never
     }
-    return contact;
+
+    final addedContact = await _source.add(contactWithNextDate);
+    if (addedContact.id != null) {
+      _contacts[addedContact.id!] = addedContact;
+    }
+    return addedContact;
   }
 
   @override
-  Future<Contact> update(Contact item) async {
-    final contact = await _source.update(item);
-    if (item.id != null) {
-      _contacts[item.id!] = item;
+  Future<Contact> update(Contact contact) async {
+    Contact contactWithNextDate = contact;
+    if (contact.isActive && contact.frequency != ContactFrequency.never.value) {
+      // Ensure lastContacted is set if null, for calculation
+      final contactToCalc = contact.lastContacted == null ? contact.copyWith(lastContacted: DateTime.now()) : contact;
+      contactWithNextDate = contact.copyWith(nextContact: calculateNextDueDate(contactToCalc));
+    } else if (!contact.isActive || contact.frequency == ContactFrequency.never.value) {
+      contactWithNextDate = contact.copyWith(nextContact: null, clearLastContacted: contact.frequency == ContactFrequency.never.value);
+      // if frequency is never, also clear lastContacted as it's irrelevant.
     }
-    return contact;
+
+    final updatedContact = await _source.update(contactWithNextDate);
+    if (updatedContact.id != null) {
+      _contacts[updatedContact.id!] = updatedContact;
+    }
+    return updatedContact;
   }
 
   @override
