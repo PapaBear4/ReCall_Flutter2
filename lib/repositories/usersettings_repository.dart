@@ -3,7 +3,6 @@ import 'package:recall/models/usersettings.dart';
 import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:objectbox/objectbox.dart';
 import 'package:recall/sources/usersettings_ob_source.dart';
-import 'package:recall/sources/usersettings_sp_source.dart';
 import 'package:recall/sources/data_source.dart';
 import 'repository.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -26,11 +25,6 @@ class UserSettingsRepository implements Repository<UserSettings> {
       }
     } else {
       _source = _createInMemorySource();
-      try {
-        _source = UserSettingsSharedPreferencesSource();
-      } catch (e) {
-        logger.i("Error opening shared preferences: $e");
-      }
     }
   }
 

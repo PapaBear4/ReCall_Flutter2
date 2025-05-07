@@ -50,7 +50,6 @@ dependencies:
   permission_handler: ^12.0.0+1 # Use the latest version from pub.dev
   provider: ^6.1.4
   share_plus: ^11.0.0
-  shared_preferences: ^2.3.5
   timezone: ^0.10.0
   url_launcher: ^6.3.1
   uuid: ^4.5.1

@@ -6,7 +6,6 @@ import 'package:recall/utils/last_contacted_utils.dart'; // Import the utils
 import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:objectbox/objectbox.dart';
 import 'package:recall/sources/contact_ob_source.dart';
-import 'package:recall/sources/contact_sp_source.dart';
 import 'package:recall/sources/data_source.dart';
 import 'repository.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -29,11 +28,6 @@ class ContactRepository implements Repository<Contact> {
       }
     } else {
       _source = _createInMemorySource();
-      try {
-        _source = ContactsSharedPreferencesSource();
-      } catch (e) {
-        logger.i("Error opening shared preferences: $e");
-      }
     }
   }
 
