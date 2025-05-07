@@ -1,7 +1,7 @@
 // lib/models/usersettings.dart
 import 'package:objectbox/objectbox.dart';
 import 'package:flutter/material.dart';
-import 'package:recall/models/contact_frequency.dart';
+import 'package:recall/models/enums.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'usersettings.g.dart';

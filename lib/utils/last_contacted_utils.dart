@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:recall/models/contact.dart';
-import 'package:recall/models/contact_frequency.dart';
+import 'package:recall/models/enums.dart';
 
 // This function remains the core logic for calculating the next contact date.
 DateTime calculateNextDueDate(Contact contact) {

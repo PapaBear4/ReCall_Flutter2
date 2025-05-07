@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/foundation.dart';
 import 'package:recall/models/contact.dart'; // Adjust import path as necessary
-import 'package:recall/models/contact_frequency.dart';
+import 'package:recall/models/enums.dart';
 
 void main() {
   group('Contact Model Tests', () {

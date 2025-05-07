@@ -1,7 +1,7 @@
 // lib/blocs/contact_list/contact_list_bloc.dart
 import 'package:bloc/bloc.dart';
 import 'package:recall/models/contact.dart';
-import 'package:recall/models/contact_frequency.dart';
+import 'package:recall/models/enums.dart';
 import 'package:recall/repositories/contact_repository.dart';
 import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:recall/services/notification_service.dart';
@@ -26,66 +26,44 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
       if (event is LoadContactsEvent) {
         emit(const LoadingContactListState());
         try {
-          final allContacts = await _contactRepository.getAll(); // Load ALL contacts
+          // Load all contacts from the repository
+          final allContacts = await _contactRepository.getAll();
 
-          if (allContacts.isEmpty) {
+          // Apply filters
+          final filteredContacts = _applyFilterAndSearch(
+            allContacts,
+            event.searchTerm,
+            event.filters,
+          );
+
+          // Sort the filtered contacts
+          final sortedContacts = _sortContacts(
+            filteredContacts,
+            event.sortField,
+            event.ascending,
+          );
+
+          if (sortedContacts.isEmpty) {
             emit(const EmptyContactListState());
           } else {
-            // Sort all contacts for the "All Contacts" view
-            final sortedContacts = _sortContacts(
-                List.from(allContacts), ContactListSortField.dueDate, true);
             emit(LoadedContactListState(
-              originalContacts: allContacts, // originalContacts now includes active and inactive
+              originalContacts: allContacts,
               displayedContacts: sortedContacts,
-              sortField: ContactListSortField.dueDate,
-              ascending: true,
-              searchTerm: '',
-              activeFilters: {}, 
+              sortField: event.sortField,
+              ascending: event.ascending,
+              searchTerm: event.searchTerm,
+              activeFilters: event.filters,
             ));
           }
         } catch (e) {
           emit(ErrorContactListState(e.toString()));
           logger.e("Error loading contacts: $e");
         }
-      // LOAD HOME SCREEN CONTACTS
-      } else if (event is LoadHomeScreenContactsEvent) {
-        emit(const LoadingContactListState());
-        try {
-          final allContacts = await _contactRepository.getAll();
-          final activeContacts = allContacts.where((c) => c.isActive).toList();
-
-          if (activeContacts.isEmpty) {
-            // If no active contacts, home screen will also be empty.
-            emit(const EmptyContactListState());
-          } else {
-            final Set<ContactListFilterType> homeScreenFilters = {
-              ContactListFilterType.overdue,
-              ContactListFilterType.dueSoon,
-            };
-            final homeScreenContacts = _applyFilterAndSearch(
-                List.from(activeContacts), '', homeScreenFilters);
-
-            final sortedHomeScreenContacts = _sortContacts(
-                homeScreenContacts, ContactListSortField.dueDate, true);
-
-            emit(LoadedContactListState(
-              originalContacts: activeContacts, // Base list is all active contacts
-              displayedContacts: sortedHomeScreenContacts, // Specifically filtered for home
-              sortField: ContactListSortField.dueDate,
-              ascending: true,
-              searchTerm: '',
-              activeFilters: homeScreenFilters, // Pre-apply home screen filters
-            ));
-          }
-        } catch (e) {
-          emit(ErrorContactListState(e.toString()));
-          logger.e("Error loading home screen contacts: $e");
-        }
-      // DELETE CONTACT FROM LIST
-      } else if (event is DeleteContactFromListEvent) {
+        // DELETE CONTACT FROM LIST
+      } else if (event is DeleteContactsEvent) {
         // TODO: Maybe for later to provide a way to delete contacts
         // directly from the list
-      // UPDATE CONTACT FROM LIST
+        // UPDATE CONTACT FROM LIST
       } else if (event is UpdateContactFromListEvent) {
         final currentState = state;
         if (currentState is! LoadedContactListState) {
@@ -114,26 +92,26 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
             originalContacts: newOriginalContacts,
             displayedContacts: newlySortedContacts,
           ));
-          logger.i("Successfully updated contact ${updatedContact.id} in list state.");
+          logger.i(
+              "Successfully updated contact ${updatedContact.id} in list state.");
         } catch (err) {
           emit(ErrorContactListState(err.toString()));
-          logger.e("Error updating contact ID ${event.contact.id} from list: $err");
+          logger.e(
+              "Error updating contact ID ${event.contact.id} from list: $err");
         }
-      // SORT CONTACTS
+        // SORT CONTACTS
       } else if (event is SortContactsEvent) {
         final currentState = state;
         if (currentState is LoadedContactListState) {
           final sortedContacts = _sortContacts(
-              currentState.displayedContacts,
-              event.sortField,
-              event.ascending);
+              currentState.displayedContacts, event.sortField, event.ascending);
           emit(currentState.copyWith(
             displayedContacts: sortedContacts,
             sortField: event.sortField,
             ascending: event.ascending,
           ));
         }
-      // SEARCH CONTACTS
+        // SEARCH CONTACTS
       } else if (event is ApplySearchEvent) {
         final currentState = state;
         if (currentState is LoadedContactListState) {
@@ -142,15 +120,15 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
               event.searchTerm,
               currentState.activeFilters);
 
-          final sortedContacts = _sortContacts(filteredContacts,
-              currentState.sortField, currentState.ascending);
+          final sortedContacts = _sortContacts(
+              filteredContacts, currentState.sortField, currentState.ascending);
 
           emit(currentState.copyWith(
             displayedContacts: sortedContacts,
             searchTerm: event.searchTerm,
           ));
         }
-      // APPLY FILTERS
+        // APPLY FILTERS
       } else if (event is ApplyFilterEvent) {
         final currentState = state;
         if (currentState is LoadedContactListState) {
@@ -169,35 +147,29 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
               updatedFilters);
 
           final sortedContacts = _sortContacts(
-              filteredContacts,
-              currentState.sortField,
-              currentState.ascending);
+              filteredContacts, currentState.sortField, currentState.ascending);
 
           emit(currentState.copyWith(
             displayedContacts: sortedContacts,
             activeFilters: updatedFilters,
           ));
         }
-      // CLEAR ALL FILTERS
+        // CLEAR ALL FILTERS
       } else if (event is ClearFiltersEvent) {
         final currentState = state;
         if (currentState is LoadedContactListState) {
           final filteredContacts = _applyFilterAndSearch(
-              currentState.originalContacts,
-              currentState.searchTerm,
-              {});
+              currentState.originalContacts, currentState.searchTerm, {});
 
           final sortedContacts = _sortContacts(
-              filteredContacts,
-              currentState.sortField,
-              currentState.ascending);
+              filteredContacts, currentState.sortField, currentState.ascending);
 
           emit(currentState.copyWith(
             displayedContacts: sortedContacts,
             activeFilters: {},
           ));
         }
-      // DELETE MULTIPLE CONTACTS
+        // DELETE MULTIPLE CONTACTS
       } else if (event is DeleteContactsEvent) {
         final currentState = state;
         if (currentState is! LoadedContactListState) {
@@ -241,7 +213,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           emit(ErrorContactListState(err.toString()));
           logger.e("Error deleting contacts ${event.contactIds}: $err");
         }
-      // TOGGLE ACTIVE STATUS FOR MULTIPLE CONTACTS
+        // TOGGLE ACTIVE STATUS FOR MULTIPLE CONTACTS
       } else if (event is ToggleContactsActiveStatusEvent) {
         final currentState = state;
         if (currentState is! LoadedContactListState) {
@@ -254,7 +226,8 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           for (int contactId in event.contactIds) {
             Contact? contact = await _contactRepository.getById(contactId);
             if (contact == null) {
-              logger.w("Contact with ID $contactId not found for toggling active status.");
+              logger.w(
+                  "Contact with ID $contactId not found for toggling active status.");
               continue;
             }
             final newActiveStatus = !contact.isActive;
@@ -267,15 +240,18 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
               await _notificationService.cancelNotification(updatedContact.id!);
             }
           }
-          
-          logger.i('Toggled active status for ${event.contactIds.length} contacts.');
+
+          logger.i(
+              'Toggled active status for ${event.contactIds.length} contacts.');
 
           // Determine which load event to re-trigger to refresh the list correctly
           // If current state has home screen filters, reload home screen, else reload all contacts.
           // This ensures originalContacts is correctly populated (all active for home, all for all contacts).
-          bool isHomeScreenView = currentState.activeFilters.contains(ContactListFilterType.overdue) ||
-                                  currentState.activeFilters.contains(ContactListFilterType.dueSoon);
-          
+          bool isHomeScreenView = currentState.activeFilters
+                  .contains(ContactListFilterType.overdue) ||
+              currentState.activeFilters
+                  .contains(ContactListFilterType.dueSoon);
+
           List<Contact> newBaseContacts;
           if (isHomeScreenView) {
             final allRepoContacts = await _contactRepository.getAll();
@@ -283,29 +259,27 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           } else {
             newBaseContacts = await _contactRepository.getAll();
           }
-          
+
           if (newBaseContacts.isEmpty && isHomeScreenView) {
-             emit(const EmptyContactListState());
+            emit(const EmptyContactListState());
           } else if (newBaseContacts.isEmpty && !isHomeScreenView) {
-             emit(const EmptyContactListState());
+            emit(const EmptyContactListState());
           } else {
-            final newlyFilteredContacts = _applyFilterAndSearch(
-                newBaseContacts,
-                currentState.searchTerm,
-                currentState.activeFilters);
+            final newlyFilteredContacts = _applyFilterAndSearch(newBaseContacts,
+                currentState.searchTerm, currentState.activeFilters);
 
             final newlySortedContacts = _sortContacts(newlyFilteredContacts,
                 currentState.sortField, currentState.ascending);
-            
+
             emit(currentState.copyWith(
               originalContacts: newBaseContacts,
               displayedContacts: newlySortedContacts,
             ));
           }
-
         } catch (err) {
           emit(ErrorContactListState(err.toString()));
-          logger.e("Error toggling active status for contacts ${event.contactIds}: $err");
+          logger.e(
+              "Error toggling active status for contacts ${event.contactIds}: $err");
           if (currentState is LoadedContactListState) {
             emit(currentState);
           } else {
@@ -316,10 +290,8 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
     });
   }
 
-  List<Contact> _applyFilterAndSearch(
-      List<Contact> originalContacts,
-      String searchTerm,
-      Set<ContactListFilterType> activeFilters) {
+  List<Contact> _applyFilterAndSearch(List<Contact> originalContacts,
+      String searchTerm, Set<ContactListFilterType> activeFilters) {
     List<Contact> filteredList = List.from(originalContacts);
 
     if (searchTerm.isNotEmpty) {
@@ -340,7 +312,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
       for (final filter in activeFilters) {
         switch (filter) {
           case ContactListFilterType.overdue:
-            if (isOverdue( contact.lastContacted,contact.frequency)) {
+            if (isOverdue(contact.lastContacted, contact.frequency)) {
               matchesFilter = true;
             }
             break;
@@ -351,6 +323,14 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
               if (dueDateDisplay == 'Today' || dueDateDisplay == 'Tomorrow') {
                 matchesFilter = true;
               }
+            }
+          case ContactListFilterType.active:
+            if (contact.isActive) {
+              matchesFilter = true;
+            }
+          case ContactListFilterType.archived:
+            if (!contact.isActive) {
+              matchesFilter = true;
             }
             break;
         }
@@ -380,7 +360,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
     sortedList.sort((a, b) {
       int comparison;
       switch (sortField) {
-        case ContactListSortField.dueDate:
+        case ContactListSortField.nextContactDate:
           DateTime dueA = calculateNextDueDate(a);
           DateTime dueB = calculateNextDueDate(b);
           bool aIsNever = a.frequency == ContactFrequency.never.value;

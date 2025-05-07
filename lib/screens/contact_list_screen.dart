@@ -10,38 +10,62 @@ import 'package:recall/screens/home_screen.dart' show buildAppDrawer;
 class ContactListScreen extends StatelessWidget {
   const ContactListScreen({super.key});
 
-  static void _handleAllContactsListAction(ListAction action, BuildContext context, TextEditingController searchController) {
+  static void _handleAllContactsListAction(
+      ListAction action, BuildContext context, TextEditingController searchController) {
     final bloc = context.read<ContactListBloc>();
+
+    // Define default parameters for LoadContactsEvent
+    String searchTerm = searchController.text;
+    Set<ContactListFilterType> filters = {};
+    ContactListSortField sortField = ContactListSortField.nextContactDate;
+    bool ascending = true;
+
+    // Update parameters based on the selected action
     switch (action) {
       case ListAction.sortByDueDateAsc:
-        bloc.add(const SortContactsEvent(sortField: ContactListSortField.dueDate, ascending: true));
+        sortField = ContactListSortField.nextContactDate;
+        ascending = true;
         break;
       case ListAction.sortByDueDateDesc:
-        bloc.add(const SortContactsEvent(sortField: ContactListSortField.dueDate, ascending: false));
+        sortField = ContactListSortField.nextContactDate;
+        ascending = false;
         break;
       case ListAction.sortByLastNameAsc:
-        bloc.add(const SortContactsEvent(sortField: ContactListSortField.lastName, ascending: true));
+        sortField = ContactListSortField.lastName;
+        ascending = true;
         break;
       case ListAction.sortByLastNameDesc:
-        bloc.add(const SortContactsEvent(sortField: ContactListSortField.lastName, ascending: false));
+        sortField = ContactListSortField.lastName;
+        ascending = false;
         break;
       case ListAction.sortByLastContactedAsc:
-        bloc.add(const SortContactsEvent(sortField: ContactListSortField.lastContacted, ascending: true));
+        sortField = ContactListSortField.lastContacted;
+        ascending = true;
         break;
       case ListAction.sortByLastContactedDesc:
-        bloc.add(const SortContactsEvent(sortField: ContactListSortField.lastContacted, ascending: false));
+        sortField = ContactListSortField.lastContacted;
+        ascending = false;
         break;
       case ListAction.filterOverdue:
-        bloc.add(const ApplyFilterEvent(filterType: ContactListFilterType.overdue, isActive: true));
+        filters.add(ContactListFilterType.overdue);
         break;
       case ListAction.filterDueSoon:
-        bloc.add(const ApplyFilterEvent(filterType: ContactListFilterType.dueSoon, isActive: true));
+        filters.add(ContactListFilterType.dueSoon);
         break;
       case ListAction.filterClear:
         searchController.clear(); // Clear search field as well
-        bloc.add(const ClearFiltersEvent());
+        searchTerm = '';
+        filters = {};
         break;
     }
+
+    // Dispatch the consolidated LoadContactsEvent
+    bloc.add(LoadContactsEvent(
+      searchTerm: searchTerm,
+      filters: filters,
+      sortField: sortField,
+      ascending: ascending,
+    ));
   }
 
   static List<PopupMenuEntry<ListAction>> _buildSortMenuItems(BuildContext context) {
@@ -69,12 +93,12 @@ class ContactListScreen extends StatelessWidget {
       screenTitle: 'All Contacts',
       emptyListText: 'No contacts found. Add some!',
       onRefreshEvent: const LoadContactsEvent(),
-      drawerWidget: buildAppDrawer(context, false), 
+      drawerWidget: buildAppDrawer(context, false),
       sortMenuItems: _buildSortMenuItems,
       filterMenuItems: _buildFilterMenuItems,
       handleListAction: _handleAllContactsListAction,
       fabHeroTagPrefix: 'all_contacts',
-      initialScreenLoadEvent: const LoadContactsEvent(), 
+      initialScreenLoadEvent: const LoadContactsEvent(),
       displayActiveStatusInList: true, // Show indicator on this screen
     );
   }

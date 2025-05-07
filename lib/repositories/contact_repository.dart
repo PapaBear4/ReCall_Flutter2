@@ -1,6 +1,6 @@
 // lib/repositories/contact_repository.dart
 import 'package:recall/models/contact.dart'; // Import the Contact model
-import 'package:recall/models/contact_frequency.dart';
+import 'package:recall/models/enums.dart';
 import 'package:recall/objectbox.g.dart';
 import 'package:recall/utils/last_contacted_utils.dart'; // Import the utils
 import 'package:recall/utils/logger.dart'; // Adjust path if needed

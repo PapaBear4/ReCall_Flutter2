@@ -1,7 +1,7 @@
 // lib/models/contact.dart
 import 'package:objectbox/objectbox.dart';
 import 'package:json_annotation/json_annotation.dart';
-import 'contact_frequency.dart';
+import 'enums.dart';
 import 'package:flutter/foundation.dart';
 
 part 'contact.g.dart';

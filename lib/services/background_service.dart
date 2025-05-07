@@ -1,7 +1,7 @@
 // lib/services/background_service.dart
 import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:recall/models/contact.dart';
-import 'package:recall/models/contact_frequency.dart';
+import 'package:recall/models/enums.dart';
 import 'package:recall/repositories/contact_repository.dart';
 import 'package:recall/repositories/usersettings_repository.dart';
 import 'package:recall/services/notification_helper.dart';

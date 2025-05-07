@@ -5,43 +5,46 @@ abstract class ContactListEvent {
   const ContactListEvent();
 }
 
+// LOAD CONTACTS
 class LoadContactsEvent extends ContactListEvent {
-  const LoadContactsEvent();
-}
+  final String searchTerm;
+  final Set<ContactListFilterType> filters;
+  final ContactListSortField sortField;
+  final bool ascending;
 
-class LoadHomeScreenContactsEvent extends ContactListEvent {
-  const LoadHomeScreenContactsEvent();
+  const LoadContactsEvent({
+    this.searchTerm = '',
+    this.filters = const {},
+    this.sortField = ContactListSortField.nextContactDate,
+    this.ascending = true,
+  });
 }
-
-class DeleteContactFromListEvent extends ContactListEvent {
-  final int contactId;
-  
-  const DeleteContactFromListEvent(this.contactId);
-}
-
+// UPDATE single
 class UpdateContactFromListEvent extends ContactListEvent {
   final Contact contact;
   
   const UpdateContactFromListEvent(this.contact);
 }
 
+// SORT
 class SortContactsEvent extends ContactListEvent {
   final ContactListSortField sortField;
   final bool ascending;
   
   const SortContactsEvent({
-    this.sortField = ContactListSortField.dueDate,
+    this.sortField = ContactListSortField.nextContactDate,
     this.ascending = true,
   });
 }
 
+// SEARCH
 class ApplySearchEvent extends ContactListEvent {
   final String searchTerm;
   
   const ApplySearchEvent({required this.searchTerm});
 }
 
-// Updated to toggle a specific filter on/off
+// FILTER
 class ApplyFilterEvent extends ContactListEvent {
   final ContactListFilterType filterType;
   final bool isActive; // true to enable filter, false to disable
@@ -52,17 +55,24 @@ class ApplyFilterEvent extends ContactListEvent {
   });
 }
 
-// New event to clear all filters
+// CLEAR FILTERS
 class ClearFiltersEvent extends ContactListEvent {
   const ClearFiltersEvent();
 }
 
+// DELETE
 class DeleteContactsEvent extends ContactListEvent {
   final List<int> contactIds;
-  
+
   const DeleteContactsEvent({required this.contactIds});
+
+  // Convenience constructor for single contact deletion
+  factory DeleteContactsEvent.single(int contactId) {
+    return DeleteContactsEvent(contactIds: [contactId]);
+  }
 }
 
+// TOGGLE STATUS
 class ToggleContactsActiveStatusEvent extends ContactListEvent {
   final List<int> contactIds;
 
@@ -70,7 +80,7 @@ class ToggleContactsActiveStatusEvent extends ContactListEvent {
 }
 
 // Changed from enum ContactListFilter to enum ContactListFilterType
-enum ContactListFilterType { overdue, dueSoon }
+enum ContactListFilterType { overdue, dueSoon, active, archived }
 
 // Define possible sort fields
 enum ContactListSortField {
@@ -78,5 +88,5 @@ enum ContactListSortField {
   birthday,
   contactFrequency,
   lastContacted,
-  dueDate
+  nextContactDate
 }

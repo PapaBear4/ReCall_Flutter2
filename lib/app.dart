@@ -41,7 +41,11 @@ class ReCall extends StatelessWidget {
               create: (context) => ContactListBloc(
                 contactRepository: _contactRepository,
                 notificationService: context.read<NotificationService>(),
-              )..add(const LoadHomeScreenContactsEvent()), // Changed to LoadHomeScreenContactsEvent
+              )..add(const LoadContactsEvent(
+                  filters: {ContactListFilterType.active},
+                  sortField: ContactListSortField.nextContactDate,
+                  ascending: true, // Most overdue first
+                )),
             ),
             BlocProvider(
               create: (context) => ContactDetailsBloc(
@@ -73,7 +77,8 @@ class ReCall extends StatelessWidget {
               '/help': (context) => const HelpScreen(),
               '/importContacts': (context) =>
                   const ContactImportSelectionScreen(),
-              '/contactListFull': (context) => const ContactListScreen(), // Added route for full contact list
+              '/contactListFull': (context) =>
+                  const ContactListScreen(), // Added route for full contact list
             },
           ),
         ));
