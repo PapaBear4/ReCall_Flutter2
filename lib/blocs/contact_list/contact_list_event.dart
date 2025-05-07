@@ -9,6 +9,10 @@ class LoadContactsEvent extends ContactListEvent {
   const LoadContactsEvent();
 }
 
+class LoadHomeScreenContactsEvent extends ContactListEvent {
+  const LoadHomeScreenContactsEvent();
+}
+
 class DeleteContactFromListEvent extends ContactListEvent {
   final int contactId;
   

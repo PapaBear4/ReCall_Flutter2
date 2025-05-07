@@ -22,28 +22,64 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
         super(const InitialContactListState()) {
     // BEGIN EVENT HANDLING
     on<ContactListEvent>((event, emit) async {
-      // LOAD CONTACTS
+      // LOAD CONTACTS (FOR ALL CONTACTS SCREEN)
       if (event is LoadContactsEvent) {
         emit(const LoadingContactListState());
         try {
           final allContacts = await _contactRepository.getAll();
-          if (allContacts.isEmpty) {
+          final activeContacts = allContacts.where((c) => c.isActive).toList();
+
+          if (activeContacts.isEmpty) {
             emit(const EmptyContactListState());
           } else {
             final sortedContacts = _sortContacts(
-                List.from(allContacts), ContactListSortField.dueDate, true);
+                List.from(activeContacts), ContactListSortField.dueDate, true);
             emit(LoadedContactListState(
-              originalContacts: allContacts,
+              originalContacts: activeContacts,
               displayedContacts: sortedContacts,
               sortField: ContactListSortField.dueDate,
               ascending: true,
               searchTerm: '',
-              activeFilters: {}, // Empty set - no filters active
+              activeFilters: {}, // No default filters for "All Contacts" view
             ));
           }
         } catch (e) {
           emit(ErrorContactListState(e.toString()));
           logger.e("Error loading contacts: $e");
+        }
+      // LOAD HOME SCREEN CONTACTS
+      } else if (event is LoadHomeScreenContactsEvent) {
+        emit(const LoadingContactListState());
+        try {
+          final allContacts = await _contactRepository.getAll();
+          final activeContacts = allContacts.where((c) => c.isActive).toList();
+
+          if (activeContacts.isEmpty) {
+            // If no active contacts, home screen will also be empty.
+            emit(const EmptyContactListState());
+          } else {
+            final Set<ContactListFilterType> homeScreenFilters = {
+              ContactListFilterType.overdue,
+              ContactListFilterType.dueSoon,
+            };
+            final homeScreenContacts = _applyFilterAndSearch(
+                List.from(activeContacts), '', homeScreenFilters);
+
+            final sortedHomeScreenContacts = _sortContacts(
+                homeScreenContacts, ContactListSortField.dueDate, true);
+
+            emit(LoadedContactListState(
+              originalContacts: activeContacts, // Base list is all active contacts
+              displayedContacts: sortedHomeScreenContacts, // Specifically filtered for home
+              sortField: ContactListSortField.dueDate,
+              ascending: true,
+              searchTerm: '',
+              activeFilters: homeScreenFilters, // Pre-apply home screen filters
+            ));
+          }
+        } catch (e) {
+          emit(ErrorContactListState(e.toString()));
+          logger.e("Error loading home screen contacts: $e");
         }
       // DELETE CONTACT FROM LIST
       } else if (event is DeleteContactFromListEvent) {
@@ -210,7 +246,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
   }
 
   List<Contact> _applyFilterAndSearch(
-      List<Contact> originalContacts,
+      List<Contact> originalContacts, // This list is already pre-filtered for active contacts
       String searchTerm,
       Set<ContactListFilterType> activeFilters) {
     List<Contact> filteredList = List.from(originalContacts);

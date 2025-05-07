@@ -1,589 +1,80 @@
 // lib/screens/contact_list_screen.dart
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:recall/blocs/contact_details/contact_details_bloc.dart';
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
-import 'package:recall/models/contact.dart';
-import 'package:recall/screens/scheduled_notifications_screen.dart';
-import 'package:recall/utils/logger.dart'; // Adjust path if needed
-import 'package:recall/widgets/contact_list_item.dart';
-import 'package:recall/screens/help_screen.dart'; // Import HelpScreen
-import 'package:recall/main.dart' as main_app;
-import 'package:flutter/foundation.dart'; // For kDebugMode
+import 'package:recall/widgets/base_contact_list_scaffold.dart';
+import 'package:recall/screens/home_screen.dart' show buildAppDrawer; 
 
-// Enum to represent the combined Sort/Filter action
-enum ListAction {
-  sortByDueDateAsc,
-  sortByDueDateDesc,
-  sortByLastNameAsc,
-  sortByLastNameDesc,
-  sortByLastContactedAsc,
-  sortByLastContactedDesc,
-  filterOverdue,
-  filterDueSoon,
-  filterClear
-}
+// Common ListAction enum is in base_contact_list_scaffold.dart
 
-class ContactListScreen extends StatefulWidget {
+class ContactListScreen extends StatelessWidget {
   const ContactListScreen({super.key});
 
-  @override
-  State<ContactListScreen> createState() => _ContactListScreenState();
-}
-
-class _ContactListScreenState extends State<ContactListScreen> {
-  final TextEditingController _searchController =
-      TextEditingController(); // Controller for search
-  Timer? _debounce;
-
-  // Selection mode state
-  bool _selectionMode = false;
-  final Set<int> _selectedContactIds =
-      {}; // Using a Set to store selected contact IDs
-
-  @override
-  void initState() {
-    super.initState();
-    _searchController.addListener(_onSearchChanged); // Use separate handler
-    _handleInitialNotification();
-  }
-
-  @override
-  void dispose() {
-    _searchController.removeListener(_onSearchChanged); // Remove listener
-    _searchController.dispose();
-    _debounce?.cancel(); // Cancel timer on dispose
-    super.dispose();
-  }
-
-  // Debounce search handler
-  void _onSearchChanged() {
-    if (_debounce?.isActive ?? false) {
-      _debounce!.cancel(); // Cancel previous timer
-    }
-    _debounce = Timer(const Duration(milliseconds: 500), () {
-      // Wait 500ms
-      if (mounted) {
-        // Check if still mounted before dispatching
-        context.read<ContactListBloc>().add(
-            ApplySearchEvent(searchTerm: _searchController.text));
-      }
-    });
-  }
-
-  void _handleInitialNotification() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (main_app.initialNotificationPayload != null && mounted) {
-        // Check mounted
-        logger.i(
-            '>>> Handling initial notification payload: ${main_app.initialNotificationPayload}');
-        final String payload = main_app.initialNotificationPayload!;
-        int? contactId;
-
-        if (payload.startsWith('contact_id:')) {
-          final String idString = payload.split(':').last;
-          contactId = int.tryParse(idString);
-          logger.i('>>> Parsed initial contactId: $contactId');
-        }
-
-        main_app.initialNotificationPayload = null;
-
-        if (contactId != null) {
-          logger.i(
-              '>>> Navigating to /contactDetails from initial launch payload.');
-          // Ensure BLoC is ready before pushing route
-          context
-              .read<ContactDetailsBloc>()
-              .add(LoadContactEvent(contactId: contactId));
-          Navigator.pushNamed(context, '/contactDetails', arguments: contactId);
-        } else {
-          logger.w('>>> Failed to parse contactId from initial payload.');
-        }
-      } else {
-        logger.i(
-            '>>> No initial notification payload detected or widget not mounted.');
-      }
-    });
-  }
-
-  // Helper to dispatch BLoC events from PopupMenuButton
-  void _handleListAction(ListAction action) {
+  static void _handleAllContactsListAction(ListAction action, BuildContext context, TextEditingController searchController) {
+    final bloc = context.read<ContactListBloc>();
     switch (action) {
-      // Sorting
       case ListAction.sortByDueDateAsc:
-        context.read<ContactListBloc>().add(SortContactsEvent(
-            sortField: ContactListSortField.dueDate, ascending: true));
+        bloc.add(const SortContactsEvent(sortField: ContactListSortField.dueDate, ascending: true));
         break;
       case ListAction.sortByDueDateDesc:
-        context.read<ContactListBloc>().add(SortContactsEvent(
-            sortField: ContactListSortField.dueDate, ascending: false));
+        bloc.add(const SortContactsEvent(sortField: ContactListSortField.dueDate, ascending: false));
         break;
       case ListAction.sortByLastNameAsc:
-        context.read<ContactListBloc>().add(SortContactsEvent(
-            sortField: ContactListSortField.lastName, ascending: true));
+        bloc.add(const SortContactsEvent(sortField: ContactListSortField.lastName, ascending: true));
         break;
       case ListAction.sortByLastNameDesc:
-        context.read<ContactListBloc>().add(SortContactsEvent(
-            sortField: ContactListSortField.lastName, ascending: false));
+        bloc.add(const SortContactsEvent(sortField: ContactListSortField.lastName, ascending: false));
         break;
       case ListAction.sortByLastContactedAsc:
-        context.read<ContactListBloc>().add(SortContactsEvent(
-            sortField: ContactListSortField.lastContacted, ascending: true));
+        bloc.add(const SortContactsEvent(sortField: ContactListSortField.lastContacted, ascending: true));
         break;
       case ListAction.sortByLastContactedDesc:
-        context.read<ContactListBloc>().add(SortContactsEvent(
-            sortField: ContactListSortField.lastContacted, ascending: false));
+        bloc.add(const SortContactsEvent(sortField: ContactListSortField.lastContacted, ascending: false));
         break;
-      // Filtering
       case ListAction.filterOverdue:
-        context.read<ContactListBloc>().add(ApplyFilterEvent(
-            filterType: ContactListFilterType.overdue, isActive: true));
+        bloc.add(const ApplyFilterEvent(filterType: ContactListFilterType.overdue, isActive: true));
         break;
       case ListAction.filterDueSoon:
-        context.read<ContactListBloc>().add(ApplyFilterEvent(
-            filterType: ContactListFilterType.dueSoon, isActive: true));
+        bloc.add(const ApplyFilterEvent(filterType: ContactListFilterType.dueSoon, isActive: true));
         break;
       case ListAction.filterClear:
-        context.read<ContactListBloc>().add(const ClearFiltersEvent());
+        searchController.clear(); // Clear search field as well
+        bloc.add(const ClearFiltersEvent());
         break;
     }
   }
 
-  // Toggle selection mode
-  void _toggleSelectionMode() {
-    setState(() {
-      _selectionMode = !_selectionMode;
-      // Clear selections when exiting selection mode
-      if (!_selectionMode) {
-        _selectedContactIds.clear();
-      }
-    });
+  static List<PopupMenuEntry<ListAction>> _buildSortMenuItems(BuildContext context) {
+    return [
+      const PopupMenuItem<ListAction>(value: ListAction.sortByDueDateAsc, child: Text('Sort by Due Date (Soonest)')),
+      const PopupMenuItem<ListAction>(value: ListAction.sortByDueDateDesc, child: Text('Sort by Due Date (Latest)')),
+      const PopupMenuItem<ListAction>(value: ListAction.sortByLastNameAsc, child: Text('Sort by Last Name (A-Z)')),
+      const PopupMenuItem<ListAction>(value: ListAction.sortByLastNameDesc, child: Text('Sort by Last Name (Z-A)')),
+      const PopupMenuItem<ListAction>(value: ListAction.sortByLastContactedAsc, child: Text('Sort by Last Contacted (Oldest)')),
+      const PopupMenuItem<ListAction>(value: ListAction.sortByLastContactedDesc, child: Text('Sort by Last Contacted (Newest)')),
+    ];
   }
 
-  // Toggle selection for a specific contact
-  void _toggleContactSelection(int contactId) {
-    setState(() {
-      if (_selectedContactIds.contains(contactId)) {
-        _selectedContactIds.remove(contactId);
-        // Exit selection mode if no contacts are selected
-        if (_selectedContactIds.isEmpty) {
-          _selectionMode = false;
-        }
-      } else {
-        _selectedContactIds.add(contactId);
-      }
-    });
-  }
-
-  // Delete selected contacts
-  void _deleteSelectedContacts() async {
-    // Show confirmation dialog
-    final bool confirmDelete = await showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text('Delete Contacts'),
-              content: Text(
-                  'Delete ${_selectedContactIds.length} selected contacts?'),
-              actions: <Widget>[
-                TextButton(
-                  child: const Text('Cancel'),
-                  onPressed: () => Navigator.of(context).pop(false),
-                ),
-                TextButton(
-                  child:
-                      const Text('Delete', style: TextStyle(color: Colors.red)),
-                  onPressed: () => Navigator.of(context).pop(true),
-                ),
-              ],
-            );
-          },
-        ) ??
-        false; // Default to false if dialog is dismissed
-
-    if (confirmDelete && mounted) {
-      // Process deletion through the bloc
-      context.read<ContactListBloc>().add(DeleteContactsEvent(
-          contactIds: _selectedContactIds.toList()));
-
-      // Exit selection mode
-      setState(() {
-        _selectionMode = false;
-        _selectedContactIds.clear();
-      });
-
-      // Show a snackbar indicating successful deletion
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${_selectedContactIds.length} contacts deleted'),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
-  }
-
-  // Handle long press on a contact
-  void _onContactLongPress(Contact contact) {
-    // Start selection mode if not already in it
-    if (!_selectionMode) {
-      setState(() {
-        _selectionMode = true;
-        if (contact.id != null) {
-          _selectedContactIds.add(contact.id!);
-        }
-      });
-    } else {
-      // If already in selection mode, toggle this contact's selection
-      _toggleContactSelection(contact.id!);
-    }
+  static List<PopupMenuEntry<ListAction>> _buildFilterMenuItems(BuildContext context) {
+    return [
+      const PopupMenuItem<ListAction>(value: ListAction.filterOverdue, child: Text('Filter: Overdue')),
+      const PopupMenuItem<ListAction>(value: ListAction.filterDueSoon, child: Text('Filter: Due Soon')),
+      const PopupMenuItem<ListAction>(value: ListAction.filterClear, child: Text('Clear Filters')),
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      drawer: _buildDrawer(context), // Add this line to include the drawer
-      appBar: _selectionMode
-          ? _buildSelectionAppBar(context)
-          : _buildNormalAppBar(context),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          // Reloading should clear search/filter and fetch fresh data
-          _searchController.clear(); // Clear search field visually
-          // Dispatch load event which will reset state in BLoC
-          context
-              .read<ContactListBloc>()
-              .add(const LoadContactsEvent());
-        },
-        child: BlocBuilder<ContactListBloc, ContactListState>(
-            builder: (context, state) {
-          if (state is InitialContactListState) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (state is LoadingContactListState) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (state is EmptyContactListState) {
-            return const Center(child: Text('No contacts found.'));
-          } else if (state is LoadedContactListState) {
-            return _buildContactList(state.displayedContacts);
-          } else if (state is ErrorContactListState) {
-            return Center(child: Text("Error: ${state.message}"));
-          } else {
-            return const Center(child: Text('Unknown state'));
-          }
-        }),
-      ),
-      // BottomAppBar remains largely the same
-      bottomNavigationBar: BottomAppBar(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              const Spacer(), // Pushes buttons to the right
-              const SizedBox(width: 10),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (kDebugMode)
-                    FloatingActionButton.small(
-                      heroTag: "btn1",
-                      tooltip: "View Scheduled Notifications",
-                      onPressed: () => _viewScheduledNotifications(context),
-                      child: const Icon(Icons.notifications),
-                    ),
-                  const SizedBox(width: 8),
-                  FloatingActionButton.small(
-                    heroTag: "btn2",
-                    tooltip: "Add New Contact",
-                    onPressed: () {
-                      context
-                          .read<ContactDetailsBloc>()
-                          .add(const ClearContactEvent());
-                      Navigator.pushNamed(context, '/contactDetails',
-                          arguments: 0);
-                    },
-                    child: const Icon(Icons.add),
-                  ),
-                ],
-              )
-            ],
-          ),
-        ),
-      ),
+    return BaseContactListScaffold(
+      screenTitle: 'All Contacts',
+      emptyListText: 'No contacts found. Add some!',
+      onRefreshEvent: const LoadContactsEvent(),
+      drawerWidget: buildAppDrawer(context, false), 
+      sortMenuItems: _buildSortMenuItems,
+      filterMenuItems: _buildFilterMenuItems,
+      handleListAction: _handleAllContactsListAction,
+      fabHeroTagPrefix: 'all_contacts',
+      initialScreenLoadEvent: const LoadContactsEvent(), // Ensure this screen loads its data
     );
   }
-
-  // Build normal app bar
-  PreferredSizeWidget _buildNormalAppBar(BuildContext context) {
-    return AppBar(
-      title: const Text('Contacts'),
-      actions: [
-        // Sort Menu
-        PopupMenuButton<ListAction>(
-          icon: const Icon(Icons.sort),
-          tooltip: "Sort",
-          onSelected: _handleListAction,
-          itemBuilder: (BuildContext context) => <PopupMenuEntry<ListAction>>[
-            const PopupMenuItem<ListAction>(
-              value: ListAction.sortByDueDateAsc,
-              child: Text('Sort by Due Date (Soonest)'),
-            ),
-            const PopupMenuItem<ListAction>(
-              value: ListAction.sortByDueDateDesc,
-              child: Text('Sort by Due Date (Latest)'),
-            ),
-            const PopupMenuItem<ListAction>(
-              value: ListAction.sortByLastNameAsc,
-              child: Text('Sort by Last Name (A-Z)'),
-            ),
-            const PopupMenuItem<ListAction>(
-              value: ListAction.sortByLastNameDesc,
-              child: Text('Sort by Last Name (Z-A)'),
-            ),
-            const PopupMenuItem<ListAction>(
-              value: ListAction.sortByLastContactedAsc,
-              child: Text('Sort by Last Contacted (Oldest)'),
-            ),
-            const PopupMenuItem<ListAction>(
-              value: ListAction.sortByLastContactedDesc,
-              child: Text('Sort by Last Contacted (Newest)'),
-            ),
-          ],
-        ),
-        // Filter Menu - New separate button
-        PopupMenuButton<ListAction>(
-          icon: const Icon(Icons.filter_alt),
-          tooltip: "Filter",
-          onSelected: _handleListAction,
-          itemBuilder: (BuildContext context) => <PopupMenuEntry<ListAction>>[
-            const PopupMenuItem<ListAction>(
-              value: ListAction.filterOverdue,
-              child: Text('Filter: Overdue'),
-            ),
-            const PopupMenuItem<ListAction>(
-              value: ListAction.filterDueSoon,
-              child: Text('Filter: Due Soon'),
-            ),
-            const PopupMenuItem<ListAction>(
-              value: ListAction.filterClear,
-              child: Text('Clear Filter'),
-            ),
-          ],
-        ),
-      ],
-      // Add Search Bar to AppBar bottom
-      bottom: PreferredSize(
-        preferredSize:
-            const Size.fromHeight(kToolbarHeight), // Standard toolbar height
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          child: TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              hintText: 'Search contacts...',
-              prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(30.0),
-                borderSide: BorderSide.none, // Hide border line
-              ),
-              filled: true, // Fill background
-              fillColor: Colors
-                  .white, // Or Theme.of(context).inputDecorationTheme.fillColor
-              contentPadding: const EdgeInsets.symmetric(
-                  vertical: 0, horizontal: 16), // Adjust padding
-              // Add clear button
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.clear),
-                tooltip: "Clear Search",
-                onPressed: () {
-                  _searchController
-                      .clear(); // Clears text and triggers listener
-                },
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Build selection mode app bar
-  PreferredSizeWidget _buildSelectionAppBar(BuildContext context) {
-    return AppBar(
-      backgroundColor: Colors
-          .blueGrey.shade800, // Different color to indicate selection mode
-      elevation: 0, // Remove the shadow effect
-      scrolledUnderElevation: 0, // Explicitly remove elevation when scrolled
-      title: Text('${_selectedContactIds.length} selected'),
-      leading: IconButton(
-        icon: const Icon(Icons.close, color: Colors.white),
-        onPressed: _toggleSelectionMode, // Exit selection mode
-      ),
-      actions: [
-        // Delete button
-        IconButton(
-          icon: const Icon(Icons.delete, color: Colors.white),
-          tooltip: 'Delete Selected',
-          onPressed:
-              _selectedContactIds.isEmpty ? null : _deleteSelectedContacts,
-        ),
-        // Select all button
-        IconButton(
-          icon: const Icon(Icons.select_all, color: Colors.white),
-          tooltip: 'Select All',
-          onPressed: () {
-            final contacts = context.read<ContactListBloc>().state;
-            List<Contact> displayedContacts = [];
-            if (contacts is LoadedContactListState) {
-              displayedContacts = contacts.displayedContacts;
-            }
-
-            setState(() {
-              _selectedContactIds
-                  .addAll(displayedContacts.map((contact) => contact.id!));
-            });
-          },
-        ),
-      ],
-    );
-  }
-
-  // --- Widget for building the list ---
-  // Takes the list to display as parameter (now the filtered/searched list)
-  Widget _buildContactList(List<Contact> contactsToDisplay) {
-    if (contactsToDisplay.isEmpty) {
-      return const Center(child: Text('No contacts match your search/filter.'));
-    }
-
-    // Access state variables from the parent class
-    return ListView.builder(
-      itemCount: contactsToDisplay.length,
-      itemBuilder: (context, index) {
-        final contact = contactsToDisplay[index];
-        // Check if the contact ID exists and is not null before checking selection
-        final bool isSelected =
-            contact.id != null && _selectedContactIds.contains(contact.id!);
-
-        return ContactListItem(
-            contact: contact,
-            isSelected: isSelected, // Pass selection state
-            // ----- Pass Callbacks -----
-            onTap: () {
-              if (contact.id == null) {
-                logger.e("Error: Tapped contact with null ID.");
-                return; // Should not happen if data is valid
-              }
-              if (_selectionMode) {
-                // If in selection mode, toggle selection
-                _toggleContactSelection(contact.id!);
-              } else {
-                // If not in selection mode, navigate to details
-                context.read<ContactDetailsBloc>().add(
-                    LoadContactEvent(contactId: contact.id!));
-                Navigator.pushNamed(
-                  context,
-                  '/contactDetails',
-                  arguments: contact.id!,
-                );
-              }
-            },
-            onLongPress: () {
-              // Always trigger long press logic regardless of current mode
-              if (contact.id != null) {
-                _onContactLongPress(contact);
-              } else {
-                logger.e("Error: Long-pressed contact with null ID.");
-              }
-            }
-            // ----- End Callbacks -----
-            );
-      },
-    );
-  }
-
-  // Function to navigate to scheduled notifications screen (no change needed)
-  void _viewScheduledNotifications(BuildContext context) {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => const ScheduledNotificationsScreen()));
-    logger.i('LOG: Show notifications button pushed');
-  }
-}
-
-Widget _buildDrawer(BuildContext context) {
-  return Drawer(
-    child: ListView(
-      padding: EdgeInsets.zero,
-      children: <Widget>[
-        DrawerHeader(
-          decoration: BoxDecoration(
-            color: Theme.of(context).primaryColor,
-          ),
-          child: const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Text(
-                'ReCall',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Keep in touch with people who matter',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-        ),
-        ListTile(
-          leading: const Icon(Icons.contact_phone),
-          title: const Text('Contacts'),
-          onTap: () {
-            Navigator.pop(context); // Close the drawer
-            // Already on contacts page, so no navigation needed
-          },
-        ),
-        ListTile(
-          leading: const Icon(Icons.settings),
-          title: const Text('Settings'),
-          onTap: () {
-            Navigator.pop(context); // Close the drawer first
-            Navigator.pushNamed(context, '/settings');
-          },
-        ),
-        // Add About screen link
-        ListTile(
-          leading: const Icon(Icons.info_outline),
-          title: const Text('About'),
-          onTap: () {
-            Navigator.pop(context); // Close the drawer first
-            Navigator.pushNamed(context, '/about');
-          },
-        ),
-        ListTile(
-          leading: const Icon(Icons.help_outline),
-          title: const Text('Help'),
-          onTap: () {
-            Navigator.pop(context); // Close the drawer first
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const HelpScreen(
-                  initialSection: HelpSection.list,
-                ),
-              ),
-            );
-          },
-        ),
-      ],
-    ),
-  );
 }
