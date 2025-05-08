@@ -5,7 +5,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
 import 'package:recall/models/contact.dart';
 import 'package:recall/models/enums.dart';
-import 'package:recall/utils/last_contacted_utils.dart';
+import 'package:recall/utils/contact_utils.dart';
 
 class ContactListItem extends StatelessWidget {
   final Contact contact;

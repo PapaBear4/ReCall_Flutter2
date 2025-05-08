@@ -11,7 +11,9 @@ import 'package:recall/models/contact.dart' as app_contact;
 import 'package:recall/utils/contact_utils.dart'; // Import ContactUtils
 
 class DebugUtils {
+  // MARK: FAKE CNTCT
   /// Generates a fake contact mapped to the app's Contact model.
+  /// Each fake contact has a random name, phone number, email, events, and notes.
   static fc.Contact _generateFakeFlutterContact(Faker faker, Random random) {
     return fc.Contact(
       name: fc.Name(
@@ -62,13 +64,42 @@ class DebugUtils {
   }
 
   /// Generates a fake contact for the app's database.
+  /// Maps the FlutterContacts contact to the app's Contact model and adds random
+  /// frequency and dates.
+  // MARK: FAKE ApCNT
   static app_contact.Contact _generateFakeAppContact(
       Faker faker, Random random, String defaultFrequency) {
     final fcContact = _generateFakeFlutterContact(faker, random);
-    return ContactUtils.mapContactDeviceToApp(fcContact, defaultFrequency);
+    final fakeAppContact =
+        ContactUtils.mapContactDeviceToApp(fcContact, defaultFrequency);
+
+    // Add a random frequency to the contact
+    final List<ContactFrequency> frequencies = ContactFrequency.values;
+    final randomFrequency =
+        frequencies[random.nextInt(frequencies.length)].value;
+
+    // Add a random last contacted date (between today and today minus the selected frequency)
+    final DateTime now = DateTime.now();
+    final int daysAgo =
+        random.nextInt(60); // Random number of days in the past (up to 60 days)
+    final DateTime lastContacted = now.subtract(Duration(days: daysAgo));
+    final bool isActive = Random().nextBool();
+
+    // Calculate the next contact date based on the last contacted date and the frequency
+    final DateTime nextContact = calculateNextContactDate(fakeAppContact
+        .copyWith(frequency: randomFrequency, lastContacted: lastContacted));
+
+    // Return the updated contact with the new fields
+    return fakeAppContact.copyWith(
+      frequency: randomFrequency,
+      lastContacted: lastContacted,
+      nextContact: nextContact,
+      isActive: isActive
+    );
   }
 
   /// Adds a specified number of sample contacts directly to the app's database.
+  // MARK: ADD TO APP
   static Future<String> addSampleAppContacts(ContactRepository contactRepo,
       {int count = 10}) async {
     if (!kDebugMode) {
@@ -104,8 +135,8 @@ class DebugUtils {
     return statusMessage;
   }
 
-
   /// Adds a specified number of sample contacts to the device's address book.
+  // MARK: ADD TO DEVICE
   static Future<String> addSampleDeviceContacts({int count = 10}) async {
     if (!kDebugMode) {
       logger.w("Attempted to call debug function in non-debug mode.");
@@ -150,56 +181,36 @@ class DebugUtils {
     return statusMessage;
   }
 
-  /// Clears all data stored in the app's database (ObjectBox via repositories).
-  /// Also cancels all scheduled notifications.
+  /// MARK: CLEAR APP
+  /// Clears all application data (Database, SharedPreferences, and Notifications).
   /// Only runs in debug mode.
-  /// Requires ContactRepository and UserSettingsRepository instances.
   /// Returns a status message string.
-  static Future<String> clearAppDatabase(ContactRepository contactRepo,
+  static Future<String> clearAppData(ContactRepository contactRepo,
       UserSettingsRepository settingsRepo) async {
     if (!kDebugMode) {
       logger.w("Attempted to call debug function in non-debug mode.");
       return "Error: Cannot run in release mode.";
     }
 
-    logger.d("Attempting to clear app database (ObjectBox)...");
+    logger.i("--- Starting App Data Clear ---");
     try {
+      // Clear contacts from the database
       final int contactCount = await contactRepo.getContactsCount();
       await contactRepo.deleteAll();
       logger.i("Deleted $contactCount contacts from ObjectBox.");
 
+      // Clear user settings
       await settingsRepo.deleteAll();
-      logger.i(
-          "Cleared user settings from ObjectBox (implementation needed if specific clearing required).");
+      logger.i("Cleared user settings from ObjectBox.");
 
+      // Cancel all scheduled notifications
       logger.i("Cancelled all scheduled notifications.");
 
-      return "App database cleared ($contactCount contacts deleted, settings cleared, notifications cancelled).";
+      logger.i("--- App Data Clear Finished ---");
+      return "App data cleared ($contactCount contacts deleted, settings cleared, notifications cancelled).";
     } catch (e) {
-      logger.e("Error clearing app database: $e");
-      return "Error clearing app database: $e";
-    }
-  }
-
-  /// Clears ALL application data (Database and SharedPreferences).
-  /// Only runs in debug mode.
-  /// Returns a combined status message string.
-  static Future<String> clearAllAppData(ContactRepository contactRepo,
-      UserSettingsRepository settingsRepo) async {
-    if (!kDebugMode) {
-      logger.w("Attempted to call debug function in non-debug mode.");
-      return "Error: Cannot run in release mode.";
-    }
-
-    logger.i("--- Starting Full App Data Clear ---");
-    List<String> results = [];
-    try {
-      results.add(await clearAppDatabase(contactRepo, settingsRepo));
-      logger.i("--- Full App Data Clear Finished ---");
-      return results.join(' ');
-    } catch (e) {
-      logger.e("Error during full app data clear: $e");
-      return "Error during full app data clear: $e";
+      logger.e("Error during app data clear: $e");
+      return "Error during app data clear: $e";
     }
   }
 }

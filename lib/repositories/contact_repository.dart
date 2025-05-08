@@ -2,7 +2,7 @@
 import 'package:recall/models/contact.dart'; // Import the Contact model
 import 'package:recall/models/enums.dart';
 import 'package:recall/objectbox.g.dart';
-import 'package:recall/utils/last_contacted_utils.dart'; // Import the utils
+import 'package:recall/utils/contact_utils.dart'; // Import the utils
 import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:objectbox/objectbox.dart';
 import 'package:recall/sources/contact_ob_source.dart';
@@ -65,7 +65,7 @@ class ContactRepository implements Repository<Contact> {
     if (contact.isActive && contact.frequency != ContactFrequency.never.value) {
       // Ensure lastContacted is set if null, for calculation
       final contactToCalc = contact.lastContacted == null ? contact.copyWith(lastContacted: DateTime.now()) : contact;
-      contactWithNextDate = contact.copyWith(nextContact: calculateNextDueDate(contactToCalc));
+      contactWithNextDate = contact.copyWith(nextContact: calculateNextContactDate(contactToCalc));
     } else if (!contact.isActive || contact.frequency == ContactFrequency.never.value) {
       contactWithNextDate = contact.copyWith(nextContact: null); // Explicitly null for inactive/never
     }
@@ -83,7 +83,7 @@ class ContactRepository implements Repository<Contact> {
     if (contact.isActive && contact.frequency != ContactFrequency.never.value) {
       // Ensure lastContacted is set if null, for calculation
       final contactToCalc = contact.lastContacted == null ? contact.copyWith(lastContacted: DateTime.now()) : contact;
-      contactWithNextDate = contact.copyWith(nextContact: calculateNextDueDate(contactToCalc));
+      contactWithNextDate = contact.copyWith(nextContact: calculateNextContactDate(contactToCalc));
     } else if (!contact.isActive || contact.frequency == ContactFrequency.never.value) {
       contactWithNextDate = contact.copyWith(nextContact: null, clearLastContacted: contact.frequency == ContactFrequency.never.value);
       // if frequency is never, also clear lastContacted as it's irrelevant.

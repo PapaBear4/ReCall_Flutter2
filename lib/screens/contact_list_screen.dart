@@ -2,8 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
+import 'package:recall/widgets/app_drawer.dart';
 import 'package:recall/widgets/base_contact_list_scaffold.dart';
-import 'package:recall/screens/home_screen.dart' show buildAppDrawer; 
 
 // Common ListAction enum is in base_contact_list_scaffold.dart
 

@@ -671,7 +671,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                                     // Call the static utility function
                                     final String resultMessage =
-                                        await DebugUtils.clearAllAppData(
+                                        await DebugUtils.clearAppData(
                                             contactRepo, settingsRepo);
 
                                     if (!mounted) return;

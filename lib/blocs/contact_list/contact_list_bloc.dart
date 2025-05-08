@@ -5,7 +5,7 @@ import 'package:recall/models/enums.dart';
 import 'package:recall/repositories/contact_repository.dart';
 import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:recall/services/notification_service.dart';
-import 'package:recall/utils/last_contacted_utils.dart';
+import 'package:recall/utils/contact_utils.dart';
 
 part 'contact_list_event.dart';
 part 'contact_list_state.dart';
@@ -361,8 +361,8 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
       int comparison;
       switch (sortField) {
         case ContactListSortField.nextContactDate:
-          DateTime dueA = calculateNextDueDate(a);
-          DateTime dueB = calculateNextDueDate(b);
+          DateTime dueA = calculateNextContactDate(a);
+          DateTime dueB = calculateNextContactDate(b);
           bool aIsNever = a.frequency == ContactFrequency.never.value;
           bool bIsNever = b.frequency == ContactFrequency.never.value;
           if (aIsNever && bIsNever) {

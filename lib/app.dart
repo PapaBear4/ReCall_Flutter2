@@ -13,7 +13,6 @@ import 'package:recall/blocs/contact_details/contact_details_bloc.dart';
 import 'package:recall/screens/contact_details_screen.dart';
 import 'package:recall/services/notification_service.dart';
 import 'package:recall/screens/settings_screen.dart';
-import 'package:recall/screens/help_screen.dart';
 import 'package:recall/screens/home_screen.dart'; // Import HomeScreen
 
 class ReCall extends StatelessWidget {
@@ -74,7 +73,6 @@ class ReCall extends StatelessWidget {
                   const ContactDetailsScreen(contactId: 0),
               '/settings': (context) => const SettingsScreen(),
               '/about': (context) => const AboutScreen(),
-              '/help': (context) => const HelpScreen(),
               '/importContacts': (context) =>
                   const ContactImportSelectionScreen(),
               '/contactListFull': (context) =>

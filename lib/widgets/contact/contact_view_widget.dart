@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:recall/models/contact.dart';
-import 'package:recall/utils/last_contacted_utils.dart';
+import 'package:recall/utils/contact_utils.dart';
 import 'package:recall/utils/logger.dart';
 import 'package:recall/widgets/contact/contact_field.dart';
 import 'package:recall/widgets/contact/email_list_widget.dart';

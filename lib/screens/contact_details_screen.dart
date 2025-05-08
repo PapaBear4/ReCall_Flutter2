@@ -11,7 +11,6 @@ import 'package:recall/utils/logger.dart';
 import 'package:recall/models/enums.dart';
 import 'package:recall/repositories/usersettings_repository.dart';
 import 'package:recall/services/notification_helper.dart';
-import 'package:recall/screens/help_screen.dart';
 import 'package:recall/utils/contact_utils.dart';
 import 'package:recall/widgets/contact/contact_view_widget.dart';
 import 'package:recall/widgets/contact/contact_edit_widget.dart';
@@ -194,18 +193,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   // MARK: - AppBar Actions Builder
   List<Widget> _buildAppBarActions() {
     return [
-      IconButton(
-        icon: const Icon(Icons.help_outline),
-        tooltip: 'Help',
-        onPressed: () {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) =>
-                    const HelpScreen(initialSection: HelpSection.details),
-              ));
-        },
-      ),
       IconButton(
         icon: const Icon(Icons.delete),
         tooltip: 'Delete Contact',
