@@ -10,6 +10,8 @@ import 'package:recall/services/contact_importer.dart';
 import 'package:recall/utils/logger.dart';
 import 'package:recall/models/contact.dart'
     as app_contact; // Alias for your app's Contact model
+import 'package:recall/utils/debug_utils.dart'; // Import DebugUtils
+import 'package:recall/utils/contact_utils.dart'; // Import ContactUtils
 
 class ContactImportSelectionScreen extends StatefulWidget {
   const ContactImportSelectionScreen({super.key});

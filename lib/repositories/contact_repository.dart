@@ -9,6 +9,8 @@ import 'package:recall/sources/contact_ob_source.dart';
 import 'package:recall/sources/data_source.dart';
 import 'repository.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+// TODO: Update delete functions to also cancel notifications for that contact
+
 
 class ContactRepository implements Repository<Contact> {
   late final Store? _store;
