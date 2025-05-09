@@ -23,43 +23,51 @@ enum ListAction {
   filterClear
 }
 
-typedef ListActionCallback = void Function(ListAction action, BuildContext context, TextEditingController searchController);
-typedef PopupMenuBuilder<T> = List<PopupMenuEntry<T>> Function(BuildContext context);
+typedef ListActionCallback = void Function(ListAction action,
+    BuildContext context, TextEditingController searchController);
+typedef PopupMenuBuilder<T> = List<PopupMenuEntry<T>> Function(
+    BuildContext context);
 
 class BaseContactListScaffold extends StatefulWidget {
   final String screenTitle;
   final String emptyListText;
   final ContactListEvent onRefreshEvent;
-  final Widget drawerWidget;
+  final Widget? drawerWidget; // Make drawerWidget optional
   final PopupMenuBuilder<ListAction> sortMenuItems;
   final PopupMenuBuilder<ListAction> filterMenuItems;
   final ListActionCallback handleListAction;
   final String fabHeroTagPrefix;
-  final ContactListEvent? initialScreenLoadEvent; // For specific screen first load
+  final ContactListEvent?
+      initialScreenLoadEvent; // For specific screen first load
   final bool showSearchBar;
   final bool showFilterMenu;
   final bool showSortMenu;
   final bool displayActiveStatusInList; // New parameter
+  final ContactListEvent? debugRefreshEvent; // Add debugRefreshEvent parameter
+  final List<Widget>? appBarActions; // New parameter for custom AppBar actions
 
   const BaseContactListScaffold({
     super.key,
     required this.screenTitle,
     required this.emptyListText,
     required this.onRefreshEvent,
-    required this.drawerWidget,
     required this.sortMenuItems,
     required this.filterMenuItems,
     required this.handleListAction,
     required this.fabHeroTagPrefix,
+    this.drawerWidget,
     this.initialScreenLoadEvent,
     this.showSearchBar = true,
     this.showFilterMenu = true,
     this.showSortMenu = true,
     this.displayActiveStatusInList = false, // Default to false
+    this.debugRefreshEvent, // Initialize debugRefreshEvent
+    this.appBarActions, // Initialize appBarActions
   });
 
   @override
-  State<BaseContactListScaffold> createState() => _BaseContactListScaffoldState();
+  State<BaseContactListScaffold> createState() =>
+      _BaseContactListScaffoldState();
 }
 
 class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
@@ -68,6 +76,7 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
   bool _selectionMode = false;
   final Set<int> _selectedContactIds = {};
 
+  // MARK: Lifecycle
   @override
   void initState() {
     super.initState();
@@ -86,6 +95,7 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
     super.dispose();
   }
 
+  // MARK: METHODS
   void _onSearchChanged() {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () {
@@ -139,17 +149,20 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
           context: context,
           builder: (BuildContext dialogContext) => AlertDialog(
             title: const Text('Delete Contacts'),
-            content: Text('Delete ${_selectedContactIds.length} selected contacts?'),
+            content:
+                Text('Delete ${_selectedContactIds.length} selected contacts?'),
             actions: <Widget>[
               TextButton(
                   onPressed: () => Navigator.of(dialogContext).pop(false),
                   child: const Text('Cancel')),
               TextButton(
                   onPressed: () => Navigator.of(dialogContext).pop(true),
-                  child: const Text('Delete', style: TextStyle(color: Colors.red))),
+                  child: const Text('Delete',
+                      style: TextStyle(color: Colors.red))),
             ],
           ),
-        ) ?? false;
+        ) ??
+        false;
 
     if (confirmDelete && mounted) {
       context
@@ -160,22 +173,24 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
         _selectedContactIds.clear();
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${_selectedContactIds.length} contacts deleted')),
+        SnackBar(
+            content: Text('${_selectedContactIds.length} contacts deleted')),
       );
     }
   }
 
   void _toggleSelectedContactsActiveStatus() {
     if (_selectedContactIds.isEmpty) return;
-    context.read<ContactListBloc>().add(
-        ToggleContactsActiveStatusEvent(contactIds: _selectedContactIds.toList()));
+    context.read<ContactListBloc>().add(ToggleContactsActiveStatusEvent(
+        contactIds: _selectedContactIds.toList()));
     // Exit selection mode after action
     setState(() {
       _selectionMode = false;
       _selectedContactIds.clear();
     });
-     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Toggled active status for selected contacts.')),
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+          content: Text('Toggled active status for selected contacts.')),
     );
   }
 
@@ -192,8 +207,16 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
   }
 
   Future<void> _refreshContacts() async {
+    logger.i('Triggering onRefreshEvent: ${widget.onRefreshEvent}');
     _searchController.clear(); // Also clear search on refresh
     context.read<ContactListBloc>().add(widget.onRefreshEvent);
+  }
+
+  Future<void> _debugRefreshContacts() async {
+    if (widget.debugRefreshEvent != null) {
+      logger.i('Triggering debugRefreshEvent: ${widget.debugRefreshEvent}');
+      context.read<ContactListBloc>().add(widget.debugRefreshEvent!);
+    }
   }
 
   @override
@@ -207,17 +230,22 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
         onRefresh: _refreshContacts,
         child: BlocBuilder<ContactListBloc, ContactListState>(
           builder: (context, state) {
-            if (state is InitialContactListState || state is LoadingContactListState) {
+            if (state is InitialContactListState ||
+                state is LoadingContactListState) {
               return const Center(child: CircularProgressIndicator());
             } else if (state is EmptyContactListState) {
               return Center(child: Text(widget.emptyListText));
             } else if (state is LoadedContactListState) {
-              if (state.displayedContacts.isEmpty && _searchController.text.isNotEmpty) {
-                 return const Center(child: Text('No contacts match your search.'));
-              } else if (state.displayedContacts.isEmpty && state.activeFilters.isNotEmpty) {
-                 return const Center(child: Text('No contacts match your current filters.'));
+              if (state.displayedContacts.isEmpty &&
+                  _searchController.text.isNotEmpty) {
+                return const Center(
+                    child: Text('No contacts match your search.'));
+              } else if (state.displayedContacts.isEmpty &&
+                  state.activeFilters.isNotEmpty) {
+                return const Center(
+                    child: Text('No contacts match your current filters.'));
               } else if (state.displayedContacts.isEmpty) {
-                 return Center(child: Text(widget.emptyListText));
+                return Center(child: Text(widget.emptyListText));
               }
               return _buildContactList(state.displayedContacts);
             } else if (state is ErrorContactListState) {
@@ -237,6 +265,12 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (kDebugMode && widget.debugRefreshEvent != null)
+                    IconButton(
+                      icon: const Icon(Icons.refresh),
+                      tooltip: 'Debug Refresh',
+                      onPressed: _debugRefreshContacts,
+                    ),
                   if (kDebugMode)
                     FloatingActionButton.small(
                       heroTag: "${widget.fabHeroTagPrefix}_btn1",
@@ -244,7 +278,8 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
                       onPressed: () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (_) => const ScheduledNotificationsScreen())),
+                              builder: (_) =>
+                                  const ScheduledNotificationsScreen())),
                       child: const Icon(Icons.notifications),
                     ),
                   const SizedBox(width: 8),
@@ -252,8 +287,11 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
                     heroTag: "${widget.fabHeroTagPrefix}_btn2",
                     tooltip: "Add New Contact",
                     onPressed: () {
-                      context.read<ContactDetailsBloc>().add(const ClearContactEvent());
-                      Navigator.pushNamed(context, '/contactDetails', arguments: 0);
+                      context
+                          .read<ContactDetailsBloc>()
+                          .add(const ClearContactEvent());
+                      Navigator.pushNamed(context, '/contactDetails',
+                          arguments: 0);
                     },
                     child: const Icon(Icons.add),
                   ),
@@ -268,48 +306,70 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
 
   PreferredSizeWidget _buildNormalAppBar(BuildContext context) {
     return AppBar(
+      leading: widget.drawerWidget ==
+              null // Show back button if no drawerWidget
+          ? IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () {
+                // Dispatch the homescreen filter event before popping
+                context.read<ContactListBloc>().add(const LoadContactListEvent(
+                      filters: {ContactListFilterType.homescreen},
+                      sortField: ContactListSortField.nextContactDate,
+                      ascending: true, // Most overdue first
+                    ));
+                Navigator.of(context).pop();
+              },
+            )
+          : null,
       title: Text(widget.screenTitle),
       actions: [
         if (widget.showSortMenu)
           PopupMenuButton<ListAction>(
             icon: const Icon(Icons.sort),
             tooltip: "Sort",
-            onSelected: (action) => widget.handleListAction(action, context, _searchController),
+            onSelected: (action) =>
+                widget.handleListAction(action, context, _searchController),
             itemBuilder: widget.sortMenuItems,
           ),
         if (widget.showFilterMenu)
           PopupMenuButton<ListAction>(
             icon: const Icon(Icons.filter_alt),
             tooltip: "Filter",
-            onSelected: (action) => widget.handleListAction(action, context, _searchController),
+            onSelected: (action) =>
+                widget.handleListAction(action, context, _searchController),
             itemBuilder: widget.filterMenuItems,
           ),
+        if (widget.appBarActions != null)
+          ...widget.appBarActions!, // Add custom actions
       ],
-      bottom: widget.showSearchBar ? PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          child: TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              hintText: 'Search...',
-              prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30.0),
-                  borderSide: BorderSide.none),
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding:
-                  const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.clear),
-                tooltip: "Clear Search",
-                onPressed: () => _searchController.clear(),
+      bottom: widget.showSearchBar
+          ? PreferredSize(
+              preferredSize: const Size.fromHeight(kToolbarHeight),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search...',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                        borderSide: BorderSide.none),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding:
+                        const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.clear),
+                      tooltip: "Clear Search",
+                      onPressed: () => _searchController.clear(),
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ),
-        ),
-      ) : null,
+            )
+          : null,
     );
   }
 
@@ -325,14 +385,18 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.sync_alt, color: Colors.white), // Icon for toggling
+          icon: const Icon(Icons.sync_alt,
+              color: Colors.white), // Icon for toggling
           tooltip: 'Toggle Active Status',
-          onPressed: _selectedContactIds.isEmpty ? null : _toggleSelectedContactsActiveStatus,
+          onPressed: _selectedContactIds.isEmpty
+              ? null
+              : _toggleSelectedContactsActiveStatus,
         ),
         IconButton(
           icon: const Icon(Icons.delete, color: Colors.white),
           tooltip: 'Delete Selected',
-          onPressed: _selectedContactIds.isEmpty ? null : _deleteSelectedContacts,
+          onPressed:
+              _selectedContactIds.isEmpty ? null : _deleteSelectedContacts,
         ),
         IconButton(
           icon: const Icon(Icons.select_all, color: Colors.white),
@@ -341,8 +405,9 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
             final state = context.read<ContactListBloc>().state;
             if (state is LoadedContactListState) {
               setState(() {
-                _selectedContactIds.addAll(
-                    state.displayedContacts.where((c) => c.id != null).map((contact) => contact.id!));
+                _selectedContactIds.addAll(state.displayedContacts
+                    .where((c) => c.id != null)
+                    .map((contact) => contact.id!));
               });
             }
           },
@@ -361,7 +426,8 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
         return ContactListItem(
           contact: contact,
           isSelected: isSelected,
-          showActiveStatus: widget.displayActiveStatusInList, // Pass the new param
+          showActiveStatus:
+              widget.displayActiveStatusInList, // Pass the new param
           onTap: () {
             if (contact.id == null) return;
             if (_selectionMode) {
@@ -370,7 +436,8 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
               context
                   .read<ContactDetailsBloc>()
                   .add(LoadContactEvent(contactId: contact.id!));
-              Navigator.pushNamed(context, '/contactDetails', arguments: contact.id!);
+              Navigator.pushNamed(context, '/contactDetails',
+                  arguments: contact.id!);
             }
           },
           onLongPress: () => _onContactLongPress(contact),

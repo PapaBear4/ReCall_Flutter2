@@ -40,7 +40,7 @@ class NotificationHelper {
       // 4. Set it as the default local location for this isolate
       tz.setLocalLocation(deviceLocation);
 
-      logger.i("Timezone initialized for main isolate using device zone: $currentTimeZone");
+      //logger.i("Timezone initialized for main isolate using device zone: $currentTimeZone");
 
     } catch (e) {
        logger.e("Error initializing/setting timezone: $e. Falling back to UTC for main isolate.");
@@ -99,10 +99,10 @@ class NotificationHelper {
 
   Future<bool> requestAndHandlePermissions() async {
     PermissionStatus status = await Permission.notification.status;
-    logger.i('Notification permission status: $status');
+    //logger.i('Notification permission status: $status');
 
     if (status.isGranted) {
-      logger.i('Notification permission already granted.');
+      //logger.i('Notification permission already granted.');
       return true; // Permission already granted
     }
 

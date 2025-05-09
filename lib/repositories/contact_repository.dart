@@ -2,21 +2,44 @@
 import 'package:recall/models/contact.dart'; // Import the Contact model
 import 'package:recall/models/enums.dart';
 import 'package:recall/objectbox.g.dart';
-import 'package:recall/utils/last_contacted_utils.dart'; // Import the utils
+import 'package:recall/utils/contact_utils.dart'; // Import the utils
 import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:objectbox/objectbox.dart';
 import 'package:recall/sources/contact_ob_source.dart';
-import 'package:recall/sources/contact_sp_source.dart';
 import 'package:recall/sources/data_source.dart';
 import 'repository.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:async';
+// TODO: Update delete functions to also cancel notifications for that contact
 
 class ContactRepository implements Repository<Contact> {
   late final Store? _store;
   late final Box<Contact>? _contactBox;
   late final DataSource<Contact> _source;
   final Map<int, Contact> _contacts = {};
+  final StreamController<List<Contact>> _contactStreamController =
+      StreamController.broadcast();
 
+  // MARK: STREAMS
+  // Expose the stream for external listeners
+  Stream<List<Contact>> get contactStream => _contactStreamController.stream;
+
+  // Emit the current list of contacts to the stream
+  void _emitContacts() async {
+    try {
+      final contacts = await getAll(); // Fetch the latest contacts
+      _contactStreamController.add(contacts); // Emit the updated list
+    } catch (e) {
+      logger.e("Error emitting contacts: $e");
+    }
+  }
+
+  // Dispose of the StreamController when no longer needed
+  void dispose() {
+    _contactStreamController.close();
+  }
+
+  // MARK: INIT
   // Initialize the repository
   ContactRepository(this._store) {
     if (!kIsWeb) {
@@ -29,11 +52,6 @@ class ContactRepository implements Repository<Contact> {
       }
     } else {
       _source = _createInMemorySource();
-      try {
-        _source = ContactsSharedPreferencesSource();
-      } catch (e) {
-        logger.i("Error opening shared preferences: $e");
-      }
     }
   }
 
@@ -41,6 +59,7 @@ class ContactRepository implements Repository<Contact> {
     return _InMemoryContactSource(contacts: _contacts);
   }
 
+  // MARK: GET
   @override
   Future<List<Contact>> getAll() async {
     final contacts = await _source.getAll();
@@ -63,50 +82,32 @@ class ContactRepository implements Repository<Contact> {
     return foundContact;
   }
 
+  // MARK: ADD
   @override
   Future<Contact> add(Contact contact) async {
     Contact contactWithNextDate = contact;
     if (contact.isActive && contact.frequency != ContactFrequency.never.value) {
       // Ensure lastContacted is set if null, for calculation
-      final contactToCalc = contact.lastContacted == null ? contact.copyWith(lastContacted: DateTime.now()) : contact;
-      contactWithNextDate = contact.copyWith(nextContact: calculateNextDueDate(contactToCalc));
-    } else if (!contact.isActive || contact.frequency == ContactFrequency.never.value) {
-      contactWithNextDate = contact.copyWith(nextContact: null); // Explicitly null for inactive/never
+      final contactToCalc = contact.lastContacted == null
+          ? contact.copyWith(lastContacted: DateTime.now())
+          : contact;
+      contactWithNextDate = contact.copyWith(
+          nextContact: calculateNextContactDate(contactToCalc));
+    } else if (!contact.isActive ||
+        contact.frequency == ContactFrequency.never.value) {
+      contactWithNextDate = contact.copyWith(
+          nextContact: null); // Explicitly null for inactive/never
     }
 
     final addedContact = await _source.add(contactWithNextDate);
     if (addedContact.id != null) {
       _contacts[addedContact.id!] = addedContact;
     }
+    _emitContacts();
     return addedContact;
   }
 
-  @override
-  Future<Contact> update(Contact contact) async {
-    Contact contactWithNextDate = contact;
-    if (contact.isActive && contact.frequency != ContactFrequency.never.value) {
-      // Ensure lastContacted is set if null, for calculation
-      final contactToCalc = contact.lastContacted == null ? contact.copyWith(lastContacted: DateTime.now()) : contact;
-      contactWithNextDate = contact.copyWith(nextContact: calculateNextDueDate(contactToCalc));
-    } else if (!contact.isActive || contact.frequency == ContactFrequency.never.value) {
-      contactWithNextDate = contact.copyWith(nextContact: null, clearLastContacted: contact.frequency == ContactFrequency.never.value);
-      // if frequency is never, also clear lastContacted as it's irrelevant.
-    }
-
-    final updatedContact = await _source.update(contactWithNextDate);
-    if (updatedContact.id != null) {
-      _contacts[updatedContact.id!] = updatedContact;
-    }
-    return updatedContact;
-  }
-
-  @override
-  Future<void> delete(int id) async {
-    await _source.delete(id);
-    _contacts.remove(id);
-  }
-
-  @override
+  @override // Add many contacts
   Future<List<Contact>> addMany(List<Contact> items) async {
     // We expect items here NOT to have IDs yet,
     // the source should assign them.
@@ -117,9 +118,47 @@ class ContactRepository implements Repository<Contact> {
         _contacts[contact.id!] = contact;
       }
     }
+    _emitContacts();
     return addedContacts;
   }
 
+  // MARK: UPDATE
+  @override
+  Future<Contact> update(Contact contact) async {
+    Contact contactWithNextDate = contact;
+    if (contact.isActive && contact.frequency != ContactFrequency.never.value) {
+      // Ensure lastContacted is set if null, for calculation
+      final contactToCalc = contact.lastContacted == null
+          ? contact.copyWith(lastContacted: DateTime.now())
+          : contact;
+      contactWithNextDate = contact.copyWith(
+          nextContact: calculateNextContactDate(contactToCalc));
+    } else if (!contact.isActive ||
+        contact.frequency == ContactFrequency.never.value) {
+      contactWithNextDate = contact.copyWith(
+          nextContact: null,
+          clearLastContacted:
+              contact.frequency == ContactFrequency.never.value);
+      // if frequency is never, also clear lastContacted as it's irrelevant.
+    }
+
+    final updatedContact = await _source.update(contactWithNextDate);
+    if (updatedContact.id != null) {
+      _contacts[updatedContact.id!] = updatedContact;
+    }
+    _emitContacts();
+    return updatedContact;
+  }
+
+  // MARK: DELETE
+  @override // Delete a contact by ID
+  Future<void> delete(int id) async {
+    await _source.delete(id);
+    _contacts.remove(id);
+    _emitContacts();
+  }
+
+  // delete contact by ID and remove from cache
   Future<void> deleteMany(List<int> ids) async {
     try {
       await _source.deleteMany(ids); // Call the data source's deleteMany
@@ -129,6 +168,7 @@ class ContactRepository implements Repository<Contact> {
       }
       logger.i(
           "Successfully deleted ${ids.length} contacts from repository and cache.");
+      _emitContacts();
     } catch (e) {
       logger.e("Error deleting multiple contacts (${ids.join(', ')}): $e");
       // Optionally re-throw the error if the caller needs to handle it
@@ -136,6 +176,14 @@ class ContactRepository implements Repository<Contact> {
     }
   }
 
+  @override // Delete all contacts
+  Future<void> deleteAll() async {
+    await _source.deleteAll();
+    _contacts.clear(); // Clear the cache
+    _emitContacts();
+  }
+
+  // MARK: COUNT
   /// Returns the total number of contacts in the data source.
   Future<int> getContactsCount() async {
     try {
@@ -147,14 +195,9 @@ class ContactRepository implements Repository<Contact> {
       return 0;
     }
   }
-
-  @override
-  Future<void> deleteAll() async {
-    await _source.deleteAll();
-    _contacts.clear(); // Clear the cache
-  }
 }
 
+// MARK: CACHE
 class _InMemoryContactSource implements DataSource<Contact> {
   final Map<int, Contact> contacts;
 

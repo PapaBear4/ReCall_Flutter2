@@ -6,7 +6,7 @@ import 'package:recall/repositories/contact_repository.dart';
 import 'package:recall/repositories/usersettings_repository.dart';
 import 'package:recall/services/notification_helper.dart';
 import 'package:recall/services/notification_service.dart';
-import 'package:recall/utils/last_contacted_utils.dart';
+import 'package:recall/utils/contact_utils.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:recall/objectbox.g.dart'; // Import generated ObjectBox code
 import 'package:path_provider/path_provider.dart'; // Import path_provider
@@ -88,7 +88,7 @@ void callbackDispatcher() async {
       // ... (rest of the task logic: finding overdue, scheduling reminders) ...
        final List<Contact> overdueContacts = allContacts.where((contact) {
           if (contact.frequency == ContactFrequency.never.value) return false;
-          return isOverdue(contact.lastContacted,contact.frequency);
+          return isOverdue(contact);
        }).toList();
        logger.i("Found ${overdueContacts.length} overdue contacts.");
        logger.d("Processing ${overdueContacts.length} overdue contacts...");

@@ -3,7 +3,6 @@ import 'package:recall/models/notification.dart';
 import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:objectbox/objectbox.dart';
 import 'package:recall/sources/notification_ob_source.dart';
-import 'package:recall/sources/notification_sp_source.dart';
 import 'package:recall/sources/data_source.dart';
 import 'repository.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -25,11 +24,6 @@ class NotificationRepository implements Repository<Notification> {
       }
     } else {
       _source = _createInMemorySource();
-      try {
-        _source = NotificationSharedPreferencesSource();
-      } catch (e) {
-        logger.i("Error opening shared preferences: $e");
-      }
     }
   }
 
@@ -163,8 +157,7 @@ class _InMemoryNotificationSource implements DataSource<Notification> {
     return updatedItems;
   }
 
-  // ... (delete, deleteMany, count, getAll, getById, update remain the same)
-   @override
+  @override
   Future<void> delete(int id) async {
     notifications.remove(id);
   }
