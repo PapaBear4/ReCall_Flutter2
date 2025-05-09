@@ -44,11 +44,6 @@ class ContactListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Use contact.nextContact for overdue checks and display related to next due date
-    final bool isNextContactOverdue =   // Changed to use contact.nextContact
-        isOverdue(contact);
-    final String nextDueDateDisplayString =
-        calculateNextContactDateDisplay(contact.nextContact, contact.frequency);
 
     final String displayName = (contact.nickname != null &&
             contact.nickname!.isNotEmpty)

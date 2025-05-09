@@ -295,12 +295,8 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           emit(ErrorContactListState(err.toString()));
           logger.e(
               "Error toggling active status for contacts ${event.contactIds}: $err");
-          if (currentState is LoadedContactListState) {
-            emit(currentState);
-          } else {
-            add(const LoadContactListEvent());
-          }
-        }
+          emit(currentState);
+                }
       } else if (event is _ContactsUpdatedEvent) {
         // This event is triggered by the stream subscription
         final currentState = state;
