@@ -35,8 +35,8 @@ Widget buildAppDrawer(BuildContext context, bool isHome) {
           onTap: () {
             Navigator.pop(context);
             if (!isHome) {
-              context.read<ContactListBloc>().add(const LoadContactsEvent(
-                    filters: {ContactListFilterType.active},
+              context.read<ContactListBloc>().add(const LoadContactListEvent(
+                    filters: {ContactListFilterType.homescreen},
                     sortField: ContactListSortField.nextContactDate,
                     ascending: true,
                   ));
@@ -52,7 +52,11 @@ Widget buildAppDrawer(BuildContext context, bool isHome) {
           onTap: () {
             Navigator.pop(context);
             if (ModalRoute.of(context)?.settings.name != '/contactListFull') {
-              context.read<ContactListBloc>().add(const LoadContactsEvent());
+              /*context.read<ContactListBloc>().add(const LoadContactListEvent(
+                    filters: {ContactListFilterType.active},
+                    sortField: ContactListSortField.lastName,
+                    ascending: true,
+                  ));*/
               Navigator.pushNamed(context, '/contactListFull');
             }
           },

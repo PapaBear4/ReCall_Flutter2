@@ -88,7 +88,7 @@ void callbackDispatcher() async {
       // ... (rest of the task logic: finding overdue, scheduling reminders) ...
        final List<Contact> overdueContacts = allContacts.where((contact) {
           if (contact.frequency == ContactFrequency.never.value) return false;
-          return isOverdue(contact.lastContacted,contact.frequency);
+          return isOverdue(contact);
        }).toList();
        logger.i("Found ${overdueContacts.length} overdue contacts.");
        logger.d("Processing ${overdueContacts.length} overdue contacts...");

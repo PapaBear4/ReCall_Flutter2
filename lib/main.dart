@@ -59,5 +59,5 @@ void main() async {
           userSettingsRepository: userSettingsRepository,
         ),
       ));
-  logger.i('LOG:App started, background service initialized');
+  //logger.i('LOG:App started, background service initialized');
 }
