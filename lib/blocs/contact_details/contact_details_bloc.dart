@@ -3,6 +3,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:recall/models/contact.dart';
+import 'package:recall/models/enums.dart';
 import 'package:recall/repositories/contact_repository.dart';
 import 'package:recall/utils/contact_utils.dart';
 import 'package:recall/utils/logger.dart'; // Adjust path if needed
@@ -17,7 +18,6 @@ class ContactDetailsBloc
   // Repository for interacting with contact data
   final ContactRepository _contactRepository;
   final NotificationService _notificationService;
-  late final StreamSubscription<Contact> _contactSubscription;
 
   // Constructor initializes the bloc with the contact repository and initial state
   ContactDetailsBloc({
@@ -37,15 +37,6 @@ class ContactDetailsBloc
           final contact = await _contactRepository.getById(event.contactId);
           if (contact != null) {
             emit(LoadedContactDetailsState(contact));
-            // Subscribe to updates for this specific contact
-            _contactSubscription = _contactRepository.contactStream
-                .map((contacts) => contacts.firstWhere(
-                      (c) => c.id == event.contactId,
-                      orElse: () => throw Exception('Contact not found'),
-                    ))
-                .listen((updatedContact) {
-              add(UpdateContactLocallyEvent(contact: updatedContact));
-            });
           } else {
             emit(const ErrorContactDetailsState('Contact not found'));
           }
@@ -55,19 +46,30 @@ class ContactDetailsBloc
 
         // SAVE CONTACT DETAILS
         // MARK: SAVE
+        // makes sure that the contact date fields are set correctly
       } else if (event is SaveContactEvent) {
         emit(const LoadingContactDetailsState());
         try {
-          // Calculate the next contact date before saving
-          final contactWithNextDate = event.contact.copyWith(
-            nextContact: calculateNextContactDate(event.contact),
-          );
+          // ensure there's a last contact date
+          Contact contactToSave = event.contact;
+          if (event.contact.lastContactDate == null){ // if null, set to now
+            contactToSave = event.contact.copyWith(
+              lastContactDate: DateTime.now(),
+            );
+          }
+          // if isActive and frequency is not 'never', set the next contact date
+          if (event.contact.isActive && 
+          event.contact.frequency != ContactFrequency.never.value) {
+            contactToSave = contactToSave.copyWith(
+              nextContactDate: calculateNextContactDate(event.contact),
+            );
+            }
 
           // Save the contact details to the repository
-          final updatedContact =
-              (contactWithNextDate.id == null || contactWithNextDate.id == 0)
-                  ? await _contactRepository.add(contactWithNextDate)
-                  : await _contactRepository.update(contactWithNextDate);
+          final updatedContact = (contactToSave.id == null ||
+                  contactToSave.id == 0)
+              ? await _contactRepository.add(contactToSave)
+              : await _contactRepository.update(contactToSave);
 
           // Emit the updated state
           emit(LoadedContactDetailsState(updatedContact));
@@ -78,13 +80,6 @@ class ContactDetailsBloc
           emit(ErrorContactDetailsState(error.toString()));
         }
 
-        // UPDATE CONTACT LOCALLY for stream updates
-      } else if (event is UpdateContactLocallyEvent) {
-        try {
-          emit(LoadedContactDetailsState(event.contact));
-        } catch (error) {
-          emit(ErrorContactDetailsState(error.toString()));
-        }
         // ADD CONTACT
         // MARK: ADD
       } else if (event is AddContactEvent) {
@@ -113,10 +108,9 @@ class ContactDetailsBloc
       }
     });
   }
+
   @override
   Future<void> close() {
-    _contactSubscription
-        .cancel(); // Cancel the subscription when the bloc is closed
     return super.close();
   }
 }

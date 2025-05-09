@@ -46,11 +46,11 @@ class _ContactListScreenState extends State<ContactListScreen> {
         ascending = false;
         break;
       case ListAction.sortByLastContactedAsc:
-        sortField = ContactListSortField.lastContacted;
+        sortField = ContactListSortField.lastContactDate;
         ascending = true;
         break;
       case ListAction.sortByLastContactedDesc:
-        sortField = ContactListSortField.lastContacted;
+        sortField = ContactListSortField.lastContactDate;
         ascending = false;
         break;
       case ListAction.filterOverdue:

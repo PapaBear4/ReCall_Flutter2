@@ -14,7 +14,7 @@ class NotificationService extends ChangeNotifier {
 
   NotificationService(this._notificationHelper, this._userSettingsRepository);
 
-  //schedule a notification based on contact.frequency and contact.lastContacted
+  //schedule a notification based on contact.frequency and contact.lastContactDate
   Future<void> scheduleReminder(Contact contact) async {
     if (contact.id == null) {
       logger.e('LOG: Cannot schedule notification for contact with null ID.');
@@ -36,7 +36,7 @@ class NotificationService extends ChangeNotifier {
     String baseTitle;
     String baseBody;
 
-    if (contact.lastContacted == null) {
+    if (contact.lastContactDate == null) {
       // Never contacted: Due immediately (schedule for ~now, helper will push to tomorrow if needed)
       nextDueDate = DateTime.now();
       baseTitle = "Contact ${contact.firstName} ${contact.lastName}";

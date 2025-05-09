@@ -174,14 +174,14 @@ class ContactViewWidget extends StatelessWidget {
         ContactField(
           icon: Icons.access_time,
           label: 'Last Contacted:',
-          value: formatLastContacted(contact.lastContacted),
+          value: formatLastContacted(contact.lastContactDate),
         ),
 
         ContactField(
           icon: Icons.next_plan_outlined,
           label: 'Next Due:',
           value: calculateNextContactDateDisplay(
-              contact.lastContacted, contact.frequency),
+              contact.lastContactDate, contact.frequency),
         ),
 
         const SizedBox(height: 16.0),

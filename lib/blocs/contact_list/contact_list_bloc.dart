@@ -412,11 +412,11 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
                 a.firstName.toLowerCase().compareTo(b.firstName.toLowerCase());
           }
           break;
-        case ContactListSortField.lastContacted:
+        case ContactListSortField.lastContactDate:
           DateTime lastA =
-              a.lastContacted ?? (ascending ? DateTime(9999) : DateTime(1900));
+              a.lastContactDate ?? (ascending ? DateTime(9999) : DateTime(1900));
           DateTime lastB =
-              b.lastContacted ?? (ascending ? DateTime(9999) : DateTime(1900));
+              b.lastContactDate ?? (ascending ? DateTime(9999) : DateTime(1900));
           comparison = lastA.compareTo(lastB);
           break;
         case ContactListSortField.birthday:

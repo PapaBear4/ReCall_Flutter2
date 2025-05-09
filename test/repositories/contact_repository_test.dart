@@ -20,9 +20,9 @@ void main() {
   late MockQuery<Contact> mockQuery;
   late ContactRepository contactRepository;
 
-  final contact1 = Contact(id: 1, firstName: 'John', lastName: 'Doe', frequency: ContactFrequency.daily.value, lastContacted: DateTime(2023,1,1));
-  final contact2 = Contact(id: 2, firstName: 'Jane', lastName: 'Smith', frequency: ContactFrequency.weekly.value, lastContacted: DateTime(2023,1,1));
-  final contactToAdd = Contact(firstName: 'New', lastName: 'Person', frequency: ContactFrequency.monthly.value, lastContacted: DateTime(2023,1,1));
+  final contact1 = Contact(id: 1, firstName: 'John', lastName: 'Doe', frequency: ContactFrequency.daily.value, lastContactDate: DateTime(2023,1,1));
+  final contact2 = Contact(id: 2, firstName: 'Jane', lastName: 'Smith', frequency: ContactFrequency.weekly.value, lastContactDate: DateTime(2023,1,1));
+  final contactToAdd = Contact(firstName: 'New', lastName: 'Person', frequency: ContactFrequency.monthly.value, lastContactDate: DateTime(2023,1,1));
 
   setUp(() {
     mockStore = MockStore();
@@ -79,14 +79,14 @@ void main() {
       verify(mockBox.get(contact1.id!)).called(1);
     });
 
-    test('add - should calculate nextContact, add to source, and update cache', () async {
+    test('add - should calculate nextContactDate, add to source, and update cache', () async {
       // Mocking ContactObjectBoxSource's ID generation behavior
       when(mockQuery.findFirst()).thenReturn(null); // No existing contacts, so next ID will be 1
       final expectedAddedContact = contactToAdd.copyWith(
         id: 1,
-        // nextContact will be calculated by the repository
+        // nextContactDate will be calculated by the repository
         // For monthly from Jan 1, 2023, next is Feb 1, 2023
-        nextContact: DateTime(2023, 2, 1) 
+        nextContactDate: DateTime(2023, 2, 1) 
       );
       when(mockBox.put(any)).thenAnswer((invocation) {
         final c = invocation.positionalArguments[0] as Contact;
@@ -97,18 +97,18 @@ void main() {
 
       expect(result.id, 1);
       expect(result.firstName, contactToAdd.firstName);
-      expect(result.nextContact, DateTime(2023,2,1));
+      expect(result.nextContactDate, DateTime(2023,2,1));
       
-      // Verify that the item passed to mockBox.put has the calculated nextContact
+      // Verify that the item passed to mockBox.put has the calculated nextContactDate
       final captured = verify(mockBox.put(captureAny)).captured.single as Contact;
       expect(captured.id, 1);
-      expect(captured.nextContact, DateTime(2023,2,1));
+      expect(captured.nextContactDate, DateTime(2023,2,1));
       
       // Verify cache
       expect(await contactRepository.getById(result.id!), result);
     });
     
-    test('add - inactive contact should have null nextContact', () async {
+    test('add - inactive contact should have null nextContactDate', () async {
       final inactiveContact = Contact(firstName: 'Inactive', lastName: 'User', isActive: false, frequency: ContactFrequency.daily.value);
       when(mockQuery.findFirst()).thenReturn(null);
       when(mockBox.put(any)).thenAnswer((inv) => (inv.positionalArguments[0] as Contact).id!);
@@ -116,12 +116,12 @@ void main() {
       final result = await contactRepository.add(inactiveContact);
       
       expect(result.id, 1);
-      expect(result.nextContact, isNull);
+      expect(result.nextContactDate, isNull);
       final captured = verify(mockBox.put(captureAny)).captured.single as Contact;
-      expect(captured.nextContact, isNull);
+      expect(captured.nextContactDate, isNull);
     });
 
-    test('update - should calculate nextContact, update in source, and update cache', () async {
+    test('update - should calculate nextContactDate, update in source, and update cache', () async {
       // Pre-populate cache
       when(mockBox.getAll()).thenAnswer((_) => [contact1]);
       await contactRepository.getAll();
@@ -129,9 +129,9 @@ void main() {
 
       final updatedContactData = contact1.copyWith(
         frequency: ContactFrequency.yearly.value, 
-        lastContacted: DateTime(2023, 6, 15) // New lastContacted
+        lastContactDate: DateTime(2023, 6, 15) // New lastContactDate
       );
-      // Expected nextContact: June 15, 2024
+      // Expected nextContactDate: June 15, 2024
       final expectedNextContact = DateTime(2024, 6, 15); 
 
       when(mockBox.put(any)).thenAnswer((invocation) {
@@ -143,20 +143,20 @@ void main() {
 
       expect(result.id, contact1.id);
       expect(result.frequency, ContactFrequency.yearly.value);
-      expect(result.nextContact, expectedNextContact);
+      expect(result.nextContactDate, expectedNextContact);
 
       final captured = verify(mockBox.put(captureAny)).captured.single as Contact;
       expect(captured.id, contact1.id);
-      expect(captured.nextContact, expectedNextContact);
+      expect(captured.nextContactDate, expectedNextContact);
       
       // Verify cache
       final cachedContact = await contactRepository.getById(result.id!);
       expect(cachedContact, result);
-      expect(cachedContact?.nextContact, expectedNextContact);
+      expect(cachedContact?.nextContactDate, expectedNextContact);
     });
     
-    test('update - setting frequency to never should nullify nextContact and lastContacted', () async {
-      final contactToMakeNever = contact1.copyWith(lastContacted: DateTime.now(), nextContact: DateTime.now().add(Duration(days: 5)));
+    test('update - setting frequency to never should nullify nextContactDate and lastContactDate', () async {
+      final contactToMakeNever = contact1.copyWith(lastContactDate: DateTime.now(), nextContactDate: DateTime.now().add(Duration(days: 5)));
       when(mockBox.getAll()).thenAnswer((_) => [contactToMakeNever]);
       await contactRepository.getAll();
       clearInteractions(mockBox);
@@ -167,12 +167,12 @@ void main() {
       final result = await contactRepository.update(updatedToNever);
 
       expect(result.frequency, ContactFrequency.never.value);
-      expect(result.nextContact, isNull);
-      expect(result.lastContacted, isNull); // As per repo logic
+      expect(result.nextContactDate, isNull);
+      expect(result.lastContactDate, isNull); // As per repo logic
 
       final captured = verify(mockBox.put(captureAny)).captured.single as Contact;
-      expect(captured.nextContact, isNull);
-      expect(captured.lastContacted, isNull);
+      expect(captured.nextContactDate, isNull);
+      expect(captured.lastContactDate, isNull);
     });
 
 
