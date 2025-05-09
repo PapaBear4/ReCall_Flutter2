@@ -28,7 +28,7 @@ class LoadedContactListState extends ContactListState {
   const LoadedContactListState({
     required this.originalContacts,
     required this.displayedContacts,
-    this.sortField = ContactListSortField.dueDate,
+    this.sortField = ContactListSortField.nextContactDate,
     this.ascending = true,
     this.searchTerm = '',
     this.activeFilters = const {}, // Default to empty set

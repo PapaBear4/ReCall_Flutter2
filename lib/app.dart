@@ -13,7 +13,8 @@ import 'package:recall/blocs/contact_details/contact_details_bloc.dart';
 import 'package:recall/screens/contact_details_screen.dart';
 import 'package:recall/services/notification_service.dart';
 import 'package:recall/screens/settings_screen.dart';
-import 'package:recall/screens/help_screen.dart';
+import 'package:recall/screens/home_screen.dart';
+import 'package:recall/utils/logger.dart'; // Import HomeScreen
 
 class ReCall extends StatelessWidget {
   final ContactRepository _contactRepository;
@@ -37,10 +38,17 @@ class ReCall extends StatelessWidget {
             RepositoryProvider<UserSettingsRepository>.value(
                 value: _userSettingsRepository),
             BlocProvider(
-              create: (context) => ContactListBloc(
-                contactRepository: _contactRepository,
-                notificationService: context.read<NotificationService>(),
-              )..add(const LoadContactsEvent()),
+              create: (context) {
+                logger.i('LoadContactListEvent triggered in app.dart');
+                return ContactListBloc(
+                  contactRepository: _contactRepository,
+                  notificationService: context.read<NotificationService>(),
+                )..add(const LoadContactListEvent(
+                    filters: {ContactListFilterType.active},
+                    sortField: ContactListSortField.nextContactDate,
+                    ascending: true, // Most overdue first
+                  ));
+              },
             ),
             BlocProvider(
               create: (context) => ContactDetailsBloc(
@@ -62,16 +70,17 @@ class ReCall extends StatelessWidget {
               useMaterial3: true, // Keep this enabled
             ),
             // Set the initial route of the app.
-            home: const ContactListScreen(),
+            home: const HomeScreen(), // Changed to HomeScreen
             // Define the routes for the app.
             routes: {
               '/contactDetails': (context) =>
                   const ContactDetailsScreen(contactId: 0),
               '/settings': (context) => const SettingsScreen(),
               '/about': (context) => const AboutScreen(),
-              '/help': (context) => const HelpScreen(),
               '/importContacts': (context) =>
                   const ContactImportSelectionScreen(),
+              '/contactListFull': (context) =>
+                  const ContactListScreen(), // Added route for full contact list
             },
           ),
         ));

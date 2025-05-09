@@ -40,7 +40,7 @@ class NotificationHelper {
       // 4. Set it as the default local location for this isolate
       tz.setLocalLocation(deviceLocation);
 
-      logger.i("Timezone initialized for main isolate using device zone: $currentTimeZone");
+      //logger.i("Timezone initialized for main isolate using device zone: $currentTimeZone");
 
     } catch (e) {
        logger.e("Error initializing/setting timezone: $e. Falling back to UTC for main isolate.");
@@ -99,10 +99,10 @@ class NotificationHelper {
 
   Future<bool> requestAndHandlePermissions() async {
     PermissionStatus status = await Permission.notification.status;
-    logger.i('Notification permission status: $status');
+    //logger.i('Notification permission status: $status');
 
     if (status.isGranted) {
-      logger.i('Notification permission already granted.');
+      //logger.i('Notification permission already granted.');
       return true; // Permission already granted
     }
 
@@ -184,8 +184,8 @@ class NotificationHelper {
     } else {
       // It's due in the future. Schedule for the calculated date.
       scheduledDate = targetTimeOnDate(tzCalculatedDueDate); // Use user's time
-      logger
-          .i('LOG: Contact $id due in future. Scheduling for $scheduledDate');
+      //logger
+      //    .i('LOG: Contact $id due in future. Scheduling for $scheduledDate');
     }
 
     // Ensure we don't schedule in the past (safety net)
@@ -233,8 +233,8 @@ class NotificationHelper {
       matchDateTimeComponents:
           null, // Usually null for specific date/time schedules
     );
-    logger.i(
-        'LOG: Notification $id scheduled for $scheduledDate with payload $payload');
+    //logger.i(
+    //    'LOG: Notification $id scheduled for $scheduledDate with payload $payload');
   }
 
   Future<void> cancelNotification(int id) async {

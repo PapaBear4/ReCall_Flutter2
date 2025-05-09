@@ -23,5 +23,5 @@ enum ContactFrequency {
   }
 
   // Default value to be used when creating new instances
-  static const String defaultValue = 'never';
+  static const String defaultValue = 'weekly';
 }

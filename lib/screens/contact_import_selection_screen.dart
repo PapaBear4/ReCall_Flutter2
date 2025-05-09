@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart'; // Import Bloc
 import 'package:flutter_contacts/flutter_contacts.dart' as fc; // Use prefix
-import 'package:recall/models/contact_frequency.dart';
+import 'package:recall/models/enums.dart';
 import 'package:recall/repositories/contact_repository.dart'; // Import Contact Repo
 import 'package:recall/repositories/usersettings_repository.dart'; // Import Settings Repo
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart'; // Import List Bloc
@@ -10,6 +10,8 @@ import 'package:recall/services/contact_importer.dart';
 import 'package:recall/utils/logger.dart';
 import 'package:recall/models/contact.dart'
     as app_contact; // Alias for your app's Contact model
+import 'package:recall/utils/debug_utils.dart'; // Import DebugUtils
+import 'package:recall/utils/contact_utils.dart'; // Import ContactUtils
 
 class ContactImportSelectionScreen extends StatefulWidget {
   const ContactImportSelectionScreen({super.key});
@@ -512,11 +514,6 @@ class _ContactImportSelectionScreenState
           duration: const Duration(seconds: 4), // Longer duration for more info
         ),
       );
-
-      // Refresh the main list
-      context
-          .read<ContactListBloc>()
-          .add(const LoadContactsEvent());
 
       // Navigate back
       Navigator.of(context).pop();

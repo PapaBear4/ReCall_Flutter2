@@ -1,11 +1,11 @@
 // lib/services/notification_service.dart
 import 'package:flutter/foundation.dart';
 import 'package:recall/models/contact.dart';
-import 'package:recall/models/contact_frequency.dart';
+import 'package:recall/models/enums.dart';
 import 'package:recall/models/usersettings.dart';
 import 'package:recall/repositories/usersettings_repository.dart';
 import 'package:recall/services/notification_helper.dart';
-import 'package:recall/utils/last_contacted_utils.dart'; // Import the new utils file
+import 'package:recall/utils/contact_utils.dart'; // Import the new utils file
 import 'package:recall/utils/logger.dart'; // Adjust path if needed
 
 class NotificationService extends ChangeNotifier {
@@ -21,7 +21,7 @@ class NotificationService extends ChangeNotifier {
       return;
     }
     if (contact.frequency == ContactFrequency.never.value) {
-         logger.i('LOG: Not scheduling notification for contact ${contact.id} with frequency "never". Cancelling any existing.');
+         //logger.i('LOG: Not scheduling notification for contact ${contact.id} with frequency "never". Cancelling any existing.');
          await _notificationHelper.cancelNotification(contact.id!); // Cancel if frequency is set to never
          return;
     }
@@ -44,10 +44,10 @@ class NotificationService extends ChangeNotifier {
        logger.i('LOG: Contact ${contact.id} never contacted. Due date calculated as now.');
     } else {
       // Previously contacted: Calculate next due date
-      nextDueDate = calculateNextDueDate(contact); // Calculate the ideal date
+      nextDueDate = calculateNextContactDate(contact); // Calculate the ideal date
       baseTitle = "Contact ${contact.firstName} ${contact.lastName}";
       baseBody = "${contact.firstName} is due for contact."; // Simpler body
-       logger.i('LOG: Contact ${contact.id} previously contacted. Next due date calculated as $nextDueDate.');
+      //logger.i('LOG: Contact ${contact.id} previously contacted. Next due date calculated as $nextDueDate.');
     }
 
     // Call the helper, passing the calculated date and the contact
