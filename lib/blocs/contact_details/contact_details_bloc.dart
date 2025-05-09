@@ -111,13 +111,12 @@ class ContactDetailsBloc
         logger.i('Log: Clearing contact details');
         emit(const ClearedContactDetailsState());
       }
-
-      @override
-      Future<void> close() {
-        _contactSubscription
-            .cancel(); // Cancel the subscription when the bloc is closed
-        return super.close();
-      }
     });
+  }
+  @override
+  Future<void> close() {
+    _contactSubscription
+        .cancel(); // Cancel the subscription when the bloc is closed
+    return super.close();
   }
 }
