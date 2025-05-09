@@ -18,7 +18,7 @@ class ContactUtils {
   static Future<void> launchUniversalLink(BuildContext context, Uri url) async {
     try {
       final bool canLaunch = await canLaunchUrl(url);
-      
+
       // Check if widget is still in the tree
       if (!context.mounted) return;
 
@@ -34,7 +34,7 @@ class ContactUtils {
       }
     } catch (e) {
       if (!context.mounted) return;
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error launching link: $e')),
       );
@@ -60,16 +60,16 @@ class ContactUtils {
   }
 
   /// Maps a FlutterContacts Contact to the app's Contact model.
-  static app_contact.Contact mapContactDeviceToApp(fc.Contact fcContact, String defaultFrequency) {
+  static app_contact.Contact mapContactDeviceToApp(
+      fc.Contact fcContact, String defaultFrequency) {
     // Map phone numbers
     final String? phoneNumber = fcContact.phones.isNotEmpty
         ? fcContact.phones.first.number.trim()
         : null;
 
     // Map emails
-    final List<String> emails = fcContact.emails
-        .map((email) => email.address.trim())
-        .toList();
+    final List<String> emails =
+        fcContact.emails.map((email) => email.address.trim()).toList();
 
     // Map birthday and anniversary
     DateTime? birthday;
@@ -88,9 +88,8 @@ class ContactUtils {
     }
 
     // Map notes
-    final String? notes = fcContact.notes.isNotEmpty
-        ? fcContact.notes.first.note
-        : null;
+    final String? notes =
+        fcContact.notes.isNotEmpty ? fcContact.notes.first.note : null;
 
     // Create and return the app's Contact model
     return app_contact.Contact(
@@ -118,6 +117,7 @@ DateTime calculateNextContactDate(Contact contact) {
     return DateTime(9999, 12, 31);
   }
 
+  // figure out the next contact date from baseDate + frequency
   DateTime nextDate;
   switch (freq) {
     case ContactFrequency.daily:
@@ -149,16 +149,19 @@ DateTime calculateNextContactDate(Contact contact) {
   return DateTime(nextDate.year, nextDate.month, nextDate.day);
 }
 
-// Refactored to use nextContactDate primarily
-String calculateNextDueDateDisplay(DateTime? nextContactDate, String frequencyValue) {
-  if (ContactFrequency.fromString(frequencyValue) == ContactFrequency.never || nextContactDate == null) {
+// formats the next contact date for display
+String calculateNextContactDateDisplay(
+    DateTime? nextContactDate, String frequencyValue) {
+  if (ContactFrequency.fromString(frequencyValue) == ContactFrequency.never ||
+      nextContactDate == null) {
     return 'Never';
   }
 
   final DateTime now = DateTime.now();
   final DateTime today = DateTime(now.year, now.month, now.day);
   final DateTime tomorrow = today.add(const Duration(days: 1));
-  final DateTime nextContactDay = DateTime(nextContactDate.year, nextContactDate.month, nextContactDate.day);
+  final DateTime nextContactDay = DateTime(
+      nextContactDate.year, nextContactDate.month, nextContactDate.day);
 
   if (nextContactDay.isAtSameMomentAs(today)) {
     return 'Today';
@@ -171,26 +174,60 @@ String calculateNextDueDateDisplay(DateTime? nextContactDate, String frequencyVa
   }
 }
 
-// Refactored to use nextContactDate
-bool isOverdue(DateTime? nextContactDate, String frequencyValue) {
-  if (ContactFrequency.fromString(frequencyValue) == ContactFrequency.never || nextContactDate == null) {
+// determines if the next contact date is overdue
+bool isOverdue(Contact contact) {
+  // If the contact's frequency is "never" or nextContact is null, it's not overdue
+  if (ContactFrequency.fromString(contact.frequency) ==
+          ContactFrequency.never ||
+      contact.nextContact == null) {
     return false;
   }
+
+  // Get the current date (without time)
   final DateTime now = DateTime.now();
   final DateTime today = DateTime(now.year, now.month, now.day);
-  return nextContactDate.isBefore(today);
+
+  // Check if the nextContact date is before today
+  return contact.nextContact!.isBefore(today);
 }
 
-// Refactored to use nextContactDate
-Color? getDueDateColor(DateTime? nextContactDate, String frequencyValue, BuildContext context) {
-  if (ContactFrequency.fromString(frequencyValue) == ContactFrequency.never || nextContactDate == null) {
+// determines if the next contact date is due soon (today or tomorrow)
+bool isDueSoon(Contact contact) {
+  // If the nextContact is null, the contact is not due soon
+  if (contact.nextContact == null) {
+    return false;
+  }
+
+  // Get today's and tomorrow's dates (without time)
+  final DateTime now = DateTime.now();
+  final DateTime today = DateTime(now.year, now.month, now.day);
+  final DateTime tomorrow = today.add(const Duration(days: 1));
+
+  // Get the nextContact date (without time)
+  final DateTime nextContactDay = DateTime(
+    contact.nextContact!.year,
+    contact.nextContact!.month,
+    contact.nextContact!.day,
+  );
+
+  // Check if the nextContact date is today or tomorrow
+  return nextContactDay.isAtSameMomentAs(today) ||
+      nextContactDay.isAtSameMomentAs(tomorrow);
+}
+
+// set the color for the next contact date based on its status
+Color? getContactDateColor(
+    DateTime? nextContactDate, String frequencyValue, BuildContext context) {
+  if (ContactFrequency.fromString(frequencyValue) == ContactFrequency.never ||
+      nextContactDate == null) {
     return Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.6);
   }
 
   final DateTime now = DateTime.now();
   final DateTime today = DateTime(now.year, now.month, now.day);
   final DateTime tomorrow = today.add(const Duration(days: 1));
-  final DateTime nextContactDay = DateTime(nextContactDate.year, nextContactDate.month, nextContactDate.day);
+  final DateTime nextContactDay = DateTime(
+      nextContactDate.year, nextContactDate.month, nextContactDate.day);
 
   if (nextContactDay.isBefore(today)) {
     return Colors.red.shade700; // Overdue
@@ -199,9 +236,13 @@ Color? getDueDateColor(DateTime? nextContactDate, String frequencyValue, BuildCo
   } else if (nextContactDay.isAtSameMomentAs(tomorrow)) {
     return Colors.blue.shade700; // Tomorrow
   }
-  return Theme.of(context).textTheme.bodySmall?.color; // Default color for future dates
+  return Theme.of(context)
+      .textTheme
+      .bodySmall
+      ?.color; // Default color for future dates
 }
 
+// formats the last contacted date for display
 String formatLastContacted(DateTime? lastContactedDate) {
   if (lastContactedDate == null) {
     return 'Never';
@@ -210,7 +251,8 @@ String formatLastContacted(DateTime? lastContactedDate) {
   final DateTime now = DateTime.now();
   final DateTime today = DateTime(now.year, now.month, now.day);
   final DateTime yesterday = today.subtract(const Duration(days: 1));
-  final DateTime lastContactDay = DateTime(lastContactedDate.year, lastContactedDate.month, lastContactedDate.day);
+  final DateTime lastContactDay = DateTime(
+      lastContactedDate.year, lastContactedDate.month, lastContactedDate.day);
 
   if (lastContactDay.isAtSameMomentAs(today)) {
     return 'Today';

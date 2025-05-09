@@ -6,27 +6,37 @@ abstract class ContactListEvent {
 }
 
 // LOAD CONTACTS
-class LoadContactsEvent extends ContactListEvent {
+// MARK: LOAD
+class LoadContactListEvent extends ContactListEvent {
   final String searchTerm;
   final Set<ContactListFilterType> filters;
   final ContactListSortField sortField;
   final bool ascending;
 
-  const LoadContactsEvent({
+  // default constructor is for all contacts, sorted by last name
+  const LoadContactListEvent({
     this.searchTerm = '',
     this.filters = const {},
-    this.sortField = ContactListSortField.nextContactDate,
+    this.sortField = ContactListSortField.lastName,
     this.ascending = true,
   });
 }
 // UPDATE single
+// MARK: UPDATE
 class UpdateContactFromListEvent extends ContactListEvent {
   final Contact contact;
   
   const UpdateContactFromListEvent(this.contact);
 }
 
+class _ContactsUpdatedEvent extends ContactListEvent {
+  final List<Contact> contacts;
+
+  const _ContactsUpdatedEvent(this.contacts);
+}
+
 // SORT
+// MARK: SORT
 class SortContactsEvent extends ContactListEvent {
   final ContactListSortField sortField;
   final bool ascending;
@@ -37,14 +47,14 @@ class SortContactsEvent extends ContactListEvent {
   });
 }
 
-// SEARCH
+// MARK: SEARCH
 class ApplySearchEvent extends ContactListEvent {
   final String searchTerm;
   
   const ApplySearchEvent({required this.searchTerm});
 }
 
-// FILTER
+// MARK: FILTER
 class ApplyFilterEvent extends ContactListEvent {
   final ContactListFilterType filterType;
   final bool isActive; // true to enable filter, false to disable
@@ -60,7 +70,7 @@ class ClearFiltersEvent extends ContactListEvent {
   const ClearFiltersEvent();
 }
 
-// DELETE
+// MARK: DELETE
 class DeleteContactsEvent extends ContactListEvent {
   final List<int> contactIds;
 
@@ -80,7 +90,7 @@ class ToggleContactsActiveStatusEvent extends ContactListEvent {
 }
 
 // Changed from enum ContactListFilter to enum ContactListFilterType
-enum ContactListFilterType { overdue, dueSoon, active, archived }
+enum ContactListFilterType { overdue, dueSoon, active, archived, homescreen }
 
 // Define possible sort fields
 enum ContactListSortField {

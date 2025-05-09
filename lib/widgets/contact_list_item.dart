@@ -46,18 +46,14 @@ class ContactListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     // Use contact.nextContact for overdue checks and display related to next due date
     final bool isNextContactOverdue =   // Changed to use contact.nextContact
-        isOverdue(contact.nextContact, contact.frequency);
+        isOverdue(contact);
     final String nextDueDateDisplayString =
-        calculateNextDueDateDisplay(contact.nextContact, contact.frequency);
+        calculateNextContactDateDisplay(contact.nextContact, contact.frequency);
 
     final String displayName = (contact.nickname != null &&
             contact.nickname!.isNotEmpty)
-        ? contact.nickname!
+        ? '${contact.nickname!} ${contact.lastName} (${contact.firstName})'
         : '${contact.firstName} ${contact.lastName}';
-    final String secondaryName = (contact.nickname != null &&
-            contact.nickname!.isNotEmpty)
-        ? '${contact.firstName} ${contact.lastName}'
-        : '';
 
     return Column(
       children: [
@@ -87,6 +83,9 @@ class ContactListItem extends StatelessWidget {
           child: ListTile(
             selected: isSelected,
             selectedTileColor: Colors.blue.withAlpha(26),
+            tileColor: contact.isActive
+                ? Colors.white // Background for active contacts
+                : Colors.grey.shade200, // Background for archived contacts
             leading: CircleAvatar(
               backgroundColor: isSelected
                   ? Theme.of(context).primaryColor
@@ -99,48 +98,36 @@ class ContactListItem extends StatelessWidget {
                           ? contact.lastName[0].toUpperCase()
                           : '?')),
             ),
-            title: Text(displayName),
+            title: Text(
+              displayName,
+              style: TextStyle(
+                color: contact.isActive ? Colors.black : Colors.grey, // Text color
+              ),
+            ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (secondaryName.isNotEmpty)
-                  Text(secondaryName,
-                      style: const TextStyle(fontSize: 11, color: Colors.grey)),
                 Text(
-                  nextDueDateDisplayString,
+                  contact.frequency != ContactFrequency.never.value
+                      ? contact.frequency
+                      : '',
                   style: TextStyle(
                     fontSize: 12,
-                    color: getDueDateColor(
-                        contact.nextContact, contact.frequency, context),
+                    color: contact.isActive ? Colors.grey : Colors.grey.shade400,
                   ),
                 ),
               ],
             ),
-            trailing: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  formatLastContacted(contact.lastContacted),
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: isNextContactOverdue ? Colors.red.shade700 : null),
-                ),
-                Text(
-                    contact.frequency != ContactFrequency.never.value
-                        ? contact.frequency
-                        : '',
-                    style: const TextStyle(
-                        fontSize: 10, color: Colors.grey)),
-                if (showActiveStatus)
-                  Icon(
-                    contact.isActive
-                        ? Icons.check_circle
-                        : Icons.pause_circle_outline,
-                    color: contact.isActive ? Colors.green : Colors.grey,
-                    semanticLabel: contact.isActive ? "Active" : "Inactive",
-                  ),
-              ],
+            trailing: Text(
+              calculateNextContactDateDisplay(
+                  contact.nextContact, contact.frequency),
+              style: TextStyle(
+                fontSize: 12,
+                color: contact.isActive
+                    ? getContactDateColor(
+                        contact.nextContact, contact.frequency, context)
+                    : Colors.grey.shade400,
+              ),
             ),
             onTap: onTap,
             onLongPress: onLongPress,

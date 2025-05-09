@@ -180,7 +180,7 @@ class ContactViewWidget extends StatelessWidget {
         ContactField(
           icon: Icons.next_plan_outlined,
           label: 'Next Due:',
-          value: calculateNextDueDateDisplay(
+          value: calculateNextContactDateDisplay(
               contact.lastContacted, contact.frequency),
         ),
 

@@ -13,7 +13,8 @@ import 'package:recall/blocs/contact_details/contact_details_bloc.dart';
 import 'package:recall/screens/contact_details_screen.dart';
 import 'package:recall/services/notification_service.dart';
 import 'package:recall/screens/settings_screen.dart';
-import 'package:recall/screens/home_screen.dart'; // Import HomeScreen
+import 'package:recall/screens/home_screen.dart';
+import 'package:recall/utils/logger.dart'; // Import HomeScreen
 
 class ReCall extends StatelessWidget {
   final ContactRepository _contactRepository;
@@ -37,14 +38,17 @@ class ReCall extends StatelessWidget {
             RepositoryProvider<UserSettingsRepository>.value(
                 value: _userSettingsRepository),
             BlocProvider(
-              create: (context) => ContactListBloc(
-                contactRepository: _contactRepository,
-                notificationService: context.read<NotificationService>(),
-              )..add(const LoadContactsEvent(
-                  filters: {ContactListFilterType.active},
-                  sortField: ContactListSortField.nextContactDate,
-                  ascending: true, // Most overdue first
-                )),
+              create: (context) {
+                logger.i('LoadContactListEvent triggered in app.dart');
+                return ContactListBloc(
+                  contactRepository: _contactRepository,
+                  notificationService: context.read<NotificationService>(),
+                )..add(const LoadContactListEvent(
+                    filters: {ContactListFilterType.active},
+                    sortField: ContactListSortField.nextContactDate,
+                    ascending: true, // Most overdue first
+                  ));
+              },
             ),
             BlocProvider(
               create: (context) => ContactDetailsBloc(
