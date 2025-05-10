@@ -77,10 +77,10 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       firstName: '',
       lastName: '',
       nickname: null,
-      frequency: ContactFrequency.never.value,
+      frequency: ContactFrequency.biweekly.value,
       birthday: null,
       anniversary: null,
-      lastContactDate: null,
+      lastContactDate: DateTime.now(),
       phoneNumber: null,
       emails: [],
       notes: null,
@@ -95,7 +95,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           .read<ContactDetailsBloc>()
           .add(LoadContactEvent(contactId: contactId));
     } else {
-      String fetchedDefaultFrequency = ContactFrequency.never.value;
+      String fetchedDefaultFrequency = ContactFrequency.biweekly.value;
       try {
         final settingsRepo = context.read<UserSettingsRepository>();
         final settingsList = await settingsRepo.getAll();
@@ -465,14 +465,11 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
   // ...existing code...
   void _onSaveButtonPressed(BuildContext context) {
-    logger.i('_onSaveButtonPressed: Method started.');
     // Collect emails from the email controllers, trimming whitespace and filtering out empty entries
     List<String> currentEmailsFromControllers = _emailControllers
         .map((controller) => controller.text.trim())
         .where((email) => email.isNotEmpty)
         .toList();
-    logger.i(
-        '_onSaveButtonPressed: Collected emails: $currentEmailsFromControllers');
 
     // Create a new contact object with updated values from the form fields
     final contactToSave = _localContact.copyWith(
@@ -487,10 +484,13 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           ? _notesController.text.trim()
           : null,
       emails: currentEmailsFromControllers, // Updated email list
-      // nextContactDate: calculateNextContactDate(_localContact), // This might be calculated in BLoC/Repository
+      frequency: _localContact.frequency,
+      birthday: _localContact.birthday,
+      anniversary: _localContact.anniversary,
+      lastContactDate: _localContact.lastContactDate ?? DateTime.now(),
+      isActive: _localContact.isActive,
+      nextContactDate: calculateNextContactDate(_localContact)
     );
-    logger.i(
-        '_onSaveButtonPressed: contactToSave created: ${contactToSave.toJson()}');
 
     // Validate the form before proceeding
     if (_formKey.currentState!.validate()) {
@@ -504,7 +504,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         // If it's a new contact, dispatch an event to add it
         context
             .read<ContactDetailsBloc>()
-            .add(AddContactEvent(contact: contactToSave));
+            .add(SaveContactEvent(contact: contactToSave));
         if (mounted) {
           // Show a success message for saving a new contact
           ScaffoldMessenger.of(context)
@@ -556,9 +556,6 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   context
                       .read<ContactDetailsBloc>()
                       .add(DeleteContactEvent(contactId: contactIdToDelete));
-                  context
-                      .read<ContactListBloc>()
-                      .add(const LoadContactListEvent());
                   Navigator.of(context).pop();
                 }
               },

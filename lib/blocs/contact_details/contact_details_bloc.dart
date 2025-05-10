@@ -28,9 +28,9 @@ class ContactDetailsBloc
         super(const InitialContactDetailsState()) {
     // Event handler using instanceof checks instead of pattern matching
     on<ContactDetailsEvent>((event, emit) async {
-      // LOAD CONTACT DETAILS
-      // MARK: LOAD
       if (event is LoadContactEvent) {
+        // LOAD CONTACT DETAILS
+        // MARK: LOAD
         emit(const LoadingContactDetailsState());
         try {
           // Fetch contact details from the repository using the provided ID
@@ -43,33 +43,32 @@ class ContactDetailsBloc
         } catch (e) {
           emit(ErrorContactDetailsState(e.toString()));
         }
-
+      } else if (event is SaveContactEvent) {
         // SAVE CONTACT DETAILS
         // MARK: SAVE
         // makes sure that the contact date fields are set correctly
-      } else if (event is SaveContactEvent) {
         emit(const LoadingContactDetailsState());
         try {
           // ensure there's a last contact date
           Contact contactToSave = event.contact;
-          if (event.contact.lastContactDate == null){ // if null, set to now
+          if (event.contact.lastContactDate == null) {
+            // if null, set to now
             contactToSave = event.contact.copyWith(
               lastContactDate: DateTime.now(),
             );
           }
-          // if isActive and frequency is not 'never', set the next contact date
-          if (event.contact.isActive && 
-          event.contact.frequency != ContactFrequency.never.value) {
+          // if isActive, set the next contact date
+          if (event.contact.isActive) {
             contactToSave = contactToSave.copyWith(
               nextContactDate: calculateNextContactDate(event.contact),
             );
-            }
+          }
 
           // Save the contact details to the repository
-          final updatedContact = (contactToSave.id == null ||
-                  contactToSave.id == 0)
-              ? await _contactRepository.add(contactToSave)
-              : await _contactRepository.update(contactToSave);
+          final updatedContact =
+              (contactToSave.id == null || contactToSave.id == 0)
+                  ? await _contactRepository.add(contactToSave)
+                  : await _contactRepository.update(contactToSave);
 
           // Emit the updated state
           emit(LoadedContactDetailsState(updatedContact));
@@ -79,21 +78,21 @@ class ContactDetailsBloc
         } catch (error) {
           emit(ErrorContactDetailsState(error.toString()));
         }
-
+      } else if (event is AddContactEvent) {
         // ADD CONTACT
         // MARK: ADD
-      } else if (event is AddContactEvent) {
-        emit(const LoadingContactDetailsState());
+        // TODO: I don't think I need this, dulicate of save
+        /*emit(const LoadingContactDetailsState());
         try {
           final newContact = await _contactRepository.add(event.contact);
           emit(LoadedContactDetailsState(newContact));
           _notificationService.scheduleReminder(newContact);
         } catch (error) {
           emit(ErrorContactDetailsState(error.toString()));
-        }
+        }*/
+      } else if (event is DeleteContactEvent) {
         // DELETE CONTACT
         // MARK: DELETE
-      } else if (event is DeleteContactEvent) {
         emit(const LoadingContactDetailsState());
         try {
           await _contactRepository.delete(event.contactId);
@@ -105,6 +104,8 @@ class ContactDetailsBloc
       } else if (event is ClearContactEvent) {
         logger.i('Log: Clearing contact details');
         emit(const ClearedContactDetailsState());
+      } else if (event is UpdateContactLocallyEvent){
+        emit(LoadedContactDetailsState(event.contact)); //TODO: left off here, need to try it
       }
     });
   }

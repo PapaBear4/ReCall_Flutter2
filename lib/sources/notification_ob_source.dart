@@ -51,7 +51,7 @@ class NotificationObjectBoxSource implements DataSource<Notification> {
     return _notificationBox.get(id);
   }
 
-  @override
+  
   Future<Notification> update(Notification item) async {
     final id = _notificationBox.put(item);
     return item.copyWith(id: id);

@@ -111,7 +111,7 @@ class ContactUtils {
 
 // MARK: CALCs
 
-// This function remains the core logic for calculating the next contact date.
+// This function is the core logic for calculating the next contact date.
 DateTime calculateNextContactDate(Contact contact) {
   DateTime baseDate = contact.lastContactDate ?? DateTime.now();
   ContactFrequency freq = ContactFrequency.fromString(contact.frequency);
