@@ -9,6 +9,7 @@ import 'package:recall/utils/logger.dart';
 import 'package:recall/widgets/contact_list_item.dart';
 import 'package:recall/main.dart' as main_app;
 import 'package:flutter/foundation.dart'; // For kDebugMode
+import 'package:recall/widgets/add_contact_speed_dial.dart'; // Import the new widget
 
 // Re-define or import ListAction if not globally accessible
 enum ListAction {
@@ -255,6 +256,9 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
           },
         ),
       ),
+      floatingActionButton: AddContactSpeedDial(
+        onRefreshListEvent: widget.onRefreshEvent,
+      ),
       bottomNavigationBar: BottomAppBar(
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
@@ -273,7 +277,7 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
                     ),
                   if (kDebugMode)
                     FloatingActionButton.small(
-                      heroTag: "${widget.fabHeroTagPrefix}_btn1",
+                      heroTag: "${widget.fabHeroTagPrefix}_debug_notifications",
                       tooltip: "View Scheduled Notifications",
                       onPressed: () => Navigator.push(
                           context,
@@ -282,19 +286,6 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
                                   const ScheduledNotificationsScreen())),
                       child: const Icon(Icons.notifications),
                     ),
-                  const SizedBox(width: 8),
-                  FloatingActionButton.small(
-                    heroTag: "${widget.fabHeroTagPrefix}_btn2",
-                    tooltip: "Add New Contact",
-                    onPressed: () {
-                      context
-                          .read<ContactDetailsBloc>()
-                          .add(const ClearContactEvent());
-                      Navigator.pushNamed(context, '/contactDetails',
-                          arguments: 0);
-                    },
-                    child: const Icon(Icons.add),
-                  ),
                 ],
               )
             ],
@@ -306,8 +297,7 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
 
   PreferredSizeWidget _buildNormalAppBar(BuildContext context) {
     return AppBar(
-      leading: widget.drawerWidget ==
-              null // Show back button if no drawerWidget
+      leading: widget.drawerWidget == null // Show back button if no drawerWidget
           ? IconButton(
               icon: const Icon(Icons.arrow_back),
               onPressed: () {

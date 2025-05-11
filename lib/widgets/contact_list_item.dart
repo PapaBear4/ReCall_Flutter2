@@ -25,7 +25,9 @@ class ContactListItem extends StatelessWidget {
 
   // Helper function to dispatch the update event
   void _markContacted(BuildContext context, Contact contact) {
-    final updatedContact = contact.copyWith(lastContacted: DateTime.now());
+    final updatedContact = contact.copyWith(
+      lastContactDate: DateTime.now(),
+      nextContactDate: calculateNextContactDate(contact));
     context
         .read<ContactListBloc>()
         .add(UpdateContactFromListEvent(updatedContact));
@@ -44,11 +46,6 @@ class ContactListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Use contact.nextContact for overdue checks and display related to next due date
-    final bool isNextContactOverdue =   // Changed to use contact.nextContact
-        isOverdue(contact);
-    final String nextDueDateDisplayString =
-        calculateNextContactDateDisplay(contact.nextContact, contact.frequency);
 
     final String displayName = (contact.nickname != null &&
             contact.nickname!.isNotEmpty)
@@ -120,12 +117,12 @@ class ContactListItem extends StatelessWidget {
             ),
             trailing: Text(
               calculateNextContactDateDisplay(
-                  contact.nextContact, contact.frequency),
+                  contact.nextContactDate, contact.frequency),
               style: TextStyle(
                 fontSize: 12,
                 color: contact.isActive
                     ? getContactDateColor(
-                        contact.nextContact, contact.frequency, context)
+                        contact.nextContactDate, contact.frequency, context)
                     : Colors.grey.shade400,
               ),
             ),

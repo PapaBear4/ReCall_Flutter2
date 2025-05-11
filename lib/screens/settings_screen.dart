@@ -12,12 +12,10 @@ import 'dart:io'; // For File operations
 import 'package:file_picker/file_picker.dart'; // For saving
 import 'package:path_provider/path_provider.dart'; // For temp directory
 import 'package:share_plus/share_plus.dart'; // For sharing
-import 'package:recall/blocs/contact_list/contact_list_bloc.dart'; // To refresh list
 import 'package:recall/services/notification_helper.dart';
 import 'package:recall/services/notification_service.dart';
 import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:recall/utils/backup_restore_utils.dart'; // <-- ADD THIS IMPORT
-import 'package:recall/utils/debug_utils.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});

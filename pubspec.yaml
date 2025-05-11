@@ -58,6 +58,7 @@ dependencies:
       url: https://github.com/fluttercommunity/flutter_workmanager.git
       path: workmanager # Specifies the package is within a subfolder in the repo
       ref: main   # Use the 'main' branch
+  flutter_speed_dial: ^7.0.0
 
 
 dev_dependencies:

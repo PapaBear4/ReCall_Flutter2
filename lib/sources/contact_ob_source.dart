@@ -1,5 +1,4 @@
 // lib/sources/contact_ob_source.dart
-import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:recall/models/contact.dart';
 import 'package:recall/objectbox.g.dart';
 import 'package:recall/sources/data_source.dart';
@@ -9,41 +8,37 @@ class ContactObjectBoxSource implements DataSource<Contact> {
 
   ContactObjectBoxSource(this._contactBox);
 
+  // MARK: ADD/UPDT
+  // ObjectBox handles the ID assignment
   @override
   Future<Contact> add(Contact item) async {
-    logger.i('ob received this contact: $item');
-    final query =
-        _contactBox.query().order(Contact_.id, flags: Order.descending).build();
-    final highId = query.findFirst()?.id ?? 0;
-    //add the newId to the item
-    final contactToAdd = item.copyWith(id: highId + 1);
-
-    final id = _contactBox.put(contactToAdd);
-    logger.i('new id is: $id');
-    logger.i('try to return from box: ${item.copyWith(id: id)}');
-    return item.copyWith(id: id);
-    //item.copyWith(id: id);
+    final id = _contactBox.put(item);  // add/update the contact
+    return item.copyWith(id: id); // return the contact with the new ID
   }
 
   @override
   Future<List<Contact>> addMany(List<Contact> items) async {
-    final query =
-        _contactBox.query().order(Contact_.id, flags: Order.descending).build();
-    final highId = query.findFirst()?.id ?? 0;
-    final firstNewId = highId + 1;
-    //set new ids
-    final newItems = <Contact>[];
+    final List<int> newIds = _contactBox.putMany(items);
+
+    final List<Contact> addedContactsWithIds = [];
     for (int i = 0; i < items.length; i++) {
-      newItems.add(items[i].copyWith(id: firstNewId + i));
+      addedContactsWithIds.add(items[i].copyWith(id: newIds[i]));
     }
-    final ids = _contactBox.putMany(newItems);
-    final updatedItems = <Contact>[];
-    for (int i = 0; i < items.length; i++) {
-      updatedItems.add(items[i].copyWith(id: ids[i]));
-    }
-    return updatedItems;
+    return addedContactsWithIds;
   }
 
+  // MARK: READ
+    @override
+  Future<List<Contact>> getAll() async {
+    return _contactBox.getAll();
+  }
+
+  @override
+  Future<Contact?> getById(int id) async {
+    return _contactBox.get(id);
+  }
+
+  // MARK: DELETE
   @override
   Future<void> delete(int id) async {
     _contactBox.remove(id);
@@ -54,31 +49,16 @@ class ContactObjectBoxSource implements DataSource<Contact> {
     _contactBox.removeMany(ids);
   }
 
+    @override
+  Future<void> deleteAll() async {
+    _contactBox.removeAll(); // Use ObjectBox's removeAll
+  }
+
+  // MARK: OTHER
   @override
   Future<int> count() async {
     return _contactBox.count();
   }
 
-  @override
-  Future<List<Contact>> getAll() async {
-    return _contactBox.getAll();
-  }
 
-  @override
-  Future<Contact?> getById(int id) async {
-    return _contactBox.get(id);
-  }
-
-  @override
-  Future<Contact> update(Contact item) async {
-    logger.i(
-        'ContactObjectBoxSource: Updating contact: $item, isActive: ${item.isActive}');
-    final id = _contactBox.put(item);
-    return item.copyWith(id: id);
-  }
-
-  @override
-  Future<void> deleteAll() async {
-    _contactBox.removeAll(); // Use ObjectBox's removeAll
-  }
 }

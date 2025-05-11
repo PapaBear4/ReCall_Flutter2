@@ -77,10 +77,10 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       firstName: '',
       lastName: '',
       nickname: null,
-      frequency: ContactFrequency.never.value,
+      frequency: ContactFrequency.biweekly.value,
       birthday: null,
       anniversary: null,
-      lastContacted: null,
+      lastContactDate: DateTime.now(),
       phoneNumber: null,
       emails: [],
       notes: null,
@@ -91,9 +91,11 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   Future<void> _loadContactOrDefault() async {
     final contactId = ModalRoute.of(context)!.settings.arguments as int?;
     if (contactId != null && contactId != 0) {
-      context.read<ContactDetailsBloc>().add(LoadContactEvent(contactId: contactId));
+      context
+          .read<ContactDetailsBloc>()
+          .add(LoadContactEvent(contactId: contactId));
     } else {
-      String fetchedDefaultFrequency = ContactFrequency.never.value;
+      String fetchedDefaultFrequency = ContactFrequency.biweekly.value;
       try {
         final settingsRepo = context.read<UserSettingsRepository>();
         final settingsList = await settingsRepo.getAll();
@@ -114,7 +116,9 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         _updateControllersFromLocalContact();
         _updateEmailControllers();
       });
-      context.read<ContactDetailsBloc>().add(UpdateContactLocallyEvent(contact: _localContact));
+      context
+          .read<ContactDetailsBloc>()
+          .add(UpdateContactLocallyEvent(contact: _localContact));
     }
   }
 
@@ -205,10 +209,9 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           final bool isLoaded = state is LoadedContactDetailsState;
           final bool isNewContactMode =
               (state is ClearedContactDetailsState && _isEditMode) ||
-              (_localContact.id == 0 && _isEditMode);
+                  (_localContact.id == 0 && _isEditMode);
           final bool canEditOrSave = isLoaded || isNewContactMode;
-          final bool isDisabledByState =
-              state is LoadingContactDetailsState ||
+          final bool isDisabledByState = state is LoadingContactDetailsState ||
               state is InitialContactDetailsState;
           final bool canSaveChanges = canEditOrSave &&
               !isDisabledByState &&
@@ -221,9 +224,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             icon: Icon(_isEditMode ? Icons.save : Icons.edit),
             tooltip: _isEditMode ? 'Save Changes' : 'Edit Contact',
             onPressed: _isEditMode
-                ? (canSaveChanges
-                    ? () => _onSaveButtonPressed(context)
-                    : null)
+                ? (canSaveChanges ? () => _onSaveButtonPressed(context) : null)
                 : (canEnterEdit
                     ? () {
                         if (state is LoadedContactDetailsState) {
@@ -256,8 +257,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             });
           }
         } else if (state is ErrorContactDetailsState) {
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Error: ${state.message}")));
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text("Error: ${state.message}")));
           logger.e(state.message);
         } else if (state is ClearedContactDetailsState) {
           if (_isEditMode) {
@@ -283,7 +284,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
         } else if (state is ErrorContactDetailsState) {
           return _buildErrorBody(state.message);
         } else {
-          if (_isEditMode && (_localContact.id == 0 || _localContact.id == null)) {
+          if (_isEditMode &&
+              (_localContact.id == 0 || _localContact.id == null)) {
             return _buildLoadedBody();
           }
           return const Center(child: CircularProgressIndicator());
@@ -361,9 +363,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       key: _formKey,
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: _isEditMode
-            ? _buildEditModeSection()
-            : _buildViewModeSection(),
+        child: _isEditMode ? _buildEditModeSection() : _buildViewModeSection(),
       ),
     );
   }
@@ -373,7 +373,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     return ContactViewWidget(
       contact: _localContact,
       phoneMaskFormatter: phoneMaskFormatter,
-      onPhoneActionTap: (unmaskedPhoneNumber) => _showPhoneActions(unmaskedPhoneNumber),
+      onPhoneActionTap: (unmaskedPhoneNumber) =>
+          _showPhoneActions(unmaskedPhoneNumber),
       onEmailTap: (email) => _launchEmail(email),
     );
   }
@@ -414,7 +415,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
   void _syncEmailControllers(List<String> emails) {
     while (_emailControllers.length < emails.length) {
-      _emailControllers.add(TextEditingController(text: emails[_emailControllers.length]));
+      _emailControllers
+          .add(TextEditingController(text: emails[_emailControllers.length]));
     }
     while (_emailControllers.length > emails.length) {
       _emailControllers.removeLast().dispose();
@@ -444,8 +446,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              style: TextButton.styleFrom(
-                  foregroundColor: Colors.red),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
               child: const Text('Discard'),
             ),
           ],
@@ -462,53 +463,76 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
     }
   }
 
+  // ...existing code...
   void _onSaveButtonPressed(BuildContext context) {
-      // Collect emails from the email controllers, trimming whitespace and filtering out empty entries
-      List<String> currentEmailsFromControllers = _emailControllers
-          .map((controller) => controller.text.trim())
-          .where((email) => email.isNotEmpty)
-          .toList();
-  
-      // Create a new contact object with updated values from the form fields
-      final contactToSave = _localContact.copyWith(
-        firstName: _firstNameController.text.trim(),
-        lastName: _lastNameController.text.trim(),
-        nickname: _nicknameController.text.trim().isNotEmpty ? _nicknameController.text.trim() : null,
-        phoneNumber: phoneMaskFormatter.getUnmaskedText(), // Unmasked phone number
-        notes: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
-        emails: currentEmailsFromControllers, // Updated email list
-      );
-  
-      // Validate the form before proceeding
-      if (_formKey.currentState!.validate()) {
-        // Determine if this is an existing contact or a new one
-        bool isExistingContact = contactToSave.id != null && contactToSave.id != 0;
-  
-        if (!isExistingContact) {
-          // If it's a new contact, dispatch an event to add it
-          context.read<ContactDetailsBloc>().add(AddContactEvent(contact: contactToSave));
-          if (mounted) {
-            // Show a success message for saving a new contact
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('New contact saved')));
-          }
-        } else {
-          // If it's an existing contact, dispatch an event to save changes
-          context.read<ContactDetailsBloc>().add(SaveContactEvent(contact: contactToSave));
-          if (mounted) {
-            // Show a success message for saving changes
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Changes saved')));
-          }
-        }
-  
-      } else {
-        // If validation fails, show an error message
+    // Collect emails from the email controllers, trimming whitespace and filtering out empty entries
+    List<String> currentEmailsFromControllers = _emailControllers
+        .map((controller) => controller.text.trim())
+        .where((email) => email.isNotEmpty)
+        .toList();
+
+    // Create a new contact object with updated values from the form fields
+    final contactToSave = _localContact.copyWith(
+      firstName: _firstNameController.text.trim(),
+      lastName: _lastNameController.text.trim(),
+      nickname: _nicknameController.text.trim().isNotEmpty
+          ? _nicknameController.text.trim()
+          : null,
+      phoneNumber:
+          phoneMaskFormatter.getUnmaskedText(), // Unmasked phone number
+      notes: _notesController.text.trim().isNotEmpty
+          ? _notesController.text.trim()
+          : null,
+      emails: currentEmailsFromControllers, // Updated email list
+      frequency: _localContact.frequency,
+      birthday: _localContact.birthday,
+      anniversary: _localContact.anniversary,
+      lastContactDate: _localContact.lastContactDate ?? DateTime.now(),
+      isActive: _localContact.isActive,
+      nextContactDate: calculateNextContactDate(_localContact)
+    );
+
+    // Validate the form before proceeding
+    if (_formKey.currentState!.validate()) {
+      logger.i('_onSaveButtonPressed: Form validation successful.');
+      // Determine if this is an existing contact or a new one
+      bool isExistingContact =
+          contactToSave.id != null && contactToSave.id != 0;
+      logger.i('_onSaveButtonPressed: Is existing contact? $isExistingContact');
+
+      if (!isExistingContact) {
+        // If it's a new contact, dispatch an event to add it
+        context
+            .read<ContactDetailsBloc>()
+            .add(SaveContactEvent(contact: contactToSave));
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please correct the errors before saving.')),
-          );
+          // Show a success message for saving a new contact
+          ScaffoldMessenger.of(context)
+              .showSnackBar(const SnackBar(content: Text('New contact saved')));
+          Navigator.of(context).pop(); // Pop screen after adding
+        }
+      } else {
+        // If it's an existing contact, dispatch an event to save changes
+        context
+            .read<ContactDetailsBloc>()
+            .add(SaveContactEvent(contact: contactToSave));
+        if (mounted) {
+          // Show a success message for saving changes
+          ScaffoldMessenger.of(context)
+              .showSnackBar(const SnackBar(content: Text('Changes saved')));
+              Navigator.of(context).pop(); // Pop screen after saving changes
         }
       }
+    } else {
+      // If validation fails, show an error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Please correct the errors before saving.')),
+        );
+      }
     }
+  }
   void _onDeleteButtonPressed(BuildContext context) {
     if (_localContact.id == null || _localContact.id == 0) {
       return;
@@ -529,9 +553,9 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                 final contactIdToDelete = _localContact.id!;
                 Navigator.of(dialogContext).pop();
                 if (mounted) {
-                  context.read<ContactDetailsBloc>().add(
-                      DeleteContactEvent(contactId: contactIdToDelete));
-                  context.read<ContactListBloc>().add(const LoadContactListEvent());
+                  context
+                      .read<ContactDetailsBloc>()
+                      .add(DeleteContactEvent(contactId: contactIdToDelete));
                   Navigator.of(context).pop();
                 }
               },
@@ -548,17 +572,20 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       return;
     }
     final now = DateTime.now();
-    final updatedContact = _localContact.copyWith(lastContacted: now);
+    final updatedContact = _localContact.copyWith(lastContactDate: now);
 
     setState(() {
       _localContact = updatedContact;
     });
 
-    context.read<ContactDetailsBloc>().add(SaveContactEvent(contact: updatedContact));
+    context
+        .read<ContactDetailsBloc>()
+        .add(SaveContactEvent(contact: updatedContact));
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Marked as contacted: ${DateFormat.yMd().format(now)}')));
+          content:
+              Text('Marked as contacted: ${DateFormat.yMd().format(now)}')));
       context.read<ContactListBloc>().add(const LoadContactListEvent());
     }
   }

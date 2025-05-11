@@ -82,18 +82,18 @@ class DebugUtils {
     final DateTime now = DateTime.now();
     final int daysAgo =
         random.nextInt(60); // Random number of days in the past (up to 60 days)
-    final DateTime lastContacted = now.subtract(Duration(days: daysAgo));
+    final DateTime lastContactDate = now.subtract(Duration(days: daysAgo));
     final bool isActive = Random().nextBool();
 
     // Calculate the next contact date based on the last contacted date and the frequency
-    final DateTime nextContact = calculateNextContactDate(fakeAppContact
-        .copyWith(frequency: randomFrequency, lastContacted: lastContacted));
+    final DateTime nextContactDate = calculateNextContactDate(fakeAppContact
+        .copyWith(frequency: randomFrequency, lastContactDate: lastContactDate));
 
     // Return the updated contact with the new fields
     return fakeAppContact.copyWith(
       frequency: randomFrequency,
-      lastContacted: lastContacted,
-      nextContact: nextContact,
+      lastContactDate: lastContactDate,
+      nextContactDate: nextContactDate,
       isActive: isActive
     );
   }

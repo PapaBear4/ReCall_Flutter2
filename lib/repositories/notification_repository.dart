@@ -78,7 +78,7 @@ class NotificationRepository implements Repository<Notification> {
   @override
   Future<Notification> update(Notification item) async {
     try {
-      final notification = await _source.update(item);
+      final notification = await _source.add(item);
       if (item.id != null) {
         _notifications[item.id!] = item;
       }

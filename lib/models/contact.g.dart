@@ -15,12 +15,12 @@ Contact _$ContactFromJson(Map<String, dynamic> json) => Contact(
       birthday: json['birthday'] == null
           ? null
           : DateTime.parse(json['birthday'] as String),
-      lastContacted: json['lastContacted'] == null
+      lastContactDate: json['lastContactDate'] == null
           ? null
-          : DateTime.parse(json['lastContacted'] as String),
-      nextContact: json['nextContact'] == null
+          : DateTime.parse(json['lastContactDate'] as String),
+      nextContactDate: json['nextContactDate'] == null
           ? null
-          : DateTime.parse(json['nextContact'] as String),
+          : DateTime.parse(json['nextContactDate'] as String),
       anniversary: json['anniversary'] == null
           ? null
           : DateTime.parse(json['anniversary'] as String),
@@ -38,8 +38,8 @@ Map<String, dynamic> _$ContactToJson(Contact instance) => <String, dynamic>{
       'nickname': instance.nickname,
       'frequency': instance.frequency,
       'birthday': instance.birthday?.toIso8601String(),
-      'lastContacted': instance.lastContacted?.toIso8601String(),
-      'nextContact': instance.nextContact?.toIso8601String(),
+      'lastContactDate': instance.lastContactDate?.toIso8601String(),
+      'nextContactDate': instance.nextContactDate?.toIso8601String(),
       'anniversary': instance.anniversary?.toIso8601String(),
       'phoneNumber': instance.phoneNumber,
       'emails': instance.emails,

@@ -97,6 +97,6 @@ enum ContactListSortField {
   lastName,
   birthday,
   contactFrequency,
-  lastContacted,
+  lastContactDate,
   nextContactDate
 }

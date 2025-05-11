@@ -83,66 +83,78 @@ class ContactRepository implements Repository<Contact> {
   }
 
   // MARK: ADD
+  /// Adds a valid contact to the repository and updates the cache.
   @override
   Future<Contact> add(Contact contact) async {
-    Contact contactWithNextDate = contact;
-    if (contact.isActive && contact.frequency != ContactFrequency.never.value) {
-      // Ensure lastContacted is set if null, for calculation
-      final contactToCalc = contact.lastContacted == null
-          ? contact.copyWith(lastContacted: DateTime.now())
-          : contact;
-      contactWithNextDate = contact.copyWith(
-          nextContact: calculateNextContactDate(contactToCalc));
-    } else if (!contact.isActive ||
-        contact.frequency == ContactFrequency.never.value) {
-      contactWithNextDate = contact.copyWith(
-          nextContact: null); // Explicitly null for inactive/never
-    }
+    // Check if the contact is new (ID is null or 0)
+    if (contact.id == null || contact.id == 0) {
+      try {
+        final Contact addedContact =
+            await _source.add(contact); // Use the passed 'contact' directly
 
-    final addedContact = await _source.add(contactWithNextDate);
-    if (addedContact.id != null) {
-      _contacts[addedContact.id!] = addedContact;
+        // Verify that the data source returned a contact with a valid ID
+        if (addedContact.id != null && addedContact.id != 0) {
+          // Update the in-memory cache
+          _contacts[addedContact.id!] = addedContact;
+          // Notify listeners about the change
+          _emitContacts();
+          // Return the contact, now with its ID
+          return addedContact;
+        } else {
+          // This indicates an issue with the data source if ID wasn't assigned
+          final errorMessage =
+              "Failed to add contact: Data source did not assign a valid ID.";
+          logger.e(errorMessage);
+          throw Exception(errorMessage);
+        }
+      } catch (e) {
+        logger.e("Error adding contact in repository: $e");
+        rethrow; // Rethrow the exception to be handled by the caller
+      }
+    } else {
+      // If the contact already has an ID, it's not a new contact.
+      // This method is specifically for adding new contacts.
+      final errorMessage =
+          "Attempted to add a contact that already has an ID (${contact.id}). Use update() method instead.";
+      logger.w(errorMessage);
+      throw ArgumentError(errorMessage);
     }
-    _emitContacts();
-    return addedContact;
   }
 
-  @override // Add many contacts
-  Future<List<Contact>> addMany(List<Contact> items) async {
-    // We expect items here NOT to have IDs yet,
-    // the source should assign them.
-    final addedContacts = await _source.addMany(items);
-    // Update cache with the contacts returned from the source (which now have IDs)
+  /// Adds a list of valid contacts to the repository and updates the cache.
+  @override
+  Future<List<Contact>> addMany(List<Contact> contacts) async {
+    // Check if all contacts are new (ID is null or 0)
+    for (final contact in contacts) {
+      if (contact.id != null && contact.id != 0) {
+        final errorMessage =
+            "Attempted to add a list of contacts where one or more contacts already have an ID (${contact.id}). Use update() or a different method for mixed operations.";
+        logger.w(errorMessage);
+        throw ArgumentError(errorMessage);
+      }
+    }
+
+    final List<Contact> addedContacts = await _source.addMany(contacts);
+
+    // Update cache with the contacts returned from the source (which now have IDs or are updated)
     for (final contact in addedContacts) {
-      if (contact.id != null) {
+      if (contact.id != null && contact.id != 0) {
+        // Ensure valid ID before caching
         _contacts[contact.id!] = contact;
+      } else {
+        // Log if a contact came back from the source without a valid ID after addMany
+        logger.w(
+            "Contact returned from _source.addMany without a valid ID: ${contact.firstName} ${contact.lastName}");
       }
     }
     _emitContacts();
-    return addedContacts;
+    return addedContacts; // Renamed back to addedContacts as per the new check
   }
 
   // MARK: UPDATE
   @override
   Future<Contact> update(Contact contact) async {
-    Contact contactWithNextDate = contact;
-    if (contact.isActive && contact.frequency != ContactFrequency.never.value) {
-      // Ensure lastContacted is set if null, for calculation
-      final contactToCalc = contact.lastContacted == null
-          ? contact.copyWith(lastContacted: DateTime.now())
-          : contact;
-      contactWithNextDate = contact.copyWith(
-          nextContact: calculateNextContactDate(contactToCalc));
-    } else if (!contact.isActive ||
-        contact.frequency == ContactFrequency.never.value) {
-      contactWithNextDate = contact.copyWith(
-          nextContact: null,
-          clearLastContacted:
-              contact.frequency == ContactFrequency.never.value);
-      // if frequency is never, also clear lastContacted as it's irrelevant.
-    }
-
-    final updatedContact = await _source.update(contactWithNextDate);
+    final updatedContact = await _source.add(contact);
     if (updatedContact.id != null) {
       _contacts[updatedContact.id!] = updatedContact;
     }
@@ -258,7 +270,6 @@ class _InMemoryContactSource implements DataSource<Contact> {
     return contacts[id];
   }
 
-  @override
   Future<Contact> update(Contact item) async {
     if (item.id == null) return item;
     contacts[item.id!] = item;

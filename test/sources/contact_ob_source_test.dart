@@ -131,7 +131,7 @@ void main() {
       final updatedContact = contact1.copyWith(firstName: 'Johnny');
       when(mockBox.put(updatedContact)).thenAnswer((_) => updatedContact.id!); 
 
-      final result = await dataSource.update(updatedContact);
+      final result = await dataSource.add(updatedContact);
 
       expect(result.id, updatedContact.id);
       expect(result.firstName, 'Johnny');

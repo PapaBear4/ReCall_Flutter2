@@ -79,7 +79,7 @@ class UserSettingsRepository implements Repository<UserSettings> {
   @override
   Future<UserSettings> update(UserSettings item) async {
     try {
-      final usersettings = await _source.update(item);
+      final usersettings = await _source.add(item);
       if (item.id != null) {
         _userSettings[item.id!] = item;
       }

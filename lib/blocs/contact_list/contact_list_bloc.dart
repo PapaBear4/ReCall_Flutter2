@@ -295,11 +295,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           emit(ErrorContactListState(err.toString()));
           logger.e(
               "Error toggling active status for contacts ${event.contactIds}: $err");
-          if (currentState is LoadedContactListState) {
-            emit(currentState);
-          } else {
-            add(const LoadContactListEvent());
-          }
+          emit(currentState);
         }
       } else if (event is _ContactsUpdatedEvent) {
         // This event is triggered by the stream subscription
@@ -324,12 +320,12 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           ));
         }
       }
-      @override
-      Future<void> close() {
-        _contactStreamSubscription.cancel(); // Cancel the subscription
-        return super.close();
-      }
     });
+  }
+  @override
+  Future<void> close() {
+    _contactStreamSubscription.cancel(); // Cancel the subscription
+    return super.close();
   }
 
   final Map<ContactListFilterType, bool Function(Contact)> filterFunctions = {
@@ -342,25 +338,26 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
   };
 
   // MARK: FILTER
-  List<Contact> _applyFilterAndSearch(
-      List<Contact> originalContacts, String searchTerm, Set<ContactListFilterType> activeFilters) {
+  List<Contact> _applyFilterAndSearch(List<Contact> originalContacts,
+      String searchTerm, Set<ContactListFilterType> activeFilters) {
     List<Contact> filteredList = List.from(originalContacts);
-  
+
     // Apply search term filtering
     if (searchTerm.isNotEmpty) {
       final lowerCaseSearchTerm = searchTerm.toLowerCase();
       filteredList = filteredList.where((contact) {
         return contact.firstName.toLowerCase().contains(lowerCaseSearchTerm) ||
             contact.lastName.toLowerCase().contains(lowerCaseSearchTerm) ||
-            (contact.nickname?.toLowerCase().contains(lowerCaseSearchTerm) ?? false);
+            (contact.nickname?.toLowerCase().contains(lowerCaseSearchTerm) ??
+                false);
       }).toList();
     }
-  
+
     // If no filters are active, return the filtered list
     if (activeFilters.isEmpty) {
       return filteredList;
     }
-  
+
     // Apply active filters dynamically
     return filteredList.where((contact) {
       for (final filter in activeFilters) {
@@ -372,6 +369,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
       return true; // Include the contact if it matches all active filters
     }).toList();
   }
+
   // MARK: SORT
   List<Contact> _sortContacts(List<Contact> contactsToSort,
       ContactListSortField sortField, bool ascending) {
@@ -414,11 +412,11 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
                 a.firstName.toLowerCase().compareTo(b.firstName.toLowerCase());
           }
           break;
-        case ContactListSortField.lastContacted:
+        case ContactListSortField.lastContactDate:
           DateTime lastA =
-              a.lastContacted ?? (ascending ? DateTime(9999) : DateTime(1900));
+              a.lastContactDate ?? (ascending ? DateTime(9999) : DateTime(1900));
           DateTime lastB =
-              b.lastContacted ?? (ascending ? DateTime(9999) : DateTime(1900));
+              b.lastContactDate ?? (ascending ? DateTime(9999) : DateTime(1900));
           comparison = lastA.compareTo(lastB);
           break;
         case ContactListSortField.birthday:

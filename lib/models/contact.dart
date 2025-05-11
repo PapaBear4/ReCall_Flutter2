@@ -21,10 +21,10 @@ class Contact {
   final DateTime? birthday;
   
   @Property(type: PropertyType.date)
-  final DateTime? lastContacted;
+  final DateTime? lastContactDate;
 
   @Property(type: PropertyType.date)
-  final DateTime? nextContact; // New field
+  final DateTime? nextContactDate; // New field
   
   @Property(type: PropertyType.date)
   final DateTime? anniversary;
@@ -43,8 +43,8 @@ class Contact {
     this.nickname,
     this.frequency = ContactFrequency.defaultValue,
     this.birthday,
-    this.lastContacted,
-    this.nextContact, // Add to constructor
+    this.lastContactDate,
+    this.nextContactDate, // Add to constructor
     this.anniversary,
     this.phoneNumber,
     this.emails,
@@ -60,8 +60,8 @@ class Contact {
     String? nickname,
     String? frequency,
     DateTime? birthday,
-    DateTime? lastContacted,
-    DateTime? nextContact, // Add to copyWith
+    DateTime? lastContactDate,
+    DateTime? nextContactDate, // Add to copyWith
     DateTime? anniversary,
     String? phoneNumber,
     List<String>? emails,
@@ -70,7 +70,8 @@ class Contact {
     // Add parameters for clearing nullable fields
     bool clearNickname = false,
     bool clearBirthday = false,
-    bool clearLastContacted = false,
+    bool clearLastContactDate = false,
+    bool clearNextContactDate = false,
     bool clearAnniversary = false,
     bool clearPhoneNumber = false,
     bool clearEmails = false,
@@ -83,8 +84,8 @@ class Contact {
       nickname: clearNickname ? null : (nickname ?? this.nickname),
       frequency: frequency ?? this.frequency,
       birthday: clearBirthday ? null : (birthday ?? this.birthday),
-      lastContacted: clearLastContacted ? null : (lastContacted ?? this.lastContacted),
-      nextContact: nextContact ?? this.nextContact, // Add to copyWith logic
+      lastContactDate: clearLastContactDate ? null : (lastContactDate ?? this.lastContactDate),
+      nextContactDate: clearNextContactDate ? null : (nextContactDate ?? this.nextContactDate),
       anniversary: clearAnniversary ? null : (anniversary ?? this.anniversary),
       phoneNumber: clearPhoneNumber ? null : (phoneNumber ?? this.phoneNumber),
       emails: clearEmails ? null : (emails ?? this.emails),
@@ -108,8 +109,8 @@ class Contact {
       other.nickname == nickname &&
       other.frequency == frequency &&
       other.birthday == birthday &&
-      other.lastContacted == lastContacted &&
-      other.nextContact == nextContact && // Add to equality check
+      other.lastContactDate == lastContactDate &&
+      other.nextContactDate == nextContactDate && 
       other.anniversary == anniversary &&
       other.phoneNumber == phoneNumber &&
       listEquals(other.emails, emails) &&
@@ -126,8 +127,8 @@ class Contact {
       nickname,
       frequency,
       birthday,
-      lastContacted,
-      nextContact, // Add to hash
+      lastContactDate,
+      nextContactDate,
       anniversary,
       phoneNumber,
       Object.hashAll(emails ?? []),
@@ -139,6 +140,6 @@ class Contact {
   @override
   String toString() {
     return 'Contact(id: $id, firstName: $firstName, lastName: $lastName, '
-           'nickname: $nickname, frequency: $frequency, isActive: $isActive, nextContact: $nextContact, ...)';
+           'nickname: $nickname, frequency: $frequency, isActive: $isActive, nextContactDate: $nextContactDate, ...)';
   }
 }

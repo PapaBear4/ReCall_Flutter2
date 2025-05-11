@@ -19,8 +19,8 @@ void main() {
       expect(contact.isActive, true);
       expect(contact.nickname, isNull);
       expect(contact.birthday, isNull);
-      expect(contact.lastContacted, isNull);
-      expect(contact.nextContact, isNull);
+      expect(contact.lastContactDate, isNull);
+      expect(contact.nextContactDate, isNull);
       expect(contact.anniversary, isNull);
       expect(contact.phoneNumber, isNull);
       expect(contact.emails, isNull);
@@ -35,8 +35,8 @@ void main() {
         nickname: 'Janie',
         frequency: ContactFrequency.monthly.value, // Use .value for String
         birthday: testDate,
-        lastContacted: testDate,
-        nextContact: testDate2,
+        lastContactDate: testDate,
+        nextContactDate: testDate2,
         anniversary: testDate,
         phoneNumber: '123-456-7890',
         emails: ['jane.doe@example.com'],
@@ -50,8 +50,8 @@ void main() {
       expect(contact.nickname, 'Janie');
       expect(contact.frequency, ContactFrequency.monthly.value); // Check against .value
       expect(contact.birthday, testDate);
-      expect(contact.lastContacted, testDate);
-      expect(contact.nextContact, testDate2);
+      expect(contact.lastContactDate, testDate);
+      expect(contact.nextContactDate, testDate2);
       expect(contact.anniversary, testDate);
       expect(contact.phoneNumber, '123-456-7890');
       expect(contact.emails, ['jane.doe@example.com']);
@@ -65,20 +65,20 @@ void main() {
         lastName: 'Name',
         nickname: 'OG',
         frequency: ContactFrequency.yearly.value, // Use .value
-        nextContact: testDate,
+        nextContactDate: testDate,
       );
       final updatedContact = originalContact.copyWith(
         firstName: 'Updated',
         nickname: 'NewNick',
         frequency: ContactFrequency.quarterly.value, // Use .value
-        nextContact: testDate2,
+        nextContactDate: testDate2,
       );
 
       expect(updatedContact.firstName, 'Updated');
       expect(updatedContact.lastName, 'Name'); // Unchanged
       expect(updatedContact.nickname, 'NewNick');
       expect(updatedContact.frequency, ContactFrequency.quarterly.value); // Check against .value
-      expect(updatedContact.nextContact, testDate2);
+      expect(updatedContact.nextContactDate, testDate2);
     });
 
     test('Contact copyWith clears nullable fields', () {
@@ -87,8 +87,8 @@ void main() {
         lastName: 'Name',
         nickname: 'OG',
         birthday: testDate,
-        lastContacted: testDate,
-        nextContact: testDate,
+        lastContactDate: testDate,
+        nextContactDate: testDate,
         anniversary: testDate,
         phoneNumber: '111-222-3333',
         emails: ['test@example.com'],
@@ -98,8 +98,8 @@ void main() {
       final updatedContact = originalContact.copyWith(
         clearNickname: true,
         clearBirthday: true,
-        clearLastContacted: true,
-        // Not clearing nextContact to test it remains
+        clearLastContactDate: true,
+        // Not clearing nextContactDate to test it remains
         clearAnniversary: true,
         clearPhoneNumber: true,
         clearEmails: true,
@@ -108,8 +108,8 @@ void main() {
 
       expect(updatedContact.nickname, isNull);
       expect(updatedContact.birthday, isNull);
-      expect(updatedContact.lastContacted, isNull);
-      expect(updatedContact.nextContact, testDate); // Should remain
+      expect(updatedContact.lastContactDate, isNull);
+      expect(updatedContact.nextContactDate, testDate); // Should remain
       expect(updatedContact.anniversary, isNull);
       expect(updatedContact.phoneNumber, isNull);
       expect(updatedContact.emails, isNull);
@@ -124,8 +124,8 @@ void main() {
         nickname: 'JSONy',
         frequency: ContactFrequency.yearly.value, // Use .value for String
         birthday: DateTime.utc(1990, 5, 15),
-        lastContacted: DateTime.utc(2023, 1, 10),
-        nextContact: DateTime.utc(2024, 1, 10),
+        lastContactDate: DateTime.utc(2023, 1, 10),
+        nextContactDate: DateTime.utc(2024, 1, 10),
         anniversary: DateTime.utc(2020, 6, 20),
         phoneNumber: '987-654-3210',
         emails: ['json@example.com', 'test@example.com'],
@@ -142,8 +142,8 @@ void main() {
       expect(deserializedContact.nickname, contact.nickname);
       expect(deserializedContact.frequency, contact.frequency); // Already a string
       expect(deserializedContact.birthday, contact.birthday);
-      expect(deserializedContact.lastContacted, contact.lastContacted);
-      expect(deserializedContact.nextContact, contact.nextContact);
+      expect(deserializedContact.lastContactDate, contact.lastContactDate);
+      expect(deserializedContact.nextContactDate, contact.nextContactDate);
       expect(deserializedContact.anniversary, contact.anniversary);
       expect(deserializedContact.phoneNumber, contact.phoneNumber);
       expect(listEquals(deserializedContact.emails, contact.emails), isTrue);
@@ -159,8 +159,8 @@ void main() {
         nickname: 'EQ',
         frequency: ContactFrequency.daily.value, // Use .value for String
         birthday: testDate,
-        lastContacted: testDate,
-        nextContact: testDate2,
+        lastContactDate: testDate,
+        nextContactDate: testDate2,
         anniversary: testDate,
         phoneNumber: '555-555-5555',
         emails: ['equal@example.com'],
@@ -175,8 +175,8 @@ void main() {
         nickname: 'EQ',
         frequency: ContactFrequency.daily.value, // Use .value for String
         birthday: testDate,
-        lastContacted: testDate,
-        nextContact: testDate2,
+        lastContactDate: testDate,
+        nextContactDate: testDate2,
         anniversary: testDate,
         phoneNumber: '555-555-5555',
         emails: ['equal@example.com'],
@@ -191,8 +191,8 @@ void main() {
         nickname: 'EQ',
         frequency: ContactFrequency.daily.value, // Use .value for String
         birthday: testDate,
-        lastContacted: testDate,
-        nextContact: testDate2,
+        lastContactDate: testDate,
+        nextContactDate: testDate2,
         anniversary: testDate,
         phoneNumber: '555-555-5555',
         emails: ['equal@example.com'],
@@ -207,8 +207,8 @@ void main() {
         nickname: 'EQ',
         frequency: ContactFrequency.weekly.value, // Different frequency
         birthday: testDate,
-        lastContacted: testDate,
-        nextContact: testDate, // Different nextContact
+        lastContactDate: testDate,
+        nextContactDate: testDate, // Different nextContactDate
         anniversary: testDate,
         phoneNumber: '555-555-5555',
         emails: ['equal@example.com'],
@@ -233,9 +233,9 @@ void main() {
         nickname: 'Str',
         frequency: ContactFrequency.weekly.value, // Use .value for String
         isActive: false,
-        nextContact: DateTime(2025,1,1)
+        nextContactDate: DateTime(2025,1,1)
       );
-      final expectedString = 'Contact(id: 10, firstName: ToString, lastName: Test, nickname: Str, frequency: ${ContactFrequency.weekly.value}, isActive: false, nextContact: ${DateTime(2025,1,1)}, ...)';
+      final expectedString = 'Contact(id: 10, firstName: ToString, lastName: Test, nickname: Str, frequency: ${ContactFrequency.weekly.value}, isActive: false, nextContactDate: ${DateTime(2025,1,1)}, ...)';
       expect(contact.toString(), expectedString);
     });
   });
