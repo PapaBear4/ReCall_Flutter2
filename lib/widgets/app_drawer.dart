@@ -5,6 +5,8 @@ import 'package:recall/repositories/contact_repository.dart';
 import 'package:recall/repositories/usersettings_repository.dart';
 import 'package:recall/widgets/debug_widgets.dart'; // Import DebugOptionsTile
 import 'package:flutter/foundation.dart'; // For kDebugMode
+import 'package:go_router/go_router.dart';
+import 'package:recall/config/app_router.dart';
 
 Widget buildAppDrawer(BuildContext context, bool isHome) {
   return Drawer(
@@ -33,14 +35,11 @@ Widget buildAppDrawer(BuildContext context, bool isHome) {
           title: const Text('Home'),
           selected: isHome,
           onTap: () {
-            Navigator.pop(context);
+            Navigator.pop(context); // Close the drawer
+            // Navigate to home using go_router, replacing the current stack if not already home
             if (!isHome) {
-              context.read<ContactListBloc>().add(const LoadContactListEvent(
-                    filters: {ContactListFilterType.homescreen},
-                    sortField: ContactListSortField.nextContactDate,
-                    ascending: true,
-                  ));
-              Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+              // context.goNamed clears the stack and goes to the route
+              context.goNamed(AppRouter.homeRouteName);
             }
           },
         ),
@@ -48,33 +47,54 @@ Widget buildAppDrawer(BuildContext context, bool isHome) {
           leading: const Icon(Icons.contacts),
           title: const Text('All Contacts'),
           selected: !isHome &&
-              ModalRoute.of(context)?.settings.name == '/contactListFull',
+              GoRouter.of(context)
+                      .routeInformationProvider
+                      .value
+                      .uri
+                      .toString() ==
+                  '/contacts', // Correct way to get location
           onTap: () {
             Navigator.pop(context);
-            if (ModalRoute.of(context)?.settings.name != '/contactListFull') {
-              /*context.read<ContactListBloc>().add(const LoadContactListEvent(
+            // Navigate using go_router, pushing onto the stack if not already there
+            if (GoRouter.of(context)
+                    .routeInformationProvider
+                    .value
+                    .uri
+                    .toString() !=
+                '/contacts') {
+              context.read<ContactListBloc>().add(const LoadContactListEvent(
                     filters: {ContactListFilterType.active},
-                    sortField: ContactListSortField.lastName,
-                    ascending: true,
-                  ));*/
-              Navigator.pushNamed(context, '/contactListFull');
+                  )); // Pre-load
+              context.pushNamed(AppRouter.contactListRouteName);
             }
           },
         ),
         ListTile(
           leading: const Icon(Icons.settings),
           title: const Text('Settings'),
+          selected: GoRouter.of(context)
+                  .routeInformationProvider
+                  .value
+                  .uri
+                  .toString() ==
+              '/settings', // Select if current
           onTap: () {
             Navigator.pop(context);
-            Navigator.pushNamed(context, '/settings');
+            context.pushNamed(AppRouter.settingsRouteName); // Use pushNamed
           },
         ),
         ListTile(
           leading: const Icon(Icons.info_outline),
           title: const Text('About'),
+          selected: GoRouter.of(context)
+                  .routeInformationProvider
+                  .value
+                  .uri
+                  .toString() ==
+              '/about', // Select if current
           onTap: () {
             Navigator.pop(context);
-            Navigator.pushNamed(context, '/about');
+            context.pushNamed(AppRouter.aboutRouteName); // Use pushNamed
           },
         ),
         if (kDebugMode) // Only show in debug mode

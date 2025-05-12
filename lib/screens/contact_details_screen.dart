@@ -14,11 +14,12 @@ import 'package:recall/services/notification_helper.dart';
 import 'package:recall/utils/contact_utils.dart';
 import 'package:recall/widgets/contact/contact_view_widget.dart';
 import 'package:recall/widgets/contact/contact_edit_widget.dart';
+import 'package:go_router/go_router.dart';
 
 class ContactDetailsScreen extends StatefulWidget {
-  final int? contactId;
+  final int contactId;
 
-  const ContactDetailsScreen({super.key, this.contactId});
+  const ContactDetailsScreen({super.key, required this.contactId});
 
   @override
   State<ContactDetailsScreen> createState() => _ContactDetailsScreenState();
@@ -89,11 +90,11 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   }
 
   Future<void> _loadContactOrDefault() async {
-    final contactId = ModalRoute.of(context)!.settings.arguments as int?;
-    if (contactId != null && contactId != 0) {
+    // Use widget.contactId directly, passed by GoRouter
+    if (widget.contactId != 0) {
       context
           .read<ContactDetailsBloc>()
-          .add(LoadContactEvent(contactId: contactId));
+          .add(LoadContactEvent(contactId: widget.contactId));
     } else {
       String fetchedDefaultFrequency = ContactFrequency.biweekly.value;
       try {
@@ -454,11 +455,11 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       );
       if (!mounted) return;
       if (discard == true) {
-        Navigator.of(context).pop();
+        context.pop();
       }
     } else {
       if (mounted) {
-        Navigator.of(context).pop();
+        context.pop();
       }
     }
   }
@@ -509,7 +510,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           // Show a success message for saving a new contact
           ScaffoldMessenger.of(context)
               .showSnackBar(const SnackBar(content: Text('New contact saved')));
-          Navigator.of(context).pop(); // Pop screen after adding
+          context.pop(); // Pop screen after adding
         }
       } else {
         // If it's an existing contact, dispatch an event to save changes
@@ -520,7 +521,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           // Show a success message for saving changes
           ScaffoldMessenger.of(context)
               .showSnackBar(const SnackBar(content: Text('Changes saved')));
-              Navigator.of(context).pop(); // Pop screen after saving changes
+              context.pop(); // Pop screen after saving changes
         }
       }
     } else {
@@ -556,7 +557,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
                   context
                       .read<ContactDetailsBloc>()
                       .add(DeleteContactEvent(contactId: contactIdToDelete));
-                  Navigator.of(context).pop();
+                  context.pop();
                 }
               },
               child: const Text('Delete'),

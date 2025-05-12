@@ -6,6 +6,8 @@ import 'package:recall/blocs/contact_details/contact_details_bloc.dart';
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
 import 'package:recall/repositories/contact_repository.dart';
 import 'package:recall/utils/debug_utils.dart';
+import 'package:go_router/go_router.dart';
+import 'package:recall/config/app_router.dart';
 
 class AddContactSpeedDial extends StatelessWidget {
   final ContactListEvent onRefreshListEvent;
@@ -41,7 +43,7 @@ class AddContactSpeedDial extends StatelessWidget {
             context
                 .read<ContactDetailsBloc>()
                 .add(const ClearContactEvent());
-            Navigator.pushNamed(context, '/contactDetails', arguments: 0);
+            context.pushNamed(AppRouter.newContactRouteName);
           },
         ),
         SpeedDialChild(
@@ -50,7 +52,7 @@ class AddContactSpeedDial extends StatelessWidget {
           foregroundColor: Colors.white,
           label: 'Import from Device',
           onTap: () {
-            Navigator.pushNamed(context, '/importContacts');
+            context.pushNamed(AppRouter.importContactsRouteName);
           },
         ),
         if (kDebugMode) // Only show this option in debug mode

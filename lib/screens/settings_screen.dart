@@ -16,6 +16,8 @@ import 'package:recall/services/notification_helper.dart';
 import 'package:recall/services/notification_service.dart';
 import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:recall/utils/backup_restore_utils.dart'; // <-- ADD THIS IMPORT
+import 'package:go_router/go_router.dart';
+import 'package:recall/config/app_router.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -526,7 +528,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               const Icon(Icons.download_for_offline_outlined),
                           onTap: () {
                             // Navigate to the new selection screen
-                            Navigator.pushNamed(context, '/importContacts');
+                            context.pushNamed(AppRouter.importContactsRouteName);
                           },
                         ),
                         const Divider(),

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
-import 'package:recall/main.dart';
 import 'package:recall/repositories/contact_repository.dart';
 import 'package:recall/repositories/usersettings_repository.dart';
 import 'package:recall/blocs/contact_details/contact_details_bloc.dart';

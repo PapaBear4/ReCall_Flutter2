@@ -184,7 +184,7 @@ class _InMemoryUserSettingsSource implements DataSource<UserSettings> {
     return userSettings[id];
   }
 
-  @override
+  
   Future<UserSettings> update(UserSettings item) async {
     if (item.id == null) return item;
     userSettings[item.id!] = item;
