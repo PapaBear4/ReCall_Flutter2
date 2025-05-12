@@ -12,13 +12,14 @@ import 'package:recall/services/notification_helper.dart';
 import 'objectbox.g.dart' as objectbox_g;
 import 'package:workmanager/workmanager.dart';
 import 'package:recall/services/background_service.dart';
+import 'package:go_router/go_router.dart';
+import 'package:recall/config/app_router.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 late final objectbox_g.Store? store; // Declare the store
 
-String? initialNotificationPayload;  // to hold initial payload
-
+String? initialNotificationPayload; // to hold initial payload
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensure Flutter is initialized
@@ -30,18 +31,21 @@ void main() async {
   await notificationHelper.init();
 
   // --- CHECK FOR APP LAUNCH DETAILS ---
-  final NotificationAppLaunchDetails? notificationAppLaunchDetails = await
-      flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails(); // Use the plugin instance from helper
+  final NotificationAppLaunchDetails? notificationAppLaunchDetails =
+      await flutterLocalNotificationsPlugin
+          .getNotificationAppLaunchDetails(); // Use the plugin instance from helper
 
   if (notificationAppLaunchDetails?.didNotificationLaunchApp ?? false) {
-    initialNotificationPayload = notificationAppLaunchDetails!.notificationResponse?.payload;
-    logger.i('App launched via notification tap. Payload: $initialNotificationPayload');
+    initialNotificationPayload =
+        notificationAppLaunchDetails!.notificationResponse?.payload;
+    logger.i(
+        'App launched via notification tap. Payload: $initialNotificationPayload');
   }
   // --- END CHECK ---
 
   // Create repositories
   final contactRepository = ContactRepository(store);
-  final userSettingsRepository = UserSettingsRepository(store); 
+  final userSettingsRepository = UserSettingsRepository(store);
 
   // Initialize NotificationService
   final notificationService =
@@ -51,13 +55,16 @@ void main() async {
   await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
   initializeBackgroundService(); // Call the helper from background_service.dart
 
+  // Get the GoRouter instance
+  final GoRouter router = AppRouter.router;
 
   runApp(ChangeNotifierProvider<NotificationService>(
-        create: (_) => notificationService,
-        child: ReCall(
-          contactRepository: contactRepository,
-          userSettingsRepository: userSettingsRepository,
-        ),
-      ));
+    create: (_) => notificationService,
+    child: ReCall(
+      contactRepository: contactRepository,
+      userSettingsRepository: userSettingsRepository,
+      router: router,
+    ),
+  ));
   //logger.i('LOG:App started, background service initialized');
 }
