@@ -11,6 +11,8 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:go_router/go_router.dart';
+import 'package:recall/config/app_router.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -290,29 +292,22 @@ class NotificationHelper {
   }
 
   void _handleNotificationTap(String? payload) {
-    // --- ADD LOGGING HERE ---
-    logger.i(
-        '>>> _handleNotificationTap called with payload: $payload'); // Using logger
-    // --- END LOGGING ---
-
     if (payload != null &&
         payload.isNotEmpty &&
         payload.startsWith('contact_id:')) {
       final String idString = payload.split(':').last;
-      logger
-          .i('>>> Extracted ID string: $idString'); // Using logger
       final contactId = int.tryParse(idString);
-      logger.i('>>> Parsed contactId: $contactId'); // Using logger
 
       if (contactId != null) {
-        // --- ADD LOGGING HERE ---
-        logger.i(
-            '>>> Attempting navigation to /contactDetails with argument: $contactId'); // Using logger
-        logger.i(
-            '>>> navigatorKey.currentState is null? ${navigatorKey.currentState == null}'); // Using logger
-        // --- END LOGGING ---
-        navigatorKey.currentState
-            ?.pushNamed('/contactDetails', arguments: contactId);
+        // Use GoRouter to navigate, ensuring context is available via the key
+        if (navigatorKey.currentContext != null) {
+           GoRouter.of(navigatorKey.currentContext!).pushNamed(
+                AppRouter.contactDetailsRouteName,
+                pathParameters: {'id': contactId.toString()},
+              );
+        } else {
+           logger.e(">>> Navigator key context was null, couldn't navigate from notification tap.");
+        }
       } else {
         logger
             .w('>>> Failed to parse contactId from payload.'); // Using logger

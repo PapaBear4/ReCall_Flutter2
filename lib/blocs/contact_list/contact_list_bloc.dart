@@ -28,9 +28,9 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
       add(_ContactsUpdatedEvent(contacts)); // Dispatch an internal event
     });
 // BEGIN EVENT HANDLING
-// MARK: EVENTS
     on<ContactListEvent>((event, emit) async {
       // LOAD CONTACTS (FOR ALL CONTACTS SCREEN)
+      // MARK: LOAD
       if (event is LoadContactListEvent) {
         logger.i('LoadContactListEvent triggered with parameters: '
             'searchTerm=${event.searchTerm}, '
@@ -74,11 +74,8 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           logger.e('Error in LoadContactListEvent: $e');
           emit(ErrorContactListState(e.toString()));
         }
-        // DELETE CONTACT FROM LIST
-      } else if (event is DeleteContactsEvent) {
-        // TODO: Maybe for later to provide a way to delete contacts
-        // directly from the list
         // UPDATE CONTACT FROM LIST
+        // MARK: UPDATE
       } else if (event is UpdateContactFromListEvent) {
         final currentState = state;
         if (currentState is! LoadedContactListState) {
@@ -115,6 +112,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
               "Error updating contact ID ${event.contact.id} from list: $err");
         }
         // SORT CONTACTS
+        // MARK: SORT
       } else if (event is SortContactsEvent) {
         final currentState = state;
         if (currentState is LoadedContactListState) {
@@ -127,6 +125,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           ));
         }
         // SEARCH CONTACTS
+        // MARK: SEARCH
       } else if (event is ApplySearchEvent) {
         final currentState = state;
         if (currentState is LoadedContactListState) {
@@ -144,6 +143,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           ));
         }
         // APPLY FILTERS
+        // MARK: FILTER
       } else if (event is ApplyFilterEvent) {
         final currentState = state;
         if (currentState is LoadedContactListState) {
@@ -170,6 +170,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           ));
         }
         // CLEAR ALL FILTERS
+        // MARK: UN FILTER
       } else if (event is ClearFiltersEvent) {
         final currentState = state;
         if (currentState is LoadedContactListState) {
@@ -185,6 +186,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           ));
         }
         // DELETE MULTIPLE CONTACTS
+        // MARK: DELETE
       } else if (event is DeleteContactsEvent) {
         final currentState = state;
         if (currentState is! LoadedContactListState) {
@@ -229,6 +231,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           logger.e("Error deleting contacts ${event.contactIds}: $err");
         }
         // TOGGLE ACTIVE STATUS FOR MULTIPLE CONTACTS
+        // MARK: TOG Status
       } else if (event is ToggleContactsActiveStatusEvent) {
         final currentState = state;
         if (currentState is! LoadedContactListState) {

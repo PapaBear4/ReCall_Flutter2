@@ -6,7 +6,6 @@ import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
 import 'package:recall/models/contact.dart';
 import 'package:recall/utils/logger.dart';
 import 'package:recall/widgets/contact_list_item.dart';
-import 'package:recall/main.dart' as main_app;
 import 'package:flutter/foundation.dart'; // For kDebugMode
 import 'package:recall/widgets/add_contact_speed_dial.dart'; // Import the new widget
 import 'package:go_router/go_router.dart';
@@ -83,7 +82,6 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
-    _handleInitialNotification();
     if (widget.initialScreenLoadEvent != null) {
       context.read<ContactListBloc>().add(widget.initialScreenLoadEvent!);
     }
@@ -109,29 +107,7 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
     });
   }
 
-  void _handleInitialNotification() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (main_app.initialNotificationPayload != null && mounted) {
-        final String payload = main_app.initialNotificationPayload!;
-        int? contactId;
-        if (payload.startsWith('contact_id:')) {
-          contactId = int.tryParse(payload.split(':').last);
-        }
-        main_app.initialNotificationPayload = null;
-        if (contactId != null) {
-          context
-              .read<ContactDetailsBloc>()
-              .add(LoadContactEvent(contactId: contactId)); // Load data
-          // Navigate using GoRouter
-          context.pushNamed(
-            AppRouter.contactDetailsRouteName,
-            pathParameters: {'id': contactId.toString()},
-          );
-        }
-      }
-    });
-  }
-
+  // MARK: SELECTION
   void _toggleSelectionMode() {
     setState(() {
       _selectionMode = !_selectionMode;
@@ -169,8 +145,10 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
           ),
         ) ??
         false;
-
+    logger.i('Delete confirmation: $confirmDelete');
     if (confirmDelete && mounted) {
+      logger.i('Deleting contacts: $_selectedContactIds');
+      final int deletedContactsCount = _selectedContactIds.length;
       context
           .read<ContactListBloc>()
           .add(DeleteContactsEvent(contactIds: _selectedContactIds.toList()));
@@ -179,8 +157,7 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
         _selectedContactIds.clear();
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('${_selectedContactIds.length} contacts deleted')),
+        SnackBar(content: Text('$deletedContactsCount contacts deleted')),
       );
     }
   }

@@ -13,7 +13,8 @@ import 'package:recall/utils/logger.dart';
 
 // MARK: - Router Configuration
 class AppRouter {
-  static final _rootNavigatorKey = navigatorKey; // Use the global key from main.dart
+  static final _rootNavigatorKey =
+      navigatorKey; // Use the global key from main.dart
 
   // Using route names is a good practice for type-safe navigation
   // and makes it easier to manage routes.
@@ -108,7 +109,42 @@ class AppRouter {
         ],
       ),
     ],
-    // MARK: - Error Handling
+    
+    // MARK: - Redirection Logic
+    redirect: (BuildContext context, GoRouterState state) {
+      // Check if there's an initial payload from a terminated notification launch
+      if (initialNotificationPayload != null) {
+        logger.i(
+            'Redirect: Detected initial payload: $initialNotificationPayload');
+        final payload = initialNotificationPayload;
+        initialNotificationPayload = null; // Consume the payload!
+
+        if (payload != null && payload.startsWith('contact_id:')) {
+          final idString = payload.split(':').last;
+          final contactId = int.tryParse(idString);
+
+          if (contactId != null && contactId != 0) {
+            // Ensure we are not already trying to go there to avoid loops
+            final targetPath = '/contact/$contactId';
+            if (state.uri.toString() != targetPath) {
+              logger.i(
+                  'Redirect: Redirecting to $targetPath from initial payload.');
+              return targetPath; // Redirect to the contact details screen
+            } else {
+              logger.i(
+                  'Redirect: Already at target path $targetPath, no redirection needed.');
+            }
+          } else {
+            logger.w(
+                'Redirect: Failed to parse contactId from payload: $payload');
+          }
+        }
+      }
+      // No redirection needed, proceed to the original location
+      return null;
+    },
+
+// MARK: - Error Handling
     errorBuilder: (context, state) {
       logger.e('Routing error: No route found for ${state.uri.toString()}');
       return Scaffold(
