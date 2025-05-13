@@ -184,7 +184,7 @@ class _InMemoryNotificationSource implements DataSource<Notification> {
     return notifications[id];
   }
 
-  @override
+  
   Future<Notification> update(Notification item) async {
     if (item.id == null) return item;
     if (notifications.containsKey(item.id)) {

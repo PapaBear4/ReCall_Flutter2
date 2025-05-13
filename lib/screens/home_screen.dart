@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
 import 'package:recall/widgets/app_drawer.dart';
 import 'package:recall/widgets/base_contact_list_scaffold.dart';
+import 'package:go_router/go_router.dart';
+import 'package:recall/config/app_router.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -40,20 +43,16 @@ class HomeScreen extends StatelessWidget {
       appBarActions: [
         TextButton(
           onPressed: () {
-            /*/ Dispatch event to load all active contacts for the ContactListScreen
+            // Navigate using go_router's named route for the full contact list
+            // Using pushNamed to add it to the navigation stack
             context.read<ContactListBloc>().add(
                   const LoadContactListEvent(
                     filters: {
                       ContactListFilterType.active
-                    }, // Show active contacts
-                    sortField: ContactListSortField
-                        .lastName, // Default sort for all contacts
-                    ascending: true,
+                    }, // Pre-load active contacts
                   ),
-                );*/
-            // Navigate to the ContactListScreen
-            // Ensure you have a route named '/contactList' or use MaterialPageRoute
-            Navigator.pushNamed(context, '/contactListFull');
+                );
+            context.pushNamed(AppRouter.contactListRouteName);
           },
           child: Row(
             mainAxisSize: MainAxisSize.min,

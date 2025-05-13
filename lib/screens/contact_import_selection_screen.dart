@@ -9,6 +9,7 @@ import 'package:recall/services/contact_importer.dart';
 import 'package:recall/utils/logger.dart';
 import 'package:recall/models/contact.dart'
     as app_contact; // Alias for your app's Contact model
+import 'package:go_router/go_router.dart';
 
 class ContactImportSelectionScreen extends StatefulWidget {
   const ContactImportSelectionScreen({super.key});
@@ -160,13 +161,13 @@ class _PhoneEmailSelectionDialogState extends State<PhoneEmailSelectionDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
           child: const Text('Cancel'),
         ),
         TextButton(
           onPressed: () {
             widget.onSave(_selectedPhone, _selectedEmails.toList());
-            Navigator.of(context).pop();
+            context.pop();
           },
           child: const Text('Save Selection'),
         ),
@@ -281,7 +282,7 @@ class _ContactImportSelectionScreenState
         content: Text(message),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => context.pop(),
             child: const Text('OK'),
           ),
         ],

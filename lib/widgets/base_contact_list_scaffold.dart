@@ -4,12 +4,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:recall/blocs/contact_details/contact_details_bloc.dart';
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
 import 'package:recall/models/contact.dart';
-import 'package:recall/screens/scheduled_notifications_screen.dart';
 import 'package:recall/utils/logger.dart';
 import 'package:recall/widgets/contact_list_item.dart';
 import 'package:recall/main.dart' as main_app;
 import 'package:flutter/foundation.dart'; // For kDebugMode
 import 'package:recall/widgets/add_contact_speed_dial.dart'; // Import the new widget
+import 'package:go_router/go_router.dart';
+import 'package:recall/config/app_router.dart';
 
 // Re-define or import ListAction if not globally accessible
 enum ListAction {
@@ -120,8 +121,12 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
         if (contactId != null) {
           context
               .read<ContactDetailsBloc>()
-              .add(LoadContactEvent(contactId: contactId));
-          Navigator.pushNamed(context, '/contactDetails', arguments: contactId);
+              .add(LoadContactEvent(contactId: contactId)); // Load data
+          // Navigate using GoRouter
+          context.pushNamed(
+            AppRouter.contactDetailsRouteName,
+            pathParameters: {'id': contactId.toString()},
+          );
         }
       }
     });
@@ -279,11 +284,11 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
                     FloatingActionButton.small(
                       heroTag: "${widget.fabHeroTagPrefix}_debug_notifications",
                       tooltip: "View Scheduled Notifications",
-                      onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) =>
-                                  const ScheduledNotificationsScreen())),
+                      onPressed: () => (
+                        // Replace with GoRouter navigation:
+                        context
+                            .pushNamed(AppRouter.debugNotificationsRouteName),
+                      ),
                       child: const Icon(Icons.notifications),
                     ),
                 ],
@@ -297,7 +302,8 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
 
   PreferredSizeWidget _buildNormalAppBar(BuildContext context) {
     return AppBar(
-      leading: widget.drawerWidget == null // Show back button if no drawerWidget
+      leading: widget.drawerWidget ==
+              null // Show back button if no drawerWidget
           ? IconButton(
               icon: const Icon(Icons.arrow_back),
               onPressed: () {
@@ -307,7 +313,7 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
                       sortField: ContactListSortField.nextContactDate,
                       ascending: true, // Most overdue first
                     ));
-                Navigator.of(context).pop();
+                context.pop(); // Use context.pop() from go_router
               },
             )
           : null,
@@ -423,11 +429,15 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
             if (_selectionMode) {
               _toggleContactSelection(contact.id!);
             } else {
-              context
-                  .read<ContactDetailsBloc>()
-                  .add(LoadContactEvent(contactId: contact.id!));
-              Navigator.pushNamed(context, '/contactDetails',
-                  arguments: contact.id!);
+              context.read<ContactDetailsBloc>().add(
+                  LoadContactEvent(contactId: contact.id!)); // Load BLoC state
+              // Navigate using go_router
+              context.pushNamed(
+                AppRouter.contactDetailsRouteName,
+                pathParameters: {
+                  'id': contact.id!.toString()
+                }, // Pass id as path parameter
+              );
             }
           },
           onLongPress: () => _onContactLongPress(contact),

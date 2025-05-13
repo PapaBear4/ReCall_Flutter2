@@ -59,6 +59,7 @@ dependencies:
       path: workmanager # Specifies the package is within a subfolder in the repo
       ref: main   # Use the 'main' branch
   flutter_speed_dial: ^7.0.0
+  go_router: ^15.1.2
 
 
 dev_dependencies:
