@@ -65,7 +65,9 @@ class ContactListItem extends StatelessWidget {
               label: 'Mark Contacted',
             ),
           ]),
-          startActionPane: ActionPane(
+          startActionPane: null, 
+          // TODO: Add a snooze feature for 1, 3, and 5 days
+          /*ActionPane(
             motion: const DrawerMotion(),
             children: [
               SlidableAction(
@@ -76,7 +78,7 @@ class ContactListItem extends StatelessWidget {
                 label: 'Mark Contacted',
               ),
             ],
-          ),
+          ),*/
           child: ListTile(
             selected: isSelected,
             selectedTileColor: Colors.blue.withAlpha(26),
