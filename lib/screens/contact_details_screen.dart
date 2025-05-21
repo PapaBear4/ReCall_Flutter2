@@ -6,7 +6,6 @@ import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:recall/blocs/contact_details/contact_details_bloc.dart';
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
 import 'package:recall/models/contact.dart';
-import 'package:intl/intl.dart';
 import 'package:recall/utils/logger.dart';
 import 'package:recall/models/enums.dart';
 import 'package:recall/repositories/usersettings_repository.dart';
@@ -19,7 +18,10 @@ import 'package:go_router/go_router.dart';
 class ContactDetailsScreen extends StatefulWidget {
   final int contactId;
 
-  const ContactDetailsScreen({super.key, required this.contactId});
+  const ContactDetailsScreen({
+    super.key,
+    required this.contactId,
+  });
 
   @override
   State<ContactDetailsScreen> createState() => _ContactDetailsScreenState();
@@ -433,134 +435,72 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
 
   // MARK: - Action Handlers (Navigation, Save, Delete, Contacted)
   Future<void> _handleBackNavigation() async {
-    if (_isEditMode && _hasUnsavedChanges) {
-      final bool? discard = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Discard Changes?'),
-          content: const Text(
-              'You have unsaved changes. Are you sure you want to discard them?'),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
+    if (mounted) {
+      /*context.read<ContactListBloc>().add(
+            const LoadContactListEvent(
+              filters: {
+                ContactListFilterType.homescreen,
+              }, // Pre-load active contacts
+              sortField: ContactListSortField.lastContactDate,
+              ascending: true, // most overdue first
             ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Discard'),
-            ),
-          ],
-        ),
-      );
-      if (!mounted) return;
-      if (discard == true) {
-        context.pop();
-      }
-    } else {
-      if (mounted) {
-        context.pop();
-      }
+          );*/
+      context.pop();
     }
   }
 
-  // ...existing code...
   void _onSaveButtonPressed(BuildContext context) {
-    // Collect emails from the email controllers, trimming whitespace and filtering out empty entries
-    List<String> currentEmailsFromControllers = _emailControllers
-        .map((controller) => controller.text.trim())
-        .where((email) => email.isNotEmpty)
-        .toList();
-
-    // Create a new contact object with updated values from the form fields
-    final contactToSave = _localContact.copyWith(
-      firstName: _firstNameController.text.trim(),
-      lastName: _lastNameController.text.trim(),
-      nickname: _nicknameController.text.trim().isNotEmpty
-          ? _nicknameController.text.trim()
-          : null,
-      phoneNumber:
-          phoneMaskFormatter.getUnmaskedText(), // Unmasked phone number
-      notes: _notesController.text.trim().isNotEmpty
-          ? _notesController.text.trim()
-          : null,
-      emails: currentEmailsFromControllers, // Updated email list
-      frequency: _localContact.frequency,
-      birthday: _localContact.birthday,
-      anniversary: _localContact.anniversary,
-      lastContactDate: _localContact.lastContactDate ?? DateTime.now(),
-      isActive: _localContact.isActive,
-      nextContactDate: calculateNextContactDate(_localContact)
-    );
-
-    // Validate the form before proceeding
     if (_formKey.currentState!.validate()) {
-      logger.i('_onSaveButtonPressed: Form validation successful.');
-      // Determine if this is an existing contact or a new one
-      bool isExistingContact =
-          contactToSave.id != null && contactToSave.id != 0;
-      logger.i('_onSaveButtonPressed: Is existing contact? $isExistingContact');
+      _formKey.currentState!
+          .save(); // Ensure all onSaved callbacks are triggered
 
-      if (!isExistingContact) {
-        // If it's a new contact, dispatch an event to add it
-        context
-            .read<ContactDetailsBloc>()
-            .add(SaveContactEvent(contact: contactToSave));
-        if (mounted) {
-          // Show a success message for saving a new contact
-          ScaffoldMessenger.of(context)
-              .showSnackBar(const SnackBar(content: Text('New contact saved')));
-          context.pop(); // Pop screen after adding
-        }
-      } else {
-        // If it's an existing contact, dispatch an event to save changes
-        context
-            .read<ContactDetailsBloc>()
-            .add(SaveContactEvent(contact: contactToSave));
-        if (mounted) {
-          // Show a success message for saving changes
-          ScaffoldMessenger.of(context)
-              .showSnackBar(const SnackBar(content: Text('Changes saved')));
-              context.pop(); // Pop screen after saving changes
-        }
-      }
-    } else {
-      // If validation fails, show an error message
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Please correct the errors before saving.')),
-        );
-      }
+      // Update _localContact with values from controllers one last time
+      _localContact = _localContact.copyWith(
+        firstName: _firstNameController.text,
+        lastName: _lastNameController.text,
+        nickname: _nicknameController.text,
+        phoneNumber: phoneMaskFormatter.getUnmaskedText(),
+        notes: _notesController.text,
+        // emails are handled by _handleEmailsChange via onSaved in EmailListEditWidget
+      );
+
+      context
+          .read<ContactDetailsBloc>()
+          .add(SaveContactEvent(contact: _localContact));
+      setState(() {
+        _isEditMode = false;
+        _hasUnsavedChanges = false;
+      });
     }
   }
+
   void _onDeleteButtonPressed(BuildContext context) {
-    if (_localContact.id == null || _localContact.id == 0) {
-      return;
-    }
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text('Delete Contact'),
-          content: Text(
-              'Are you sure you want to delete ${_localContact.firstName} ${_localContact.lastName}?\n\nThis action cannot be undone.'),
+          content: const Text('Are you sure you want to delete this contact?'),
           actions: <Widget>[
             TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                child: const Text('Cancel')),
-            TextButton(
+              child: const Text('Cancel'),
               onPressed: () {
-                final contactIdToDelete = _localContact.id!;
-                Navigator.of(dialogContext).pop();
+                Navigator.of(dialogContext).pop(); // Close the dialog
+              },
+            ),
+            TextButton(
+              child: const Text('Delete'),
+              onPressed: () {
+                Navigator.of(dialogContext).pop(); // Close the dialog
+                context
+                    .read<ContactDetailsBloc>()
+                    .add(DeleteContactEvent(contactId: widget.contactId));
                 if (mounted) {
-                  context
-                      .read<ContactDetailsBloc>()
-                      .add(DeleteContactEvent(contactId: contactIdToDelete));
-                  context.pop();
+                  //TODO: need something here to either pop to home or contact list and do it in a
+                  // way that correctly applies the filter
+                  context.pop(); // Pop back to the previous screen
                 }
               },
-              child: const Text('Delete'),
             ),
           ],
         );
@@ -569,26 +509,22 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   }
 
   void _onContactedButtonPressed() {
-    if (_localContact.id == null || _localContact.id == 0) {
-      return;
-    }
     final now = DateTime.now();
-    final updatedContact = _localContact.copyWith(lastContactDate: now);
-
-    setState(() {
-      _localContact = updatedContact;
-    });
-
+    // Ensure the local contact being used for calculateNextContactDate has the updated lastContactDate
+    final contactWithUpdatedLastContactDate =
+        _localContact.copyWith(lastContactDate: now);
+    final Contact updatedContact = contactWithUpdatedLastContactDate.copyWith(
+      nextContactDate:
+          calculateNextContactDate(contactWithUpdatedLastContactDate),
+    );
     context
         .read<ContactDetailsBloc>()
         .add(SaveContactEvent(contact: updatedContact));
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content:
-              Text('Marked as contacted: ${DateFormat.yMd().format(now)}')));
-      context.read<ContactListBloc>().add(const LoadContactListEvent());
-    }
+    setState(() {
+      _localContact =
+          updatedContact; // Update local state to reflect change immediately
+      _hasUnsavedChanges = false; // Assuming marking as contacted is a save
+    });
   }
 
   // MARK: - Utility & Action Launchers

@@ -83,9 +83,11 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           return;
         }
 
+        logger.i('UpdateContactFromListEvent: Received contact: ${event.contact}'); // Added logger
         emit(const LoadingContactListState());
         try {
           final updatedContact = await _contactRepository.update(event.contact);
+          logger.i('UpdateContactFromListEvent: Updated contact in repository: $updatedContact'); // Added logger
           await _notificationService.scheduleReminder(updatedContact);
 
           final newOriginalContacts = currentState.originalContacts.map((c) {

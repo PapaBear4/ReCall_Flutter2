@@ -46,6 +46,7 @@ class ContactDetailsBloc
         // SAVE CONTACT DETAILS
         // MARK: SAVE
         // makes sure that the contact date fields are set correctly
+        logger.i('SaveContactEvent: Received contact: ${event.contact}'); // Added logger
         emit(const LoadingContactDetailsState());
         try {
           // ensure there's a last contact date
@@ -59,15 +60,17 @@ class ContactDetailsBloc
           // if isActive, set the next contact date
           if (event.contact.isActive) {
             contactToSave = contactToSave.copyWith(
-              nextContactDate: calculateNextContactDate(event.contact),
+              nextContactDate: calculateNextContactDate(contactToSave), // Changed from event.contact to contactToSave
             );
           }
 
           // Save the contact details to the repository
+          logger.i('SaveContactEvent: Saving contact: $contactToSave'); // Added logger
           final updatedContact =
               (contactToSave.id == null || contactToSave.id == 0)
                   ? await _contactRepository.add(contactToSave)
                   : await _contactRepository.update(contactToSave);
+          logger.i('SaveContactEvent: Saved contact: $updatedContact'); // Added logger
 
           // Emit the updated state
           emit(LoadedContactDetailsState(updatedContact));

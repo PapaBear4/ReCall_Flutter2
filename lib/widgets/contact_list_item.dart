@@ -25,9 +25,13 @@ class ContactListItem extends StatelessWidget {
 
   // Helper function to dispatch the update event
   void _markContacted(BuildContext context, Contact contact) {
-    final updatedContact = contact.copyWith(
-      lastContactDate: DateTime.now(),
-      nextContactDate: calculateNextContactDate(contact));
+    final now = DateTime.now();
+    // First, create a contact object that has the new lastContactDate
+    final contactWithJustUpdatedLastContactDate = contact.copyWith(lastContactDate: now);
+    // Then, use this object to calculate the nextContactDate
+    final updatedContact = contactWithJustUpdatedLastContactDate.copyWith(
+      nextContactDate: calculateNextContactDate(contactWithJustUpdatedLastContactDate)
+    );
     context
         .read<ContactListBloc>()
         .add(UpdateContactFromListEvent(updatedContact));
