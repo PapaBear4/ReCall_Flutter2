@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:recall/blocs/contact_details/contact_details_bloc.dart';
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
 import 'package:recall/models/contact.dart';
 import 'package:recall/utils/logger.dart';
@@ -11,7 +10,6 @@ import 'package:recall/widgets/add_contact_speed_dial.dart'; // Import the new w
 import 'package:go_router/go_router.dart';
 import 'package:recall/config/app_router.dart';
 
-// Re-define or import ListAction if not globally accessible
 enum ListAction {
   sortByDueDateAsc,
   sortByDueDateDesc,
@@ -77,14 +75,32 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
   bool _selectionMode = false;
   final Set<int> _selectedContactIds = {};
 
+  // Store current filter and sort state to pass to details screen
+  Set<ContactListFilterType> _currentFilters = {ContactListFilterType.active}; // Default
+  ContactListSortField _currentSortField = ContactListSortField.lastName; // Default
+  bool _currentAscending = true; // Default
+
   // MARK: Lifecycle
   @override
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
+
+    ContactListEvent eventToLoad;
     if (widget.initialScreenLoadEvent != null) {
-      context.read<ContactListBloc>().add(widget.initialScreenLoadEvent!);
+      eventToLoad = widget.initialScreenLoadEvent!;
+    } else {
+      eventToLoad = widget.onRefreshEvent;
     }
+
+    if (eventToLoad is LoadContactListEvent) {
+      // Directly assign as analyzer indicates these are non-null for LoadContactListEvent
+      _currentFilters = eventToLoad.filters;
+      _currentSortField = eventToLoad.sortField;
+      _currentAscending = eventToLoad.ascending;
+    }
+    // Ensure an event is always added
+    context.read<ContactListBloc>().add(eventToLoad);
   }
 
   @override
@@ -189,6 +205,7 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
     }
   }
 
+  // MARK: REFRESH
   Future<void> _refreshContacts() async {
     logger.i('Triggering onRefreshEvent: ${widget.onRefreshEvent}');
     _searchController.clear(); // Also clear search on refresh
@@ -202,81 +219,95 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
     }
   }
 
+  // MARK: BUILD
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      drawer: widget.drawerWidget,
-      appBar: _selectionMode
-          ? _buildSelectionAppBar(context)
-          : _buildNormalAppBar(context),
-      body: RefreshIndicator(
-        onRefresh: _refreshContacts,
-        child: BlocBuilder<ContactListBloc, ContactListState>(
-          builder: (context, state) {
-            if (state is InitialContactListState ||
-                state is LoadingContactListState) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is EmptyContactListState) {
-              return Center(child: Text(widget.emptyListText));
-            } else if (state is LoadedContactListState) {
-              if (state.displayedContacts.isEmpty &&
-                  _searchController.text.isNotEmpty) {
-                return const Center(
-                    child: Text('No contacts match your search.'));
-              } else if (state.displayedContacts.isEmpty &&
-                  state.activeFilters.isNotEmpty) {
-                return const Center(
-                    child: Text('No contacts match your current filters.'));
-              } else if (state.displayedContacts.isEmpty) {
+    return BlocListener<ContactListBloc, ContactListState>(
+      listener: (context, state) {
+        if (state is LoadedContactListState) {
+          // Update current filter/sort state when the list reloads
+          _currentFilters = state.activeFilters;
+          _currentSortField = state.sortField;
+          _currentAscending = state.ascending;
+          logger.i(
+              'BaseContactListScaffold: Updated _currentFilters: $_currentFilters, _currentSortField: $_currentSortField, _currentAscending: $_currentAscending from LoadedContactListState');
+        }
+      },
+      child: Scaffold(
+        drawer: widget.drawerWidget,
+        appBar: _selectionMode
+            ? _buildSelectionAppBar(context)
+            : _buildNormalAppBar(context),
+        body: RefreshIndicator(
+          onRefresh: _refreshContacts,
+          child: BlocBuilder<ContactListBloc, ContactListState>(
+            builder: (context, state) {
+              if (state is InitialContactListState ||
+                  state is LoadingContactListState) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (state is EmptyContactListState) {
                 return Center(child: Text(widget.emptyListText));
+              } else if (state is LoadedContactListState) {
+                if (state.displayedContacts.isEmpty &&
+                    _searchController.text.isNotEmpty) {
+                  return const Center(
+                      child: Text('No contacts match your search.'));
+                } else if (state.displayedContacts.isEmpty &&
+                    state.activeFilters.isNotEmpty) {
+                  return const Center(
+                      child: Text('No contacts match your current filters.'));
+                } else if (state.displayedContacts.isEmpty) {
+                  return Center(child: Text(widget.emptyListText));
+                }
+                return _buildContactList(state.displayedContacts);
+              } else if (state is ErrorContactListState) {
+                return Center(child: Text("Error: ${state.message}"));
               }
-              return _buildContactList(state.displayedContacts);
-            } else if (state is ErrorContactListState) {
-              return Center(child: Text("Error: ${state.message}"));
-            }
-            return Center(child: Text(widget.emptyListText));
-          },
+              return Center(child: Text(widget.emptyListText));
+            },
+          ),
         ),
-      ),
-      floatingActionButton: AddContactSpeedDial(
-        onRefreshListEvent: widget.onRefreshEvent,
-      ),
-      bottomNavigationBar: BottomAppBar(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              const Spacer(),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (kDebugMode && widget.debugRefreshEvent != null)
-                    IconButton(
-                      icon: const Icon(Icons.refresh),
-                      tooltip: 'Debug Refresh',
-                      onPressed: _debugRefreshContacts,
-                    ),
-                  if (kDebugMode)
-                    FloatingActionButton.small(
-                      heroTag: "${widget.fabHeroTagPrefix}_debug_notifications",
-                      tooltip: "View Scheduled Notifications",
-                      onPressed: () => (
-                        // Replace with GoRouter navigation:
-                        context
-                            .pushNamed(AppRouter.debugNotificationsRouteName),
+        floatingActionButton: AddContactSpeedDial(
+          onRefreshListEvent: widget.onRefreshEvent,
+        ),
+        bottomNavigationBar: BottomAppBar(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                const Spacer(),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (kDebugMode && widget.debugRefreshEvent != null)
+                      IconButton(
+                        icon: const Icon(Icons.refresh),
+                        tooltip: 'Debug Refresh',
+                        onPressed: _debugRefreshContacts,
                       ),
-                      child: const Icon(Icons.notifications),
-                    ),
-                ],
-              )
-            ],
+                    if (kDebugMode)
+                      FloatingActionButton.small(
+                        heroTag: "${widget.fabHeroTagPrefix}_debug_notifications",
+                        tooltip: "View Scheduled Notifications",
+                        onPressed: () => (
+                          // Replace with GoRouter navigation:
+                          context
+                              .pushNamed(AppRouter.debugNotificationsRouteName),
+                        ),
+                        child: const Icon(Icons.notifications),
+                      ),
+                  ],
+                )
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
+  // MARK: STD AppBar
   PreferredSizeWidget _buildNormalAppBar(BuildContext context) {
     return AppBar(
       leading: widget.drawerWidget ==
@@ -284,12 +315,9 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
           ? IconButton(
               icon: const Icon(Icons.arrow_back),
               onPressed: () {
-                // Dispatch the homescreen filter event before popping
-                context.read<ContactListBloc>().add(const LoadContactListEvent(
-                      filters: {ContactListFilterType.homescreen},
-                      sortField: ContactListSortField.nextContactDate,
-                      ascending: true, // Most overdue first
-                    ));
+                // The above logic is specific to HomeScreen's desired behavior when it *has* a back button.
+                // For a generic back button, we just pop. The calling screen (if it's a BaseContactListScaffold based one)
+                // will handle its own refresh via RouteAware.
                 context.pop(); // Use context.pop() from go_router
               },
             )
@@ -346,6 +374,7 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
     );
   }
 
+  // MARK: SEL AppBar
   PreferredSizeWidget _buildSelectionAppBar(BuildContext context) {
     return AppBar(
       backgroundColor: Colors.blueGrey.shade800,
@@ -389,37 +418,33 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
     );
   }
 
+  // MARK: CONTACT LIST
   Widget _buildContactList(List<Contact> contactsToDisplay) {
-    return ListView.builder(
-      itemCount: contactsToDisplay.length,
-      itemBuilder: (context, index) {
-        final contact = contactsToDisplay[index];
-        final bool isSelected =
-            contact.id != null && _selectedContactIds.contains(contact.id!);
-        return ContactListItem(
-          contact: contact,
-          isSelected: isSelected,
-          showActiveStatus:
-              widget.displayActiveStatusInList, // Pass the new param
-          onTap: () {
-            if (contact.id == null) return;
-            if (_selectionMode) {
-              _toggleContactSelection(contact.id!);
-            } else {
-              context.read<ContactDetailsBloc>().add(
-                  LoadContactEvent(contactId: contact.id!)); // Load BLoC state
-              // Navigate using go_router
-              context.pushNamed(
-                AppRouter.contactDetailsRouteName,
-                pathParameters: {
-                  'id': contact.id!.toString()
-                }, // Pass id as path parameter
-              );
-            }
-          },
-          onLongPress: () => _onContactLongPress(contact),
-        );
-      },
+    return RefreshIndicator(
+      onRefresh: _refreshContacts,
+      child: ListView.builder(
+        itemCount: contactsToDisplay.length,
+        itemBuilder: (context, index) {
+          final contact = contactsToDisplay[index];
+          return ContactListItem(
+            contact: contact,
+            isSelected: _selectedContactIds.contains(contact.id),
+            showActiveStatus: widget.displayActiveStatusInList,
+            onTap: () {
+              if (_selectionMode) {
+                _toggleContactSelection(contact.id!);
+              } else {
+                // Navigate to contact details
+                context.pushNamed(
+                  AppRouter.contactDetailsRouteName,
+                  pathParameters: {'id': contact.id.toString()},
+                );
+              }
+            },
+            onLongPress: () => _onContactLongPress(contact),
+          );
+        },
+      ),
     );
   }
 }

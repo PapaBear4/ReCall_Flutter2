@@ -15,6 +15,7 @@ import 'package:recall/utils/logger.dart';
 class AppRouter {
   static final _rootNavigatorKey =
       navigatorKey; // Use the global key from main.dart
+  static final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>(); // Add this line
 
   // Using route names is a good practice for type-safe navigation
   // and makes it easier to manage routes.
@@ -59,9 +60,10 @@ class AppRouter {
             builder: (BuildContext context, GoRouterState state) {
               final String? idString = state.pathParameters['id'];
               final int contactId = int.tryParse(idString ?? '0') ?? 0;
-              // Pass contactId to the screen.
-              // The screen will need to be updated to accept this.
-              return ContactDetailsScreen(contactId: contactId);
+
+              return ContactDetailsScreen(
+                contactId: contactId,
+              );
             },
           ),
           // MARK: - New Contact Route

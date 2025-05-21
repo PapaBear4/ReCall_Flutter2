@@ -9,6 +9,7 @@ import 'package:recall/blocs/contact_details/contact_details_bloc.dart';
 import 'package:recall/services/notification_service.dart';
 import 'package:recall/utils/logger.dart'; // Import HomeScreen
 import 'package:go_router/go_router.dart';
+import 'package:recall/config/app_router.dart'; // Add this line
 
 class ReCall extends StatelessWidget {
   final ContactRepository _contactRepository;
@@ -69,6 +70,7 @@ class ReCall extends StatelessWidget {
               ),
               useMaterial3: true, // Keep this enabled
             ),
+            // navigatorObservers: [AppRouter.routeObserver], // Commented out for now
           ),
         ));
   }
