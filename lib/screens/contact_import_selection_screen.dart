@@ -10,6 +10,7 @@ import 'package:recall/utils/logger.dart';
 import 'package:recall/models/contact.dart'
     as app_contact; // Alias for your app's Contact model
 import 'package:go_router/go_router.dart';
+import 'package:recall/utils/contact_utils.dart'; // Added for calculateNextContactDate
 
 class ContactImportSelectionScreen extends StatefulWidget {
   const ContactImportSelectionScreen({super.key});
@@ -23,157 +24,11 @@ class ContactImportSelectionScreen extends StatefulWidget {
 class ContactSelectionInfo {
   final fc.Contact contact;
   bool isSelected;
-  // Store chosen phone/emails temporarily (Phase 3.3 - initial setup)
+  // Store chosen phone/emails automatically
   fc.Phone? selectedPhone;
   List<fc.Email> selectedEmails = [];
 
   ContactSelectionInfo(this.contact, {this.isSelected = false});
-}
-
-class PhoneEmailSelectionDialog extends StatefulWidget {
-  final fc.Contact contact;
-  final fc.Phone? initialPhone;
-  final List<fc.Email> initialEmails;
-  // Callback function to return selected items
-  final Function(fc.Phone? selectedPhone, List<fc.Email> selectedEmails) onSave;
-
-  const PhoneEmailSelectionDialog({
-    super.key,
-    required this.contact,
-    required this.initialPhone,
-    required this.initialEmails,
-    required this.onSave,
-  });
-
-  @override
-  State<PhoneEmailSelectionDialog> createState() =>
-      _PhoneEmailSelectionDialogState();
-}
-
-class _PhoneEmailSelectionDialogState extends State<PhoneEmailSelectionDialog> {
-  fc.Phone? _selectedPhone;
-  late Set<fc.Email> _selectedEmails; // Use a Set for easier add/remove
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedPhone = widget.initialPhone;
-    _selectedEmails = Set<fc.Email>.from(widget.initialEmails);
-
-    // Pre-select the first phone if none was initially selected and phones exist
-    if (_selectedPhone == null && widget.contact.phones.isNotEmpty) {
-      _selectedPhone = widget.contact.phones.first;
-    }
-    // Pre-select all emails if none were initially selected and emails exist
-    if (_selectedEmails.isEmpty && widget.contact.emails.isNotEmpty) {
-      _selectedEmails = Set<fc.Email>.from(widget.contact.emails);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Get screen height to constrain dialog height
-    final screenHeight = MediaQuery.of(context).size.height;
-
-    return AlertDialog(
-      title: Text('Select for ${widget.contact.displayName}'),
-      // Constrain the content size
-      content: Container(
-        // Wrap content in a Container
-        width: double.maxFinite, // Use maximum width available in dialog
-        // Set a maximum height, e.g., 60% of screen height
-        // Adjust this fraction as needed
-        constraints: BoxConstraints(maxHeight: screenHeight * 0.6),
-        child: SingleChildScrollView(
-          // Content is scrollable
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // --- Phone Selection ---
-              if (widget.contact.phones.isNotEmpty) ...[
-                const Text('Select One Phone Number:',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                // Note: ListView.builder inside a Column needs shrinkWrap and physics
-                // It should be okay here since the outer Container provides constraints
-                ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: widget.contact.phones.length,
-                    itemBuilder: (context, index) {
-                      final phone = widget.contact.phones[index];
-                      return RadioListTile<fc.Phone>(
-                        title: Text(phone.number),
-                        subtitle: Text(phone.label.name),
-                        value: phone,
-                        groupValue: _selectedPhone,
-                        onChanged: (fc.Phone? value) {
-                          setState(() {
-                            _selectedPhone = value;
-                          });
-                        },
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                      );
-                    }),
-                const Divider(),
-              ] else ...[
-                const Text("No phone numbers found for this contact."),
-                const Divider(),
-              ],
-
-              // --- Email Selection ---
-              if (widget.contact.emails.isNotEmpty) ...[
-                const Text('Select Email Addresses:',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: widget.contact.emails.length,
-                    itemBuilder: (context, index) {
-                      final email = widget.contact.emails[index];
-                      return CheckboxListTile(
-                        title: Text(email.address),
-                        subtitle: Text(email.label.name),
-                        value: _selectedEmails.contains(email),
-                        onChanged: (bool? value) {
-                          setState(() {
-                            if (value == true) {
-                              _selectedEmails.add(email);
-                            } else {
-                              _selectedEmails.remove(email);
-                            }
-                          });
-                        },
-                        dense: true,
-                        controlAffinity: ListTileControlAffinity.leading,
-                        contentPadding: EdgeInsets.zero,
-                      );
-                    }),
-              ] else ...[
-                const Text("No email addresses found for this contact."),
-              ]
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => context.pop(),
-          child: const Text('Cancel'),
-        ),
-        TextButton(
-          onPressed: () {
-            widget.onSave(_selectedPhone, _selectedEmails.toList());
-            context.pop();
-          },
-          child: const Text('Save Selection'),
-        ),
-      ],
-    );
-  }
 }
 
 // Sort options - aligned with Contact model properties
@@ -181,13 +36,11 @@ enum SortOption {
   firstNameAsc, // Sort by first name ascending
   firstNameDesc, // Sort by first name descending
   lastNameAsc, // Sort by last name ascending
-  lastNameDesc, // Sort by last name descending
-  withPhone, // Contacts with phone numbers first
-  withEmail // Contacts with emails first
+  lastNameDesc // Sort by last name descending
 }
 
 class _ContactImportSelectionScreenState
-    extends State<ContactImportSelectionScreen> {
+    extends State<ContactImportSelectionScreen> with WidgetsBindingObserver {
   final ContactImporter _importer = ContactImporter();
   bool _isLoading = true;
   bool _isSaving = false; // Specific loading for import process
@@ -201,31 +54,69 @@ class _ContactImportSelectionScreenState
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
-  SortOption _currentSortOption = SortOption.firstNameAsc;
-
-  // Filter options
-  bool _showOnlyWithPhone = false;
-  bool _showOnlyWithEmail = false;
+  SortOption _currentSortOption = SortOption.lastNameAsc; // Changed default sort
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _fetchContacts();
     _searchController.addListener(_onSearchChanged);
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      logger.i("App resumed, refreshing contacts list.");
+      _fetchContacts();
+    }
+  }
+
   void _onSearchChanged() {
     setState(() {
       _searchQuery = _searchController.text;
-      _applyFiltersAndSort();
+      _applyFiltersAndSortInternal(); // Changed call
     });
+  }
+
+  // Helper method to get the preferred phone number
+  fc.Phone? _getPreferredPhone(fc.Contact contact) {
+    if (contact.phones.isEmpty) return null;
+
+    fc.Phone? mobilePhone;
+    fc.Phone? homePhone;
+    fc.Phone? workPhone;
+    fc.Phone? otherPhone;
+
+    for (final phone in contact.phones) {
+      switch (phone.label) {
+        case fc.PhoneLabel.mobile:
+          mobilePhone ??= phone;
+          break;
+        case fc.PhoneLabel.home:
+          homePhone ??= phone;
+          break;
+        case fc.PhoneLabel.work:
+          workPhone ??= phone;
+          break;
+        case fc.PhoneLabel.other:
+          otherPhone ??= phone;
+          break;
+        default: // For any other labels or custom ones
+          otherPhone ??= phone; // Treat as 'other' or a fallback
+          break;
+      }
+    }
+    return mobilePhone ?? homePhone ?? workPhone ?? otherPhone ?? contact.phones.first;
   }
 
   Future<void> _fetchContacts() async {
@@ -247,11 +138,10 @@ class _ContactImportSelectionScreenState
         // Wrap fetched contacts in ContactSelectionInfo
         _selectableContacts =
             result.contacts.map((c) => ContactSelectionInfo(c)).toList();
-        _sortSelectableContacts(); // Initial sort
+        _sortSelectableContacts(); // Initial sort of master list
 
-        // Initialize filtered contacts with all contacts
-        _filteredContacts = [..._selectableContacts];
-        _applyFiltersAndSort(); // Apply any active filters and sort options
+        // Apply filters and current sort option to the freshly loaded contacts
+        _applyFiltersAndSortInternal(); // Changed call, populates and sorts _filteredContacts
 
         logger.i(
             "Successfully loaded ${_selectableContacts.length} contacts for selection.");
@@ -259,7 +149,6 @@ class _ContactImportSelectionScreenState
         _errorMessage =
             result.errorMessage ?? "An unknown error occurred during import.";
         logger.e("Error loading contacts for import: $_errorMessage");
-        // Optionally show a dialog or snackbar here
         _showErrorDialog(_errorMessage!);
       }
     });
@@ -296,12 +185,9 @@ class _ContactImportSelectionScreenState
       _isSelectAll = newValue;
       for (var item in _selectableContacts) {
         item.isSelected = newValue;
-        // Auto-select/clear phone/email when using Select All
         if (newValue) {
-          // Auto-select first phone if available, otherwise null
-          item.selectedPhone =
-              item.contact.phones.isNotEmpty ? item.contact.phones.first : null;
-          // Auto-select all emails if available
+          // Auto-select preferred phone and all emails
+          item.selectedPhone = _getPreferredPhone(item.contact);
           item.selectedEmails = item.contact.emails.toList();
         } else {
           // Clear selections when deselecting all
@@ -309,42 +195,8 @@ class _ContactImportSelectionScreenState
           item.selectedEmails.clear();
         }
       }
+      _applyFiltersAndSortInternal(); // Changed call
     });
-  }
-
-  // This function will be called when a contact row is tapped or expanded
-  Future<void> _handlePhoneEmailSelection(
-      ContactSelectionInfo selectionInfo) async {
-    // Show the dialog
-    await showDialog<void>(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return PhoneEmailSelectionDialog(
-          contact: selectionInfo.contact,
-          initialPhone: selectionInfo.selectedPhone,
-          initialEmails: selectionInfo.selectedEmails,
-          onSave: (chosenPhone, chosenEmails) {
-            // Update the state of the specific item in the main list
-            // This needs to be done *outside* the dialog's build context,
-            // hence we do it here after the dialog closes and calls onSave.
-            // Use setState from the main screen's state.
-            if (mounted) {
-              // Ensure the main screen is still mounted
-              setState(() {
-                selectionInfo.selectedPhone = chosenPhone;
-                selectionInfo.selectedEmails = chosenEmails;
-                // Ensure the item remains selected after editing details
-                selectionInfo.isSelected = true;
-                // Update _isSelectAll status
-                _updateSelectAllState();
-              });
-            }
-          },
-        );
-      },
-    );
-    // Optional: Refresh state if needed after dialog closes, though onSave handles it
-    // setState(() {});
   }
 
   // Helper to update the Select All checkbox state based on item selections
@@ -384,7 +236,7 @@ class _ContactImportSelectionScreenState
       final settings = await settingsRepo.getAll();
       final String defaultFrequency = settings.isNotEmpty
           ? settings.first.defaultFrequency
-          : ContactFrequency.never.value;
+          : ContactFrequency.biweekly.value;
 
       List<app_contact.Contact> contactsToAdd = [];
       List<String> skippedContactsLog = [];
@@ -461,6 +313,16 @@ class _ContactImportSelectionScreenState
         }
 
         // Create the app's Contact object
+        final DateTime now = DateTime.now();
+        final app_contact.Contact tempContactForNextDateCalculation = app_contact.Contact(
+          lastContactDate: now,
+          frequency: defaultFrequency,
+          // Other fields are not strictly necessary for calculateNextContactDate
+          // but providing them if easily available won't hurt.
+          firstName: fcContact.name.first, // Example, can be omitted if not needed by calc
+          lastName: fcContact.name.last,  // Example, can be omitted if not needed by calc
+        );
+
         final appContact = app_contact.Contact(
           // id will be assigned by repository
           firstName: fcContact.name.first,
@@ -472,6 +334,8 @@ class _ContactImportSelectionScreenState
           birthday: birthday,
           anniversary: anniversary,
           frequency: defaultFrequency, // Assign default from settings
+          lastContactDate: now, // Set lastContactDate to today
+          nextContactDate: calculateNextContactDate(tempContactForNextDateCalculation), // Calculate nextContactDate
           notes: fcContact.notes.isNotEmpty
               ? fcContact.notes.first.note
               : null, // Use first note if exists
@@ -628,14 +492,6 @@ class _ContactImportSelectionScreenState
                                     value: SortOption.lastNameDesc,
                                     child: Text('Last Name (Z-A)'),
                                   ),
-                                  const DropdownMenuItem(
-                                    value: SortOption.withPhone,
-                                    child: Text('Has Phone'),
-                                  ),
-                                  const DropdownMenuItem(
-                                    value: SortOption.withEmail,
-                                    child: Text('Has Email'),
-                                  ),
                                 ],
                                 onChanged: (SortOption? value) {
                                   if (value != null) {
@@ -645,37 +501,6 @@ class _ContactImportSelectionScreenState
                               ),
                             ),
 
-                            const SizedBox(width: 8),
-
-                            // Filter Chip for Phone
-                            FilterChip(
-                              label: const Text('Has Phone'),
-                              selected: _showOnlyWithPhone,
-                              onSelected: _togglePhoneFilter,
-                              avatar: Icon(
-                                Icons.phone,
-                                size: 18,
-                                color: _showOnlyWithPhone ? Colors.white : null,
-                              ),
-                              showCheckmark: false,
-                            ),
-
-                            const SizedBox(width: 8),
-
-                            // Filter Chip for Email
-                            FilterChip(
-                              label: const Text('Has Email'),
-                              selected: _showOnlyWithEmail,
-                              onSelected: _toggleEmailFilter,
-                              avatar: Icon(
-                                Icons.email,
-                                size: 18,
-                                color: _showOnlyWithEmail ? Colors.white : null,
-                              ),
-                              showCheckmark: false,
-                            ),
-
-                            const SizedBox(width: 8),
                             const SizedBox(width: 8),
 
                             // Info chip showing result count
@@ -691,68 +516,65 @@ class _ContactImportSelectionScreenState
                       // Contact List (Expanded to fill remaining space)
                       Expanded(
                         child: _filteredContacts.isEmpty
-                            ? const Center(
-                                child: Text(
-                                    'No contacts match your search or filters.'),
-                              )
+                            ? Center(
+                                child: Text(_searchQuery.isNotEmpty
+                                    ? 'No contacts match your search.'
+                                    : 'No contacts to display.'))
                             : ListView.builder(
                                 itemCount: _filteredContacts.length,
                                 itemBuilder: (context, index) {
-                                  final item = _filteredContacts[index];
-                                  // Determine if editing is needed
-                                  bool needsEditing =
-                                      item.contact.phones.length > 1 ||
-                                          item.contact.emails.isNotEmpty;
+                                  final selectionInfo = _filteredContacts[index];
 
-                                  return CheckboxListTile(
-                                    title: Text(item.contact.displayName),
-                                    // Update subtitle to show selection status
-                                    subtitle: Text(item.isSelected
-                                        ? 'Phone: ${item.selectedPhone?.number ?? "None"} / Emails: ${item.selectedEmails.length}'
-                                        : (item.contact.phones.isNotEmpty
-                                            ? item.contact.phones.first.number
-                                            : (item.contact.emails.isNotEmpty
-                                                ? item.contact.emails.first
-                                                    .address
-                                                : 'No phone/email'))),
-                                    value: item.isSelected,
-                                    onChanged: (bool? newValue) {
-                                      if (newValue == null) return;
-                                      setState(() {
-                                        item.isSelected = newValue;
-                                        if (newValue) {
-                                          // If requires selection OR no phone/email pre-selected, show dialog
-                                          if (needsEditing ||
-                                              (item.selectedPhone == null &&
-                                                  item.selectedEmails
-                                                      .isEmpty)) {
-                                            _handlePhoneEmailSelection(
-                                                item); // Trigger dialog
-                                          } else if (item.selectedPhone ==
-                                                  null &&
-                                              item.contact.phones.isNotEmpty) {
-                                            // Auto-select first phone if none selected yet & available
-                                            item.selectedPhone =
-                                                item.contact.phones.first;
-                                          } // (Emails are handled in dialog or select all)
-                                        } else {
-                                          // Clear selections if unchecked
-                                          item.selectedPhone = null;
-                                          item.selectedEmails.clear();
-                                        }
-                                        _updateSelectAllState(); // Update Select All checkbox
-                                      });
-                                    },
-                                    // Show edit button if needed and not saving
-                                    secondary: (needsEditing && !_isSaving)
-                                        ? IconButton(
-                                            icon: const Icon(Icons.edit_note),
-                                            tooltip: 'Select phone/email',
-                                            onPressed: () =>
-                                                _handlePhoneEmailSelection(
-                                                    item),
-                                          )
+                                  return Card(
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
+                                    child: ListTile(
+                                      leading: Checkbox(
+                                        value: selectionInfo.isSelected,
+                                        onChanged: (bool? newValue) {
+                                          if (newValue == null) return;
+                                          setState(() {
+                                            selectionInfo.isSelected = newValue;
+                                            if (newValue) {
+                                              selectionInfo.selectedPhone = _getPreferredPhone(selectionInfo.contact);
+                                              selectionInfo.selectedEmails = selectionInfo.contact.emails.toList();
+                                            } else {
+                                              selectionInfo.selectedPhone = null;
+                                              selectionInfo.selectedEmails.clear();
+                                            }
+                                            _updateSelectAllState();
+                                          });
+                                        },
+                                      ),
+                                      title: Text(
+                                        selectionInfo.contact.displayName,
+                                        style: TextStyle(fontSize: (Theme.of(context).textTheme.titleMedium?.fontSize ?? 16) * 1.4), // Increased font size
+                                      ),
+                                      subtitle: (selectionInfo.isSelected && (selectionInfo.selectedPhone != null || selectionInfo.selectedEmails.isNotEmpty)) ? 
+                                        Text(
+                                          "Ready to import", 
+                                          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
+                                        )
                                         : null,
+                                      onTap: null, // Removed onTap from ListTile
+                                      trailing: TextButton( // Added trailing Edit button
+                                        child: const Text("Edit >"),
+                                        onPressed: () async {
+                                          try {
+                                            // Open contact in native editor
+                                            await fc.FlutterContacts.openExternalEdit(selectionInfo.contact.id);
+                                            // Note: Refresh will happen on app resume via didChangeAppLifecycleState
+                                          } catch (e) {
+                                            logger.e("Error opening external contact editor: $e");
+                                            if (mounted) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(content: Text('Could not open contact: $e')),
+                                              );
+                                            }
+                                          }
+                                        },
+                                      ),
+                                    ),
                                   );
                                 },
                               ),
@@ -784,82 +606,87 @@ class _ContactImportSelectionScreenState
   }
 
   // Apply search, filters, and sort to contacts
-  void _applyFiltersAndSort() {
-    setState(() {
-      _filteredContacts = _selectableContacts.where((item) {
-        // Apply search query
-        if (_searchQuery.isNotEmpty) {
-          return item.contact.displayName
-              .toLowerCase()
-              .contains(_searchQuery.toLowerCase());
-        }
-        return true;
-      }).where((item) {
-        // Apply phone filter
-        if (_showOnlyWithPhone && item.contact.phones.isEmpty) {
-          return false;
-        }
-        // Apply email filter
-        if (_showOnlyWithEmail && item.contact.emails.isEmpty) {
-          return false;
-        }
-        return true;
-      }).toList();
+  // Renamed from _applyFiltersAndSort and removed setState
+  void _applyFiltersAndSortInternal() { 
+    _filteredContacts = _selectableContacts.where((item) {
+      // Apply search query
+      if (_searchQuery.isNotEmpty) {
+        return item.contact.displayName
+            .toLowerCase()
+            .contains(_searchQuery.toLowerCase());
+      }
+      return true;
+    }).toList();
 
-      // Apply sort
-      _sortFilteredContacts();
-    });
+    // Apply sort
+    _sortFilteredContacts(); // Sorts _filteredContacts in place
   }
 
   // Apply sorting to filtered contacts based on current sort option
   void _sortFilteredContacts() {
     switch (_currentSortOption) {
       case SortOption.firstNameAsc:
-        _filteredContacts.sort((a, b) => a.contact.name.first
-            .toLowerCase()
-            .compareTo(b.contact.name.first.toLowerCase()));
-        break;
-      case SortOption.firstNameDesc:
-        _filteredContacts.sort((a, b) => b.contact.name.first
-            .toLowerCase()
-            .compareTo(a.contact.name.first.toLowerCase()));
-        break;
-      case SortOption.lastNameAsc:
-        _filteredContacts.sort((a, b) => a.contact.name.last
-            .toLowerCase()
-            .compareTo(b.contact.name.last.toLowerCase()));
-        break;
-      case SortOption.lastNameDesc:
-        _filteredContacts.sort((a, b) => b.contact.name.last
-            .toLowerCase()
-            .compareTo(a.contact.name.last.toLowerCase()));
-        break;
-      case SortOption.withPhone:
         _filteredContacts.sort((a, b) {
-          if (a.contact.phones.isNotEmpty && b.contact.phones.isEmpty) {
-            return -1;
-          } else if (a.contact.phones.isEmpty && b.contact.phones.isNotEmpty) {
-            return 1;
-          } else {
-            // Secondary sort by first name
-            return a.contact.name.first
-                .toLowerCase()
-                .compareTo(b.contact.name.first.toLowerCase());
+          final aFirstName = a.contact.name.first.toLowerCase();
+          final bFirstName = b.contact.name.first.toLowerCase();
+          int comparison = aFirstName.compareTo(bFirstName);
+          if (comparison == 0) {
+            final aLastName = a.contact.name.last.toLowerCase();
+            final bLastName = b.contact.name.last.toLowerCase();
+            comparison = aLastName.compareTo(bLastName);
+            if (comparison == 0) {
+              comparison = a.contact.displayName.toLowerCase().compareTo(b.contact.displayName.toLowerCase());
+            }
           }
+          return comparison;
         });
         break;
-      case SortOption.withEmail:
+      case SortOption.firstNameDesc:
         _filteredContacts.sort((a, b) {
-          if (a.contact.emails.isNotEmpty && b.contact.emails.isEmpty) {
-            return -1;
-          } else if (a.contact.emails.isEmpty && b.contact.emails.isNotEmpty) {
-            return 1;
-          } else {
-            // Secondary sort by first name
-            return a.contact.name.first
-                .toLowerCase()
-                .compareTo(b.contact.name.first.toLowerCase());
+          final aFirstName = a.contact.name.first.toLowerCase();
+          final bFirstName = b.contact.name.first.toLowerCase();
+          int comparison = bFirstName.compareTo(aFirstName); // Swapped for descending
+          if (comparison == 0) {
+            final aLastName = a.contact.name.last.toLowerCase();
+            final bLastName = b.contact.name.last.toLowerCase();
+            comparison = bLastName.compareTo(aLastName); // Swapped for descending
+            if (comparison == 0) {
+              comparison = b.contact.displayName.toLowerCase().compareTo(a.contact.displayName.toLowerCase());
+            }
           }
+          return comparison;
+        });
+        break;
+      case SortOption.lastNameAsc:
+        _filteredContacts.sort((a, b) {
+          final aLastName = a.contact.name.last.toLowerCase();
+          final bLastName = b.contact.name.last.toLowerCase();
+          int comparison = aLastName.compareTo(bLastName);
+          if (comparison == 0) {
+            final aFirstName = a.contact.name.first.toLowerCase();
+            final bFirstName = b.contact.name.first.toLowerCase();
+            comparison = aFirstName.compareTo(bFirstName);
+            if (comparison == 0) {
+              comparison = a.contact.displayName.toLowerCase().compareTo(b.contact.displayName.toLowerCase());
+            }
+          }
+          return comparison;
+        });
+        break;
+      case SortOption.lastNameDesc:
+        _filteredContacts.sort((a, b) {
+          final aLastName = a.contact.name.last.toLowerCase();
+          final bLastName = b.contact.name.last.toLowerCase();
+          int comparison = bLastName.compareTo(aLastName); // Swapped for descending
+          if (comparison == 0) {
+            final aFirstName = a.contact.name.first.toLowerCase();
+            final bFirstName = b.contact.name.first.toLowerCase();
+            comparison = bFirstName.compareTo(aFirstName); // Swapped for descending
+            if (comparison == 0) {
+              comparison = b.contact.displayName.toLowerCase().compareTo(a.contact.displayName.toLowerCase());
+            }
+          }
+          return comparison;
         });
         break;
     }
@@ -870,21 +697,6 @@ class _ContactImportSelectionScreenState
     setState(() {
       _currentSortOption = option;
       _sortFilteredContacts();
-    });
-  }
-
-  // Toggle filter options
-  void _togglePhoneFilter(bool value) {
-    setState(() {
-      _showOnlyWithPhone = value;
-      _applyFiltersAndSort();
-    });
-  }
-
-  void _toggleEmailFilter(bool value) {
-    setState(() {
-      _showOnlyWithEmail = value;
-      _applyFiltersAndSort();
     });
   }
 }
