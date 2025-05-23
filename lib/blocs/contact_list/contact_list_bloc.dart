@@ -383,9 +383,9 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
       ContactFrequency.weekly: 2,
       ContactFrequency.biweekly: 3,
       ContactFrequency.monthly: 4,
-      ContactFrequency.quarterly: 5,
-      ContactFrequency.yearly: 6,
-      ContactFrequency.rarely: 7,
+      //ContactFrequency.quarterly: 5,
+      //ContactFrequency.yearly: 6,
+      //ContactFrequency.rarely: 7,
       ContactFrequency.never: 8,
     };
 

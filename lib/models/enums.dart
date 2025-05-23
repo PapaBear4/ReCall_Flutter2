@@ -4,9 +4,9 @@ enum ContactFrequency {
   weekly('weekly'),
   biweekly('biweekly'),
   monthly('monthly'),
-  quarterly('quarterly'),
-  yearly('yearly'),
-  rarely('rarely'),
+  // quarterly('quarterly'),
+  // yearly('yearly'),
+  // rarely('rarely'),
   never('never');
 
   final String value;
@@ -17,8 +17,14 @@ enum ContactFrequency {
   static ContactFrequency fromString(String value) {
     return ContactFrequency.values.firstWhere(
       (element) => element.value == value,
-      orElse: () =>
-          ContactFrequency.daily, // Or throw an exception if not found
+      orElse: () {
+        // If the value is one of the "disabled" ones, default to monthly.
+        // Otherwise, default to daily (or consider throwing an error).
+        if (value == 'quarterly' || value == 'yearly' || value == 'rarely') {
+          return ContactFrequency.monthly;
+        }
+        return ContactFrequency.daily; // Default for truly unknown values
+      },
     );
   }
 
