@@ -128,7 +128,7 @@ void main() {
       clearInteractions(mockBox); // Clear interactions from getAll
 
       final updatedContactData = contact1.copyWith(
-        frequency: ContactFrequency.yearly.value, 
+        frequency: ContactFrequency.monthly.value, 
         lastContactDate: DateTime(2023, 6, 15) // New lastContactDate
       );
       // Expected nextContactDate: June 15, 2024
@@ -142,7 +142,7 @@ void main() {
       final result = await contactRepository.update(updatedContactData);
 
       expect(result.id, contact1.id);
-      expect(result.frequency, ContactFrequency.yearly.value);
+      expect(result.frequency, ContactFrequency.monthly.value);
       expect(result.nextContactDate, expectedNextContact);
 
       final captured = verify(mockBox.put(captureAny)).captured.single as Contact;

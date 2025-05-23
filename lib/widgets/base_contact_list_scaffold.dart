@@ -76,8 +76,11 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
   final Set<int> _selectedContactIds = {};
 
   // Store current filter and sort state to pass to details screen
-  Set<ContactListFilterType> _currentFilters = {ContactListFilterType.active}; // Default
-  ContactListSortField _currentSortField = ContactListSortField.lastName; // Default
+  Set<ContactListFilterType> _currentFilters = {
+    ContactListFilterType.active
+  }; // Default
+  ContactListSortField _currentSortField =
+      ContactListSortField.lastName; // Default
   bool _currentAscending = true; // Default
 
   // MARK: Lifecycle
@@ -272,7 +275,8 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
         ),
         bottomNavigationBar: BottomAppBar(
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
@@ -288,7 +292,8 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
                       ),
                     if (kDebugMode)
                       FloatingActionButton.small(
-                        heroTag: "${widget.fabHeroTagPrefix}_debug_notifications",
+                        heroTag:
+                            "${widget.fabHeroTagPrefix}_debug_notifications",
                         tooltip: "View Scheduled Notifications",
                         onPressed: () => (
                           // Replace with GoRouter navigation:
@@ -310,18 +315,18 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
   // MARK: STD AppBar
   PreferredSizeWidget _buildNormalAppBar(BuildContext context) {
     return AppBar(
-      leading: widget.drawerWidget ==
-              null // Show back button if no drawerWidget
-          ? IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () {
-                // The above logic is specific to HomeScreen's desired behavior when it *has* a back button.
-                // For a generic back button, we just pop. The calling screen (if it's a BaseContactListScaffold based one)
-                // will handle its own refresh via RouteAware.
-                context.pop(); // Use context.pop() from go_router
-              },
-            )
-          : null,
+      leading:
+          widget.drawerWidget == null // Show back button if no drawerWidget
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () {
+                    // The above logic is specific to HomeScreen's desired behavior when it *has* a back button.
+                    // For a generic back button, we just pop. The calling screen (if it's a BaseContactListScaffold based one)
+                    // will handle its own refresh via RouteAware.
+                    context.pop(); // Use context.pop() from go_router
+                  },
+                )
+              : null,
       title: Text(widget.screenTitle),
       actions: [
         if (widget.showSortMenu)
@@ -386,6 +391,56 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
         onPressed: _toggleSelectionMode,
       ),
       actions: [
+        if (_selectedContactIds.isNotEmpty) ...[
+          IconButton(
+            icon: const Icon(Icons.check, color: Colors.white),
+            onPressed: () {
+              context.read<ContactListBloc>().add(MarkContactsAsContactedEvent(
+                  contactIds: _selectedContactIds.toList()));
+              setState(() {
+                _selectedContactIds.clear();
+                _selectionMode = false; // Exit selection mode
+              });
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: () {
+              // Show confirmation dialog before deleting
+              showDialog(
+                context: context,
+                builder: (BuildContext dialogContext) {
+                  return AlertDialog(
+                    title: const Text('Confirm Delete'),
+                    content: Text(
+                        'Are you sure you want to delete ${_selectedContactIds.length} contact(s)?'),
+                    actions: <Widget>[
+                      TextButton(
+                        child: const Text('Cancel'),
+                        onPressed: () {
+                          Navigator.of(dialogContext).pop(); // Close the dialog
+                        },
+                      ),
+                      TextButton(
+                        child: const Text('Delete'),
+                        onPressed: () {
+                          Navigator.of(dialogContext).pop(); // Close the dialog
+                          context.read<ContactListBloc>().add(
+                              DeleteContactsEvent(
+                                  contactIds: _selectedContactIds.toList()));
+                          setState(() {
+                            _selectedContactIds.clear();
+                            _selectionMode = false; // Exit selection mode
+                          });
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
+        ],
         IconButton(
           icon: const Icon(Icons.sync_alt,
               color: Colors.white), // Icon for toggling
