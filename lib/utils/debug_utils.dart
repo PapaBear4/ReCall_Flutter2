@@ -12,7 +12,7 @@ import 'package:recall/utils/contact_utils.dart'; // Import ContactUtils
 
 class DebugUtils {
   // MARK: FAKE CNTCT
-  /// Generates a fake contact mapped to the app's Contact model.
+  /// Generates a fake contact mapped to the device (fc) Contact model.
   /// Each fake contact has a random name, phone number, email, events, and notes.
   static fc.Contact _generateFakeFlutterContact(Faker faker, Random random) {
     return fc.Contact(
@@ -83,7 +83,7 @@ class DebugUtils {
     final int daysAgo =
         random.nextInt(60); // Random number of days in the past (up to 60 days)
     final DateTime lastContactDate = now.subtract(Duration(days: daysAgo));
-    final bool isActive = Random().nextBool();
+    final bool isActive = random.nextBool();
 
     // Calculate the next contact date based on the last contacted date and the frequency
     final DateTime nextContactDate = calculateNextContactDate(fakeAppContact

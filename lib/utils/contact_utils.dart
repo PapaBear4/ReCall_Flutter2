@@ -136,7 +136,7 @@ DateTime calculateNextContactDate(Contact contact) {
     case ContactFrequency.monthly:
       nextDate = DateTime(baseDate.year, baseDate.month + 1, baseDate.day);
       break;
-    case ContactFrequency.quarterly:
+    /*case ContactFrequency.quarterly:
       nextDate = DateTime(baseDate.year, baseDate.month + 3, baseDate.day);
       break;
     case ContactFrequency.yearly:
@@ -145,7 +145,7 @@ DateTime calculateNextContactDate(Contact contact) {
     case ContactFrequency.rarely:
       // Define "rarely" as, for example, 6 months for calculation purposes
       nextDate = DateTime(baseDate.year, baseDate.month + 6, baseDate.day);
-      break;
+      break;*/
     default: // Should not happen if frequency is validated
       nextDate = DateTime(9999, 12, 31);
   }
