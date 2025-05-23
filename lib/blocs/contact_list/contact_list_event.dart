@@ -82,6 +82,13 @@ class DeleteContactsEvent extends ContactListEvent {
   }
 }
 
+// MARK: MARK CONTACTED
+class MarkContactsAsContactedEvent extends ContactListEvent {
+  final List<int> contactIds;
+
+  const MarkContactsAsContactedEvent({required this.contactIds});
+}
+
 // TOGGLE STATUS
 class ToggleContactsActiveStatusEvent extends ContactListEvent {
   final List<int> contactIds;

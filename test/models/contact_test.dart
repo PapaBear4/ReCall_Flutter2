@@ -64,20 +64,20 @@ void main() {
         firstName: 'Original',
         lastName: 'Name',
         nickname: 'OG',
-        frequency: ContactFrequency.yearly.value, // Use .value
+        frequency: ContactFrequency.monthly.value, // Use .value
         nextContactDate: testDate,
       );
       final updatedContact = originalContact.copyWith(
         firstName: 'Updated',
         nickname: 'NewNick',
-        frequency: ContactFrequency.quarterly.value, // Use .value
+        frequency: ContactFrequency.monthly.value, // Use .value
         nextContactDate: testDate2,
       );
 
       expect(updatedContact.firstName, 'Updated');
       expect(updatedContact.lastName, 'Name'); // Unchanged
       expect(updatedContact.nickname, 'NewNick');
-      expect(updatedContact.frequency, ContactFrequency.quarterly.value); // Check against .value
+      expect(updatedContact.frequency, ContactFrequency.monthly.value); // Check against .value
       expect(updatedContact.nextContactDate, testDate2);
     });
 
@@ -122,7 +122,7 @@ void main() {
         firstName: 'Json',
         lastName: 'Test',
         nickname: 'JSONy',
-        frequency: ContactFrequency.yearly.value, // Use .value for String
+        frequency: ContactFrequency.monthly.value, // Use .value for String
         birthday: DateTime.utc(1990, 5, 15),
         lastContactDate: DateTime.utc(2023, 1, 10),
         nextContactDate: DateTime.utc(2024, 1, 10),

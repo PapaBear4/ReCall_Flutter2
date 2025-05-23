@@ -83,11 +83,13 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           return;
         }
 
-        logger.i('UpdateContactFromListEvent: Received contact: ${event.contact}'); // Added logger
+        logger.i(
+            'UpdateContactFromListEvent: Received contact: ${event.contact}'); // Added logger
         emit(const LoadingContactListState());
         try {
           final updatedContact = await _contactRepository.update(event.contact);
-          logger.i('UpdateContactFromListEvent: Updated contact in repository: $updatedContact'); // Added logger
+          logger.i(
+              'UpdateContactFromListEvent: Updated contact in repository: $updatedContact'); // Added logger
           await _notificationService.scheduleReminder(updatedContact);
 
           final newOriginalContacts = currentState.originalContacts.map((c) {
@@ -302,6 +304,57 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
               "Error toggling active status for contacts ${event.contactIds}: $err");
           emit(currentState);
         }
+        // MARK: MARK CONTACTS AS CONTACTED
+      } else if (event is MarkContactsAsContactedEvent) {
+        final currentState = state;
+        if (currentState is! LoadedContactListState) {
+          logger.w(
+              "Attempted to mark contacts as contacted from non-loaded state.");
+          return;
+        }
+        emit(const LoadingContactListState());
+        try {
+          final now = DateTime.now();
+          List<Contact> updatedContacts = [];
+          for (int contactId in event.contactIds) {
+            final contact = await _contactRepository.getById(contactId);
+            if (contact != null) {
+              final contactWithJustUpdatedLastContactDate =
+                  contact.copyWith(lastContactDate: now);
+              final updatedContact =
+                  contactWithJustUpdatedLastContactDate.copyWith(
+                      nextContactDate: calculateNextContactDate(
+                          contactWithJustUpdatedLastContactDate));
+              await _contactRepository.update(updatedContact);
+              await _notificationService.scheduleReminder(updatedContact);
+              updatedContacts.add(updatedContact);
+            }
+          }
+
+          final newOriginalContacts = currentState.originalContacts.map((c) {
+            final updatedVersion = updatedContacts
+                .firstWhere((uc) => uc.id == c.id, orElse: () => c);
+            return updatedVersion;
+          }).toList();
+
+          final newlyFilteredContacts = _applyFilterAndSearch(
+              newOriginalContacts,
+              currentState.searchTerm,
+              currentState.activeFilters);
+
+          final newlySortedContacts = _sortContacts(newlyFilteredContacts,
+              currentState.sortField, currentState.ascending);
+
+          emit(currentState.copyWith(
+            originalContacts: newOriginalContacts,
+            displayedContacts: newlySortedContacts,
+          ));
+          logger.i(
+              "Successfully marked ${event.contactIds.length} contacts as contacted.");
+        } catch (err) {
+          emit(ErrorContactListState(err.toString()));
+          logger.e("Error marking contacts as contacted: $err");
+        }
       } else if (event is _ContactsUpdatedEvent) {
         // This event is triggered by the stream subscription
         final currentState = state;
@@ -418,10 +471,10 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           }
           break;
         case ContactListSortField.lastContactDate:
-          DateTime lastA =
-              a.lastContactDate ?? (ascending ? DateTime(9999) : DateTime(1900));
-          DateTime lastB =
-              b.lastContactDate ?? (ascending ? DateTime(9999) : DateTime(1900));
+          DateTime lastA = a.lastContactDate ??
+              (ascending ? DateTime(9999) : DateTime(1900));
+          DateTime lastB = b.lastContactDate ??
+              (ascending ? DateTime(9999) : DateTime(1900));
           comparison = lastA.compareTo(lastB);
           break;
         case ContactListSortField.birthday:
