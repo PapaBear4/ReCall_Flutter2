@@ -83,7 +83,7 @@ class DebugUtils {
     final int daysAgo =
         random.nextInt(60); // Random number of days in the past (up to 60 days)
     final DateTime lastContactDate = now.subtract(Duration(days: daysAgo));
-    final bool isActive = Random().nextBool();
+    final bool isActive = random.nextBool();
 
     // Calculate the next contact date based on the last contacted date and the frequency
     final DateTime nextContactDate = calculateNextContactDate(fakeAppContact
