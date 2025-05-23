@@ -393,12 +393,13 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
       actions: [
         if (_selectedContactIds.isNotEmpty) ...[
           IconButton(
-            icon: const Icon(Icons.check),
+            icon: const Icon(Icons.check, color: Colors.white),
             onPressed: () {
               context.read<ContactListBloc>().add(MarkContactsAsContactedEvent(
                   contactIds: _selectedContactIds.toList()));
               setState(() {
                 _selectedContactIds.clear();
+                _selectionMode = false; // Exit selection mode
               });
             },
           ),
@@ -429,6 +430,7 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
                                   contactIds: _selectedContactIds.toList()));
                           setState(() {
                             _selectedContactIds.clear();
+                            _selectionMode = false; // Exit selection mode
                           });
                         },
                       ),

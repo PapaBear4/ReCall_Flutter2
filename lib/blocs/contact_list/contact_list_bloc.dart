@@ -42,34 +42,23 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           // Load all contacts from the repository
           final allContacts = await _contactRepository.getAll();
 
-          // Apply filters
-          final filteredContacts = _applyFilterAndSearch(
-            allContacts,
-            event.searchTerm,
-            event.filters,
+          // Create a base state with parameters from the event
+          final baseStateForLoad = LoadedContactListState(
+            originalContacts: allContacts, // Will be used as newOriginalContacts
+            displayedContacts: [], // Placeholder, will be determined by the helper
+            sortField: event.sortField,
+            ascending: event.ascending,
+            searchTerm: event.searchTerm,
+            activeFilters: event.filters,
           );
 
-          // Sort the filtered contacts
-          final sortedContacts = _sortContacts(
-            filteredContacts,
-            event.sortField,
-            event.ascending,
+          _emitFilteredAndSortedState(
+            newOriginalContacts: allContacts,
+            currentState: baseStateForLoad,
+            emit: emit,
           );
-
-          if (sortedContacts.isEmpty) {
-            logger.i('No contacts found after applying filters and sorting.');
-            emit(const EmptyContactListState());
-          } else {
-            logger.i('Loaded ${sortedContacts.length} contacts.');
-            emit(LoadedContactListState(
-              originalContacts: allContacts,
-              displayedContacts: sortedContacts,
-              sortField: event.sortField,
-              ascending: event.ascending,
-              searchTerm: event.searchTerm,
-              activeFilters: event.filters,
-            ));
-          }
+          // Logger message for successful load will be implicitly covered by helper's logic or can be added if needed
+          // logger.i('Loaded ... contacts.'); // This was based on sortedContacts.length
         } catch (e) {
           logger.e('Error in LoadContactListEvent: $e');
           emit(ErrorContactListState(e.toString()));
@@ -84,30 +73,23 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
         }
 
         logger.i(
-            'UpdateContactFromListEvent: Received contact: ${event.contact}'); // Added logger
-        emit(const LoadingContactListState());
+            'UpdateContactFromListEvent: Received contact: ${event.contact}');
+        emit(const LoadingContactListState()); // Indicate loading before processing
         try {
           final updatedContact = await _contactRepository.update(event.contact);
           logger.i(
-              'UpdateContactFromListEvent: Updated contact in repository: $updatedContact'); // Added logger
+              'UpdateContactFromListEvent: Updated contact in repository: $updatedContact');
           await _notificationService.scheduleReminder(updatedContact);
 
           final newOriginalContacts = currentState.originalContacts.map((c) {
             return c.id == updatedContact.id ? updatedContact : c;
           }).toList();
 
-          final newlyFilteredContacts = _applyFilterAndSearch(
-              newOriginalContacts,
-              currentState.searchTerm,
-              currentState.activeFilters);
-
-          final newlySortedContacts = _sortContacts(newlyFilteredContacts,
-              currentState.sortField, currentState.ascending);
-
-          emit(currentState.copyWith(
-            originalContacts: newOriginalContacts,
-            displayedContacts: newlySortedContacts,
-          ));
+          _emitFilteredAndSortedState(
+            newOriginalContacts: newOriginalContacts,
+            currentState: currentState,
+            emit: emit,
+          );
           logger.i(
               "Successfully updated contact ${updatedContact.id} in list state.");
         } catch (err) {
@@ -212,23 +194,17 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
               .where((c) => !event.contactIds.contains(c.id))
               .toList();
 
-          if (newOriginalContacts.isEmpty) {
-            emit(const EmptyContactListState());
-          } else {
-            final newlyFilteredContacts = _applyFilterAndSearch(
-                newOriginalContacts,
-                currentState.searchTerm,
-                currentState.activeFilters);
-
-            final newlySortedContacts = _sortContacts(newlyFilteredContacts,
-                currentState.sortField, currentState.ascending);
-
-            emit(currentState.copyWith(
-              originalContacts: newOriginalContacts,
-              displayedContacts: newlySortedContacts,
-            ));
-            logger.i(
+          _emitFilteredAndSortedState(
+            newOriginalContacts: newOriginalContacts,
+            currentState: currentState,
+            emit: emit,
+          );
+          // The helper handles EmptyContactListState if newOriginalContacts (and thus sorted) is empty.
+          if (newOriginalContacts.isNotEmpty) {
+             logger.i(
                 "Successfully removed ${event.contactIds.length} contacts from list state.");
+          } else {
+            logger.i("All contacts removed, list is now empty.");
           }
         } catch (err) {
           emit(ErrorContactListState(err.toString()));
@@ -266,9 +242,6 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           logger.i(
               'Toggled active status for ${event.contactIds.length} contacts.');
 
-          // Determine which load event to re-trigger to refresh the list correctly
-          // If current state has home screen filters, reload home screen, else reload all contacts.
-          // This ensures originalContacts is correctly populated (all active for home, all for all contacts).
           bool isHomeScreenView = currentState.activeFilters
                   .contains(ContactListFilterType.overdue) ||
               currentState.activeFilters
@@ -281,28 +254,21 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           } else {
             newBaseContacts = await _contactRepository.getAll();
           }
+          
+          _emitFilteredAndSortedState(
+            newOriginalContacts: newBaseContacts,
+            currentState: currentState,
+            emit: emit,
+          );
 
-          if (newBaseContacts.isEmpty && isHomeScreenView) {
-            emit(const EmptyContactListState());
-          } else if (newBaseContacts.isEmpty && !isHomeScreenView) {
-            emit(const EmptyContactListState());
-          } else {
-            final newlyFilteredContacts = _applyFilterAndSearch(newBaseContacts,
-                currentState.searchTerm, currentState.activeFilters);
-
-            final newlySortedContacts = _sortContacts(newlyFilteredContacts,
-                currentState.sortField, currentState.ascending);
-
-            emit(currentState.copyWith(
-              originalContacts: newBaseContacts,
-              displayedContacts: newlySortedContacts,
-            ));
-          }
         } catch (err) {
           emit(ErrorContactListState(err.toString()));
           logger.e(
               "Error toggling active status for contacts ${event.contactIds}: $err");
-          emit(currentState);
+          // Consider re-emitting current loaded state if error occurs after some operations
+           if (state is LoadingContactListState) { // If still loading, revert to previous loaded state
+            emit(currentState);
+          }
         }
         // MARK: MARK CONTACTS AS CONTACTED
       } else if (event is MarkContactsAsContactedEvent) {
@@ -315,7 +281,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
         emit(const LoadingContactListState());
         try {
           final now = DateTime.now();
-          List<Contact> updatedContacts = [];
+          List<Contact> updatedContactObjects = []; // Renamed to avoid conflict
           for (int contactId in event.contactIds) {
             final contact = await _contactRepository.getById(contactId);
             if (contact != null) {
@@ -327,28 +293,21 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
                           contactWithJustUpdatedLastContactDate));
               await _contactRepository.update(updatedContact);
               await _notificationService.scheduleReminder(updatedContact);
-              updatedContacts.add(updatedContact);
+              updatedContactObjects.add(updatedContact);
             }
           }
 
           final newOriginalContacts = currentState.originalContacts.map((c) {
-            final updatedVersion = updatedContacts
+            final updatedVersion = updatedContactObjects // Use renamed variable
                 .firstWhere((uc) => uc.id == c.id, orElse: () => c);
             return updatedVersion;
           }).toList();
 
-          final newlyFilteredContacts = _applyFilterAndSearch(
-              newOriginalContacts,
-              currentState.searchTerm,
-              currentState.activeFilters);
-
-          final newlySortedContacts = _sortContacts(newlyFilteredContacts,
-              currentState.sortField, currentState.ascending);
-
-          emit(currentState.copyWith(
-            originalContacts: newOriginalContacts,
-            displayedContacts: newlySortedContacts,
-          ));
+          _emitFilteredAndSortedState(
+            newOriginalContacts: newOriginalContacts,
+            currentState: currentState,
+            emit: emit,
+          );
           logger.i(
               "Successfully marked ${event.contactIds.length} contacts as contacted.");
         } catch (err) {
@@ -357,25 +316,37 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
         }
       } else if (event is _ContactsUpdatedEvent) {
         // This event is triggered by the stream subscription
-        final currentState = state;
-        if (currentState is LoadedContactListState) {
-          final filteredContacts = _applyFilterAndSearch(event.contacts,
-              currentState.searchTerm, currentState.activeFilters);
-
-          final sortedContacts = _sortContacts(
-              filteredContacts, currentState.sortField, currentState.ascending);
-
-          emit(currentState.copyWith(
-            originalContacts: event.contacts,
-            displayedContacts: sortedContacts,
-          ));
+        final currentBlocState = state; // Renamed to avoid conflict with helper's currentState
+        if (currentBlocState is LoadedContactListState) {
+          _emitFilteredAndSortedState(
+            newOriginalContacts: event.contacts,
+            currentState: currentBlocState,
+            emit: emit,
+          );
         } else if (event.contacts.isEmpty) {
           emit(const EmptyContactListState());
         } else {
-          emit(LoadedContactListState(
-            originalContacts: event.contacts,
-            displayedContacts: event.contacts,
-          ));
+          // currentBlocState is not LoadedContactListState (e.g., Initial, Loading, Empty, Error)
+          // Establish a baseline for sort/filter parameters.
+          final defaultSortField = ContactListSortField.nextContactDate;
+          final defaultAscending = true;
+          final defaultSearchTerm = '';
+          final defaultActiveFilters = <ContactListFilterType>{};
+
+          final baseStateForUpdate = LoadedContactListState(
+            originalContacts: event.contacts, 
+            displayedContacts: [], // Placeholder, will be set by helper
+            sortField: defaultSortField,
+            ascending: defaultAscending,
+            searchTerm: defaultSearchTerm,
+            activeFilters: defaultActiveFilters,
+          );
+
+          _emitFilteredAndSortedState(
+            newOriginalContacts: event.contacts,
+            currentState: baseStateForUpdate,
+            emit: emit,
+          );
         }
       }
     });
@@ -508,5 +479,37 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
       return ascending ? comparison : -comparison;
     });
     return sortedList;
+  }
+
+  void _emitFilteredAndSortedState({
+    required List<Contact> newOriginalContacts,
+    required LoadedContactListState currentState, // Provides filter/sort params and base for copyWith
+    required Emitter<ContactListState> emit,
+  }) {
+    final newlyFilteredContacts = _applyFilterAndSearch(
+      newOriginalContacts,
+      currentState.searchTerm,
+      currentState.activeFilters,
+    );
+
+    final newlySortedContacts = _sortContacts(
+      newlyFilteredContacts,
+      currentState.sortField,
+      currentState.ascending,
+    );
+
+    if (newlySortedContacts.isEmpty) {
+      // If the final list to be displayed is empty (either due to no original contacts or filters)
+      // logger.i is typically called by the event handler after this.
+      emit(const EmptyContactListState());
+    } else {
+      // Use copyWith on the passed currentState to preserve its properties like searchTerm,
+      // activeFilters, sortField, ascending, and then override originalContacts and displayedContacts.
+      emit(currentState.copyWith(
+        originalContacts: newOriginalContacts,
+        displayedContacts: newlySortedContacts,
+      ));
+      // logger.i can be called by the specific event handler if needed, e.g. "Loaded X contacts"
+    }
   }
 }
