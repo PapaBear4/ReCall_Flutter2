@@ -2,7 +2,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart'; // Use provider to read repository
-import 'package:recall/models/contact_frequency.dart';
+import 'package:recall/models/enums.dart';
 import 'package:recall/models/usersettings.dart';
 import 'package:recall/repositories/usersettings_repository.dart';
 import 'package:recall/repositories/contact_repository.dart'; // To get contacts
@@ -12,12 +12,12 @@ import 'dart:io'; // For File operations
 import 'package:file_picker/file_picker.dart'; // For saving
 import 'package:path_provider/path_provider.dart'; // For temp directory
 import 'package:share_plus/share_plus.dart'; // For sharing
-import 'package:recall/blocs/contact_list/contact_list_bloc.dart'; // To refresh list
 import 'package:recall/services/notification_helper.dart';
 import 'package:recall/services/notification_service.dart';
 import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:recall/utils/backup_restore_utils.dart'; // <-- ADD THIS IMPORT
-import 'package:recall/utils/debug_utils.dart';
+import 'package:go_router/go_router.dart';
+import 'package:recall/config/app_router.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -415,10 +415,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             content: Text(
                 'Successfully restored ${addedContacts.length} contacts.')),
       );
-      context
-          .read<ContactListBloc>()
-          .add(const ContactListEvent.loadContacts());
-      setState(() => _isBusy = false);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -532,7 +528,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               const Icon(Icons.download_for_offline_outlined),
                           onTap: () {
                             // Navigate to the new selection screen
-                            Navigator.pushNamed(context, '/importContacts');
+                            context.pushNamed(AppRouter.importContactsRouteName);
                           },
                         ),
                         const Divider(),
@@ -560,122 +556,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               : _startRestoreProcess, // Call import function
                         ),
                         const Divider(),
-                        const Divider(),
-                        // --- DEBUG SECTION ---
-                        if (kDebugMode) ...[
-                          const SizedBox(height: 20),
-                          Text('Debug Options',
-                              style: Theme.of(context).textTheme.titleMedium),
-                          const Divider(),
-                          ListTile(
-                            title: const Text('Add Sample Device Contacts'),
-                            subtitle: const Text(
-                                'Creates ~10 contacts in device list for testing import.'),
-                            leading: const Icon(Icons.bug_report,
-                                color: Colors.orange),
-                            enabled: !_isBusy,
-                            // Updated onTap to call the utility function
-                            onTap: _isBusy
-                                ? null
-                                : () async {
-                                    if (!mounted) return;
-                                    setState(() => _isBusy = true);
-                                    ScaffoldMessenger.of(context)
-                                        .hideCurrentSnackBar(); // Hide previous messages
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                          content:
-                                              Text('Adding debug contacts...')),
-                                    );
-
-                                    // Call the static utility function
-                                    final String resultMessage =
-                                        await DebugUtils
-                                            .addSampleDeviceContacts();
-
-                                    if (!mounted) return;
-                                    setState(() => _isBusy = false);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text(resultMessage)),
-                                    );
-                                  },
-                          ),
-                          const Divider(),
-                                                  // --- NEW CLEAR APP DATA TILE ---
-                          ListTile(
-                            title: const Text('Clear All App Data'),
-                            subtitle: const Text(
-                                'Deletes all contacts, settings (ObjectBox) & cache (SharedPreferences). Requires restart or refresh.'),
-                            leading: const Icon(Icons.delete_forever, color: Colors.red),
-                            enabled: !_isBusy,
-                            onTap: _isBusy
-                                ? null
-                                : () async {
-                                    // Confirmation Dialog
-                                    final bool? confirmClear = await showDialog<bool>(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return AlertDialog(
-                                          title: const Text('Confirm Clear Data'),
-                                          content: const Text(
-                                              'This will permanently delete all contacts and settings stored within the app (ObjectBox) and clear cached preferences. This cannot be undone. Are you sure?'),
-                                          actions: <Widget>[
-                                            TextButton(
-                                              child: const Text('Cancel'),
-                                              onPressed: () => Navigator.of(context).pop(false),
-                                            ),
-                                            TextButton(
-                                              child: const Text('Clear Data', style: TextStyle(color: Colors.red)),
-                                              onPressed: () => Navigator.of(context).pop(true),
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    );
-
-                                    if (confirmClear != true || !mounted) {
-                                      if (mounted && confirmClear == false) { // Only show cancelled if explicitly cancelled
-                                         ScaffoldMessenger.of(context).showSnackBar(
-                                           const SnackBar(content: Text('Clear data cancelled.')),
-                                         );
-                                      }
-                                      return; // Exit if not confirmed or widget unmounted
-                                    }
-
-
-                                    if (!mounted) return;
-                                    setState(() => _isBusy = true);
-                                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Clearing all app data...')),
-                                    );
-
-                                    // Get repositories
-                                    final contactRepo = context.read<ContactRepository>();
-                                    final settingsRepo = context.read<UserSettingsRepository>();
-
-                                    // Call the static utility function
-                                    final String resultMessage = await DebugUtils.clearAllAppData(contactRepo, settingsRepo);
-
-                                    if (!mounted) return;
-
-                                    // Refresh UI elements after clearing
-                                    // 1. Reload settings (will create defaults if missing)
-                                    await _loadSettings();
-                                    // 2. Trigger contact list reload
-                                    context.read<ContactListBloc>().add(const ContactListEvent.loadContacts());
-
-
-                                    setState(() => _isBusy = false);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text(resultMessage)),
-                                    );
-                                  },
-                          ),
-                          const Divider(),
-                          // --- END NEW CLEAR APP DATA TILE ---
-]
-                        // --- END DEBUG SECTION ---
                       ],
                     ),
                     // Loading Indicator Overlay

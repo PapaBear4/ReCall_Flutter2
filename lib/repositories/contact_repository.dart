@@ -1,19 +1,43 @@
 // lib/repositories/contact_repository.dart
 import 'package:recall/models/contact.dart'; // Import the Contact model
+import 'package:recall/objectbox.g.dart';
 import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:objectbox/objectbox.dart';
 import 'package:recall/sources/contact_ob_source.dart';
-import 'package:recall/sources/contact_sp_source.dart';
 import 'package:recall/sources/data_source.dart';
 import 'repository.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:async';
+// TODO: Update delete functions to also cancel notifications for that contact
 
 class ContactRepository implements Repository<Contact> {
   late final Store? _store;
   late final Box<Contact>? _contactBox;
   late final DataSource<Contact> _source;
   final Map<int, Contact> _contacts = {};
+  final StreamController<List<Contact>> _contactStreamController =
+      StreamController.broadcast();
 
+  // MARK: STREAMS
+  // Expose the stream for external listeners
+  Stream<List<Contact>> get contactStream => _contactStreamController.stream;
+
+  // Emit the current list of contacts to the stream
+  void _emitContacts() async {
+    try {
+      final contacts = await getAll(); // Fetch the latest contacts
+      _contactStreamController.add(contacts); // Emit the updated list
+    } catch (e) {
+      logger.e("Error emitting contacts: $e");
+    }
+  }
+
+  // Dispose of the StreamController when no longer needed
+  void dispose() {
+    _contactStreamController.close();
+  }
+
+  // MARK: INIT
   // Initialize the repository
   ContactRepository(this._store) {
     if (!kIsWeb) {
@@ -26,11 +50,6 @@ class ContactRepository implements Repository<Contact> {
       }
     } else {
       _source = _createInMemorySource();
-      try {
-        _source = ContactsSharedPreferencesSource();
-      } catch (e) {
-        logger.i("Error opening shared preferences: $e");
-      }
     }
   }
 
@@ -38,6 +57,7 @@ class ContactRepository implements Repository<Contact> {
     return _InMemoryContactSource(contacts: _contacts);
   }
 
+  // MARK: GET
   @override
   Future<List<Contact>> getAll() async {
     final contacts = await _source.getAll();
@@ -60,49 +80,95 @@ class ContactRepository implements Repository<Contact> {
     return foundContact;
   }
 
+  // MARK: ADD
+  /// Adds a valid contact to the repository and updates the cache.
   @override
-  Future<Contact> add(Contact item) async {
-    logger.i('LOG: repo received from call: $item');
-    final contact = await _source.add(item);
-    logger.i('LOG: repo got back from source: $contact');
-    final addedContact = await _source.getById(contact.id!);
-    logger.i('LOG: repo retrieved: $addedContact');
+  Future<Contact> add(Contact contact) async {
+    // Check if the contact is new (ID is null or 0)
+    if (contact.id == null || contact.id == 0) {
+      try {
+        final Contact addedContact =
+            await _source.add(contact); // Use the passed 'contact' directly
 
-    if (item.id != null) {
-      _contacts[item.id!] = item;
+        // Verify that the data source returned a contact with a valid ID
+        if (addedContact.id != null && addedContact.id != 0) {
+          // Update the in-memory cache
+          _contacts[addedContact.id!] = addedContact;
+          // Notify listeners about the change
+          _emitContacts();
+          // Return the contact, now with its ID
+          return addedContact;
+        } else {
+          // This indicates an issue with the data source if ID wasn't assigned
+          final errorMessage =
+              "Failed to add contact: Data source did not assign a valid ID.";
+          logger.e(errorMessage);
+          throw Exception(errorMessage);
+        }
+      } catch (e) {
+        logger.e("Error adding contact in repository: $e");
+        rethrow; // Rethrow the exception to be handled by the caller
+      }
+    } else {
+      // If the contact already has an ID, it's not a new contact.
+      // This method is specifically for adding new contacts.
+      final errorMessage =
+          "Attempted to add a contact that already has an ID (${contact.id}). Use update() method instead.";
+      logger.w(errorMessage);
+      throw ArgumentError(errorMessage);
     }
-    return contact;
   }
 
+  /// Adds a list of valid contacts to the repository and updates the cache.
   @override
-  Future<Contact> update(Contact item) async {
-    final contact = await _source.update(item);
-    if (item.id != null) {
-      _contacts[item.id!] = item;
+  Future<List<Contact>> addMany(List<Contact> contacts) async {
+    // Check if all contacts are new (ID is null or 0)
+    for (final contact in contacts) {
+      if (contact.id != null && contact.id != 0) {
+        final errorMessage =
+            "Attempted to add a list of contacts where one or more contacts already have an ID (${contact.id}). Use update() or a different method for mixed operations.";
+        logger.w(errorMessage);
+        throw ArgumentError(errorMessage);
+      }
     }
-    return contact;
+
+    final List<Contact> addedContacts = await _source.addMany(contacts);
+
+    // Update cache with the contacts returned from the source (which now have IDs or are updated)
+    for (final contact in addedContacts) {
+      if (contact.id != null && contact.id != 0) {
+        // Ensure valid ID before caching
+        _contacts[contact.id!] = contact;
+      } else {
+        // Log if a contact came back from the source without a valid ID after addMany
+        logger.w(
+            "Contact returned from _source.addMany without a valid ID: ${contact.firstName} ${contact.lastName}");
+      }
+    }
+    _emitContacts();
+    return addedContacts; // Renamed back to addedContacts as per the new check
   }
 
+  // MARK: UPDATE
   @override
+  Future<Contact> update(Contact contact) async {
+    final updatedContact = await _source.add(contact);
+    if (updatedContact.id != null) {
+      _contacts[updatedContact.id!] = updatedContact;
+    }
+    _emitContacts();
+    return updatedContact;
+  }
+
+  // MARK: DELETE
+  @override // Delete a contact by ID
   Future<void> delete(int id) async {
     await _source.delete(id);
     _contacts.remove(id);
+    _emitContacts();
   }
 
-  @override
-  Future<List<Contact>> addMany(List<Contact> items) async {
-    // We expect items here NOT to have IDs yet,
-    // the source should assign them.
-    final addedContacts = await _source.addMany(items);
-    // Update cache with the contacts returned from the source (which now have IDs)
-    for (final contact in addedContacts) {
-      if (contact.id != null) {
-        _contacts[contact.id!] = contact;
-      }
-    }
-    return addedContacts;
-  }
-
+  // delete contact by ID and remove from cache
   Future<void> deleteMany(List<int> ids) async {
     try {
       await _source.deleteMany(ids); // Call the data source's deleteMany
@@ -112,6 +178,7 @@ class ContactRepository implements Repository<Contact> {
       }
       logger.i(
           "Successfully deleted ${ids.length} contacts from repository and cache.");
+      _emitContacts();
     } catch (e) {
       logger.e("Error deleting multiple contacts (${ids.join(', ')}): $e");
       // Optionally re-throw the error if the caller needs to handle it
@@ -119,6 +186,14 @@ class ContactRepository implements Repository<Contact> {
     }
   }
 
+  @override // Delete all contacts
+  Future<void> deleteAll() async {
+    await _source.deleteAll();
+    _contacts.clear(); // Clear the cache
+    _emitContacts();
+  }
+
+  // MARK: COUNT
   /// Returns the total number of contacts in the data source.
   Future<int> getContactsCount() async {
     try {
@@ -130,14 +205,9 @@ class ContactRepository implements Repository<Contact> {
       return 0;
     }
   }
-
-  @override
-  Future<void> deleteAll() async {
-    await _source.deleteAll();
-    _contacts.clear(); // Clear the cache
-  }
 }
 
+// MARK: CACHE
 class _InMemoryContactSource implements DataSource<Contact> {
   final Map<int, Contact> contacts;
 
@@ -198,7 +268,6 @@ class _InMemoryContactSource implements DataSource<Contact> {
     return contacts[id];
   }
 
-  @override
   Future<Contact> update(Contact item) async {
     if (item.id == null) return item;
     contacts[item.id!] = item;

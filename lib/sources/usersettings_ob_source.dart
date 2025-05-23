@@ -49,7 +49,7 @@ class UserSettingsObjectBoxSource implements DataSource<UserSettings> {
     return _userSettingsBox.get(id);
   }
 
-  @override
+  
   Future<UserSettings> update(UserSettings item) async {
     final id = _userSettingsBox.put(item);
     return item.copyWith(id: id);

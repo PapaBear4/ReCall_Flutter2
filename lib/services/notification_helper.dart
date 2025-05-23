@@ -11,6 +11,8 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:recall/utils/logger.dart'; // Adjust path if needed
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:go_router/go_router.dart';
+import 'package:recall/config/app_router.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -40,7 +42,7 @@ class NotificationHelper {
       // 4. Set it as the default local location for this isolate
       tz.setLocalLocation(deviceLocation);
 
-      logger.i("Timezone initialized for main isolate using device zone: $currentTimeZone");
+      //logger.i("Timezone initialized for main isolate using device zone: $currentTimeZone");
 
     } catch (e) {
        logger.e("Error initializing/setting timezone: $e. Falling back to UTC for main isolate.");
@@ -99,10 +101,10 @@ class NotificationHelper {
 
   Future<bool> requestAndHandlePermissions() async {
     PermissionStatus status = await Permission.notification.status;
-    logger.i('Notification permission status: $status');
+    //logger.i('Notification permission status: $status');
 
     if (status.isGranted) {
-      logger.i('Notification permission already granted.');
+      //logger.i('Notification permission already granted.');
       return true; // Permission already granted
     }
 
@@ -184,8 +186,8 @@ class NotificationHelper {
     } else {
       // It's due in the future. Schedule for the calculated date.
       scheduledDate = targetTimeOnDate(tzCalculatedDueDate); // Use user's time
-      logger
-          .i('LOG: Contact $id due in future. Scheduling for $scheduledDate');
+      //logger
+      //    .i('LOG: Contact $id due in future. Scheduling for $scheduledDate');
     }
 
     // Ensure we don't schedule in the past (safety net)
@@ -233,8 +235,8 @@ class NotificationHelper {
       matchDateTimeComponents:
           null, // Usually null for specific date/time schedules
     );
-    logger.i(
-        'LOG: Notification $id scheduled for $scheduledDate with payload $payload');
+    //logger.i(
+    //    'LOG: Notification $id scheduled for $scheduledDate with payload $payload');
   }
 
   Future<void> cancelNotification(int id) async {
@@ -290,29 +292,22 @@ class NotificationHelper {
   }
 
   void _handleNotificationTap(String? payload) {
-    // --- ADD LOGGING HERE ---
-    logger.i(
-        '>>> _handleNotificationTap called with payload: $payload'); // Using logger
-    // --- END LOGGING ---
-
     if (payload != null &&
         payload.isNotEmpty &&
         payload.startsWith('contact_id:')) {
       final String idString = payload.split(':').last;
-      logger
-          .i('>>> Extracted ID string: $idString'); // Using logger
       final contactId = int.tryParse(idString);
-      logger.i('>>> Parsed contactId: $contactId'); // Using logger
 
       if (contactId != null) {
-        // --- ADD LOGGING HERE ---
-        logger.i(
-            '>>> Attempting navigation to /contactDetails with argument: $contactId'); // Using logger
-        logger.i(
-            '>>> navigatorKey.currentState is null? ${navigatorKey.currentState == null}'); // Using logger
-        // --- END LOGGING ---
-        navigatorKey.currentState
-            ?.pushNamed('/contactDetails', arguments: contactId);
+        // Use GoRouter to navigate, ensuring context is available via the key
+        if (navigatorKey.currentContext != null) {
+           GoRouter.of(navigatorKey.currentContext!).pushNamed(
+                AppRouter.contactDetailsRouteName,
+                pathParameters: {'id': contactId.toString()},
+              );
+        } else {
+           logger.e(">>> Navigator key context was null, couldn't navigate from notification tap.");
+        }
       } else {
         logger
             .w('>>> Failed to parse contactId from payload.'); // Using logger

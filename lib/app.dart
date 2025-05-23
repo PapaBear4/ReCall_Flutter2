@@ -3,28 +3,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:recall/blocs/contact_list/contact_list_bloc.dart';
-import 'package:recall/main.dart';
 import 'package:recall/repositories/contact_repository.dart';
 import 'package:recall/repositories/usersettings_repository.dart';
-import 'package:recall/screens/about_screen.dart';
-import 'package:recall/screens/contact_import_selection_screen.dart';
-import 'package:recall/screens/contact_list_screen.dart';
 import 'package:recall/blocs/contact_details/contact_details_bloc.dart';
-import 'package:recall/screens/contact_details_screen.dart';
 import 'package:recall/services/notification_service.dart';
-import 'package:recall/screens/settings_screen.dart';
-import 'package:recall/screens/help_screen.dart';
+import 'package:recall/utils/logger.dart'; // Import HomeScreen
+import 'package:go_router/go_router.dart';
+import 'package:recall/config/app_router.dart'; // Add this line
 
 class ReCall extends StatelessWidget {
   final ContactRepository _contactRepository;
   final UserSettingsRepository _userSettingsRepository;
+  final GoRouter _router;
 
   const ReCall({
     super.key,
     required ContactRepository contactRepository,
     required UserSettingsRepository userSettingsRepository,
+    required GoRouter router,
   })  : _contactRepository = contactRepository,
-        _userSettingsRepository = userSettingsRepository;
+        _userSettingsRepository = userSettingsRepository,
+        _router = router;
 
   @override
   Widget build(BuildContext context) {
@@ -37,10 +36,17 @@ class ReCall extends StatelessWidget {
             RepositoryProvider<UserSettingsRepository>.value(
                 value: _userSettingsRepository),
             BlocProvider(
-              create: (context) => ContactListBloc(
-                contactRepository: _contactRepository,
-                notificationService: context.read<NotificationService>(),
-              )..add(const ContactListEvent.loadContacts()),
+              create: (context) {
+                logger.i('LoadContactListEvent triggered in app.dart');
+                return ContactListBloc(
+                  contactRepository: _contactRepository,
+                  notificationService: context.read<NotificationService>(),
+                )..add(const LoadContactListEvent(
+                    filters: {ContactListFilterType.active},
+                    sortField: ContactListSortField.nextContactDate,
+                    ascending: true, // Most overdue first
+                  ));
+              },
             ),
             BlocProvider(
               create: (context) => ContactDetailsBloc(
@@ -49,8 +55,11 @@ class ReCall extends StatelessWidget {
               ),
             ),
           ],
-          child: MaterialApp(
-            navigatorKey: navigatorKey, // Assign the global key here
+          child: MaterialApp.router(
+            // User MaterialApp.router
+            routerDelegate: _router.routerDelegate,
+            routeInformationParser: _router.routeInformationParser,
+            routeInformationProvider: _router.routeInformationProvider,
             // Set the title of the app.
             title: 'reCall App',
             // Set the theme of the app.
@@ -61,18 +70,7 @@ class ReCall extends StatelessWidget {
               ),
               useMaterial3: true, // Keep this enabled
             ),
-            // Set the initial route of the app.
-            home: const ContactListScreen(),
-            // Define the routes for the app.
-            routes: {
-              '/contactDetails': (context) =>
-                  const ContactDetailsScreen(contactId: 0),
-              '/settings': (context) => const SettingsScreen(),
-              '/about': (context) => const AboutScreen(),
-              '/help': (context) => const HelpScreen(),
-              '/importContacts': (context) =>
-                  const ContactImportSelectionScreen(),
-            },
+            // navigatorObservers: [AppRouter.routeObserver], // Commented out for now
           ),
         ));
   }

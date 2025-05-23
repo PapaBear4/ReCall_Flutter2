@@ -1,16 +1,40 @@
 // lib/blocs/contact_details/contact_detals_event.dart
 part of 'contact_details_bloc.dart';
 
-@freezed
-sealed class ContactDetailsEvent with _$ContactDetailsEvent {
-  const factory ContactDetailsEvent.loadContact({required int contactId}) =
-      _LoadContact;
-  const factory ContactDetailsEvent.saveContact({required Contact contact}) =
-      _SaveContact;
-  const factory ContactDetailsEvent.updateContactLocally(
-      {required Contact contact}) = _UpdateContactLocally;
-  const factory ContactDetailsEvent.addContact({required Contact contact}) =
-      _AddContact;
-  const factory ContactDetailsEvent.clearContact() = _ClearContact;
-  const factory ContactDetailsEvent.deleteContact({required int contactId}) = _DeleteContact;
+abstract class ContactDetailsEvent {
+  const ContactDetailsEvent();
+}
+
+class LoadContactEvent extends ContactDetailsEvent {
+  final int contactId;
+  
+  const LoadContactEvent({required this.contactId});
+}
+
+class SaveContactEvent extends ContactDetailsEvent {
+  final Contact contact;
+  
+  const SaveContactEvent({required this.contact});
+}
+
+class UpdateContactLocallyEvent extends ContactDetailsEvent {
+  final Contact contact;
+  
+  const UpdateContactLocallyEvent({required this.contact});
+}
+
+class AddContactEvent extends ContactDetailsEvent {
+  final Contact contact;
+  
+  const AddContactEvent({required this.contact});
+}
+
+class ClearContactEvent extends ContactDetailsEvent {
+  const ClearContactEvent();
+}
+
+class DeleteContactEvent extends ContactDetailsEvent {
+  final int contactId;
+  
+  const DeleteContactEvent({required this.contactId});
 }

@@ -6,8 +6,7 @@ part of 'contact.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$ContactImpl _$$ContactImplFromJson(Map<String, dynamic> json) =>
-    _$ContactImpl(
+Contact _$ContactFromJson(Map<String, dynamic> json) => Contact(
       id: (json['id'] as num?)?.toInt(),
       firstName: json['firstName'] as String,
       lastName: json['lastName'] as String,
@@ -16,9 +15,12 @@ _$ContactImpl _$$ContactImplFromJson(Map<String, dynamic> json) =>
       birthday: json['birthday'] == null
           ? null
           : DateTime.parse(json['birthday'] as String),
-      lastContacted: json['lastContacted'] == null
+      lastContactDate: json['lastContactDate'] == null
           ? null
-          : DateTime.parse(json['lastContacted'] as String),
+          : DateTime.parse(json['lastContactDate'] as String),
+      nextContactDate: json['nextContactDate'] == null
+          ? null
+          : DateTime.parse(json['nextContactDate'] as String),
       anniversary: json['anniversary'] == null
           ? null
           : DateTime.parse(json['anniversary'] as String),
@@ -26,31 +28,21 @@ _$ContactImpl _$$ContactImplFromJson(Map<String, dynamic> json) =>
       emails:
           (json['emails'] as List<dynamic>?)?.map((e) => e as String).toList(),
       notes: json['notes'] as String?,
-      youtubeUrl: json['youtubeUrl'] as String?,
-      instagramHandle: json['instagramHandle'] as String?,
-      facebookUrl: json['facebookUrl'] as String?,
-      snapchatHandle: json['snapchatHandle'] as String?,
-      xHandle: json['xHandle'] as String?,
-      linkedInUrl: json['linkedInUrl'] as String?,
+      isActive: json['isActive'] as bool? ?? true,
     );
 
-Map<String, dynamic> _$$ContactImplToJson(_$ContactImpl instance) =>
-    <String, dynamic>{
+Map<String, dynamic> _$ContactToJson(Contact instance) => <String, dynamic>{
       'id': instance.id,
       'firstName': instance.firstName,
       'lastName': instance.lastName,
       'nickname': instance.nickname,
       'frequency': instance.frequency,
       'birthday': instance.birthday?.toIso8601String(),
-      'lastContacted': instance.lastContacted?.toIso8601String(),
+      'lastContactDate': instance.lastContactDate?.toIso8601String(),
+      'nextContactDate': instance.nextContactDate?.toIso8601String(),
       'anniversary': instance.anniversary?.toIso8601String(),
       'phoneNumber': instance.phoneNumber,
       'emails': instance.emails,
       'notes': instance.notes,
-      'youtubeUrl': instance.youtubeUrl,
-      'instagramHandle': instance.instagramHandle,
-      'facebookUrl': instance.facebookUrl,
-      'snapchatHandle': instance.snapchatHandle,
-      'xHandle': instance.xHandle,
-      'linkedInUrl': instance.linkedInUrl,
+      'isActive': instance.isActive,
     };
