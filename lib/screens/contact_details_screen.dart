@@ -14,6 +14,7 @@ import 'package:recall/utils/contact_utils.dart';
 import 'package:recall/widgets/contact/contact_view_widget.dart';
 import 'package:recall/widgets/contact/contact_edit_widget.dart';
 import 'package:go_router/go_router.dart';
+import 'package:recall/config/app_router.dart';
 
 class ContactDetailsScreen extends StatefulWidget {
   final int contactId;
@@ -274,25 +275,38 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
           }
         }
       },
-      builder: (context, state) {
-        if (state is LoadedContactDetailsState) {
-          return _buildLoadedBody();
-        } else if (state is InitialContactDetailsState ||
-            state is LoadingContactDetailsState) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (state is ClearedContactDetailsState) {
-          return _isEditMode
-              ? _buildLoadedBody()
-              : const Center(child: Text('Enter new contact details'));
-        } else if (state is ErrorContactDetailsState) {
-          return _buildErrorBody(state.message);
-        } else {
-          if (_isEditMode &&
-              (_localContact.id == 0 || _localContact.id == null)) {
-            return _buildLoadedBody();
-          }
-          return const Center(child: CircularProgressIndicator());
-        }
+      builder: (context, contactDetailsState) {
+        // Add BlocBuilder for ContactListBloc to get activeContactCount
+        return BlocBuilder<ContactListBloc, ContactListState>(
+          builder: (context, contactListState) {
+            int activeContactCount = 0;
+            if (contactListState is LoadedContactListState) {
+              activeContactCount = contactListState.originalContacts
+                  .where((c) => c.isActive)
+                  .length;
+            }
+
+            if (contactDetailsState is LoadedContactDetailsState) {
+              return _buildLoadedBody(activeContactCount);
+            } else if (contactDetailsState is InitialContactDetailsState ||
+                contactDetailsState is LoadingContactDetailsState) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (contactDetailsState is ClearedContactDetailsState) {
+              return _isEditMode
+                  ? _buildLoadedBody(activeContactCount)
+                  : const Center(child: Text('Enter new contact details'));
+            } else if (contactDetailsState is ErrorContactDetailsState) {
+              return _buildErrorBody(
+                  contactDetailsState.message, activeContactCount);
+            } else {
+              if (_isEditMode &&
+                  (_localContact.id == 0 || _localContact.id == null)) {
+                return _buildLoadedBody(activeContactCount);
+              }
+              return const Center(child: CircularProgressIndicator());
+            }
+          },
+        );
       },
     );
   }
@@ -343,7 +357,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   }
 
   // MARK: - Error Body Builder
-  Widget _buildErrorBody(String errorMessage) {
+  Widget _buildErrorBody(String errorMessage, int activeContactCount) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -352,7 +366,9 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
               style: const TextStyle(color: Colors.red)),
           const SizedBox(height: 20),
           if (_isEditMode)
-            Expanded(child: SingleChildScrollView(child: _buildLoadedBody()))
+            Expanded(
+                child: SingleChildScrollView(
+                    child: _buildLoadedBody(activeContactCount)))
           else
             const Text("Could not load contact details."),
         ],
@@ -361,12 +377,14 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   }
 
   // MARK: - Main Content Body Builder (Loaded/Editing)
-  Widget _buildLoadedBody() {
+  Widget _buildLoadedBody(int activeContactCount) {
     return Form(
       key: _formKey,
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: _isEditMode ? _buildEditModeSection() : _buildViewModeSection(),
+        child: _isEditMode
+            ? _buildEditModeSection(activeContactCount)
+            : _buildViewModeSection(),
       ),
     );
   }
@@ -383,7 +401,7 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
   }
 
   // MARK: - Edit Mode Section Builder
-  Widget _buildEditModeSection() {
+  Widget _buildEditModeSection(int activeContactCount) {
     return ContactEditWidget(
       contact: _localContact,
       phoneMaskFormatter: phoneMaskFormatter,
@@ -395,6 +413,8 @@ class _ContactDetailsScreenState extends State<ContactDetailsScreen> {
       emailControllers: _emailControllers,
       onContactChanged: _handleContactChange,
       onEmailsChanged: _handleEmailsChange,
+      activeContactCount: activeContactCount,
+      maxActiveContacts: 18, // Use literal 18
     );
   }
 

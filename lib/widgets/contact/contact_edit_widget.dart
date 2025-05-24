@@ -5,6 +5,8 @@ import 'package:recall/models/contact.dart';
 import 'package:recall/models/enums.dart';
 import 'package:recall/widgets/contact/contact_field.dart';
 import 'package:recall/widgets/contact/email_list_widget.dart';
+import 'package:go_router/go_router.dart'; // Added import
+import 'package:recall/config/app_router.dart'; // Added import
 
 class ContactEditWidget extends StatelessWidget {
   final Contact contact;
@@ -17,6 +19,8 @@ class ContactEditWidget extends StatelessWidget {
   final List<TextEditingController> emailControllers;
   final Function(Contact) onContactChanged;
   final Function(List<String>) onEmailsChanged;
+  final int activeContactCount;
+  final int maxActiveContacts;
 
   const ContactEditWidget({
     Key? key,
@@ -30,6 +34,8 @@ class ContactEditWidget extends StatelessWidget {
     required this.emailControllers,
     required this.onContactChanged,
     required this.onEmailsChanged,
+    required this.activeContactCount,
+    required this.maxActiveContacts,
   }) : super(key: key);
 
   @override
@@ -157,7 +163,44 @@ class ContactEditWidget extends StatelessWidget {
               activeTrackColor: Colors.lightGreen,
               inactiveThumbColor: Colors.red,
               inactiveTrackColor: Colors.redAccent.withOpacity(0.5),
-              onChanged: (bool value) => onContactChanged(contact.copyWith(isActive: value)),
+              onChanged: (bool newValue) {
+                if (newValue == true && !contact.isActive && activeContactCount >= maxActiveContacts) {
+                  // Trying to activate a contact when limit is reached
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext dialogContext) {
+                      return AlertDialog(
+                        title: const Text('Active Contact Limit Reached'),
+                        content: const Text('You may only have 18 Active contacts. Would you like to go to the All Contacts screen to deactivate some?'),
+                        actions: <Widget>[
+                          TextButton(
+                            child: const Text('OK'),
+                            onPressed: () {
+                              Navigator.of(dialogContext).pop();
+                            },
+                          ),
+                          TextButton(
+                            child: const Text('Deactivate Contacts'),
+                            onPressed: () {
+                              Navigator.of(dialogContext).pop();
+                              // Navigate all the way back to the AllContacts screen.
+                              // This pops until the root, then pushes the contact list.
+                              while(GoRouter.of(context).canPop()) {
+                                GoRouter.of(context).pop();
+                              }
+                              context.pushNamed(AppRouter.contactListRouteName);
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                  // Do not call onContactChanged, keep the switch in its current (false) state.
+                } else {
+                  // Allow change if deactivating, or if activating and limit is not reached
+                  onContactChanged(contact.copyWith(isActive: newValue));
+                }
+              },
             ),
           ],
         ),
