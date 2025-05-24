@@ -74,6 +74,19 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           return;
         }
 
+        // Check for active contact limit if the update is to activate a contact
+        if (event.contact.isActive && // If the intention is to make the contact active
+            !currentState.originalContacts.firstWhere((c) => c.id == event.contact.id, orElse: () => event.contact.copyWith(isActive: true)).isActive) { // And it's not already active in the current state
+          final currentActiveCount = currentState.originalContacts.where((c) => c.isActive).length;
+          if (currentActiveCount >= 18) {
+            emit(currentState.copyWith(
+              errorMessage: 'Cannot activate contact. Limit of 18 active contacts reached. Please archive another contact first.',
+            ));
+            logger.w("UpdateContactFromListEvent: Cannot activate contact ${event.contact.id}, limit reached.");
+            return;
+          }
+        }
+
         logger.i(
             'UpdateContactFromListEvent: Received contact: ${event.contact}');
         emit(const LoadingContactListState()); // Indicate loading before processing
@@ -89,7 +102,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
 
           _emitFilteredAndSortedState(
             newOriginalContacts: newOriginalContacts,
-            currentState: currentState,
+            currentState: currentState.copyWith(clearErrorMessage: true), // Clear error on successful update
             emit: emit,
           );
           logger.i(
@@ -225,13 +238,56 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           return;
         }
 
+        // Check if toggling would exceed the active contact limit
+        int currentActiveCount = currentState.originalContacts.where((c) => c.isActive).length;
+        int potentialActiveCount = currentActiveCount;
+        List<Contact> contactsToToggle = [];
+        List<int> foundContactIdsForToggle = []; // Keep track of IDs we will actually toggle
+
+        for (int contactId in event.contactIds) {
+          Contact? contact;
+          try {
+            contact = currentState.originalContacts.firstWhere((c) => c.id == contactId);
+          } catch (e) {
+            logger.w("Contact with ID $contactId not found in originalContacts for toggling. Skipping.");
+            continue; // Skip to the next ID if not found
+          }
+          
+          contactsToToggle.add(contact);
+          foundContactIdsForToggle.add(contactId);
+          if (contact.isActive) {
+            potentialActiveCount--; // It will become inactive
+          } else {
+            potentialActiveCount++; // It will become active
+          }
+        }
+
+        if (potentialActiveCount > 18) {
+          int numBecomingActive = 0;
+          for (final contact in contactsToToggle) {
+            if (!contact.isActive) {
+              numBecomingActive++;
+            }
+          }
+          if (numBecomingActive > 0) {
+             emit(currentState.copyWith(
+              errorMessage: 'Cannot exceed 18 active contacts. Current: $currentActiveCount, Selected to activate: $numBecomingActive. Please deselect some or archive existing active contacts first.',
+              isSelectionMode: false, // Exit selection mode
+              selectedContacts: {}, // Clear selection
+            ));
+            logger.w("ToggleContactsActiveStatusEvent: Exceeded active contact limit. Potential: $potentialActiveCount");
+            return;
+          }
+        }
+
         emit(const LoadingContactListState());
         try {
-          for (int contactId in event.contactIds) {
+          // Use foundContactIdsForToggle instead of event.contactIds to avoid errors if some IDs were not found
+          for (int contactId in foundContactIdsForToggle) { 
             Contact? contact = await _contactRepository.getById(contactId);
             if (contact == null) {
               logger.w(
-                  "Contact with ID $contactId not found for toggling active status.");
+                  "Contact with ID $contactId not found in repository for toggling active status (should not happen if found in originalContacts).");
               continue;
             }
             final newActiveStatus = !contact.isActive;
@@ -246,7 +302,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           }
 
           logger.i(
-              'Toggled active status for ${event.contactIds.length} contacts.');
+              'Toggled active status for ${foundContactIdsForToggle.length} contacts.');
 
           bool isHomeScreenView = currentState.activeFilters
                   .contains(ContactListFilterType.overdue) ||
@@ -263,14 +319,18 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           
           _emitFilteredAndSortedState(
             newOriginalContacts: newBaseContacts,
-            currentState: currentState.copyWith(isSelectionMode: false, selectedContacts: {}),
+            currentState: currentState.copyWith(
+              isSelectionMode: false, 
+              selectedContacts: {},
+              clearErrorMessage: true // Clear any previous error message
+            ),
             emit: emit,
           );
 
         } catch (err) {
           emit(ErrorContactListState(err.toString()));
           logger.e(
-              "Error toggling active status for contacts ${event.contactIds}: $err");
+              "Error toggling active status for contacts ${foundContactIdsForToggle}: $err");
           // Consider re-emitting current loaded state if error occurs after some operations
            if (state is LoadingContactListState) { // If still loading, revert to previous loaded state
             emit(currentState);

@@ -29,6 +29,7 @@ typedef PopupMenuBuilder<T> = List<PopupMenuEntry<T>> Function(
 
 class BaseContactListScaffold extends StatefulWidget {
   final String screenTitle;
+  final Color? screenTitleColor; // New parameter for normal AppBar title color
   final String emptyListText;
   final ContactListEvent onRefreshEvent;
   final Widget? drawerWidget; // Make drawerWidget optional
@@ -48,6 +49,7 @@ class BaseContactListScaffold extends StatefulWidget {
   const BaseContactListScaffold({
     super.key,
     required this.screenTitle,
+    this.screenTitleColor, // Initialize new parameter
     required this.emptyListText,
     required this.onRefreshEvent,
     required this.sortMenuItems,
@@ -331,7 +333,7 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
                   },
                 )
               : null,
-      title: Text(widget.screenTitle),
+      title: Text(widget.screenTitle, style: widget.screenTitleColor != null ? TextStyle(color: widget.screenTitleColor) : null), // Use screenTitleColor
       actions: [
         if (widget.showSortMenu)
           PopupMenuButton<ListAction>(
@@ -377,7 +379,7 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
                     ),
                   ),
                 ),
-              ),
+              )
             )
           : null,
     );
@@ -386,60 +388,53 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
   // MARK: SEL AppBar
   PreferredSizeWidget _buildSelectionAppBar(BuildContext context) {
     final blocState = context.read<ContactListBloc>().state;
-
     String titleTextToShow;
+    Color titleColor = Colors.white; // Default color
+    const int maxActiveContacts = 18;
 
     if (blocState is LoadedContactListState) {
-      // Calculate the number of currently active contacts in the displayed list
-      int currentActiveInDisplayed = blocState.displayedContacts.where((c) => c.isActive).length;
-      
-      int adjustments = 0;
+      // Calculate potential active count based on ALL contacts, not just displayed ones
+      // This requires knowing the total active count from originalContacts
+      int currentTotalActive = blocState.originalContacts.where((c) => c.isActive).length;
+      int potentialActiveCount = currentTotalActive;
 
-      // Create a map of displayed contacts for efficient lookup by ID
-      // Assuming contacts in displayedContacts have non-null IDs as they are selectable
-      final displayedContactsMap = {
-        for (var c in blocState.displayedContacts)
+      // Adjust potentialActiveCount based on selected contacts from the original list perspective
+      // This ensures accuracy even if selected items are not currently displayed due to search/filter
+      final originalContactsMap = {
+        for (var c in blocState.originalContacts)
           if (c.id != null) c.id!: c
       };
 
-      for (var contactId in blocState.selectedContacts) {
-        final contact = displayedContactsMap[contactId];
-        if (contact != null) {
-          if (contact.isActive) {
-            adjustments--; // Selected active contact, potential decrease in active count
-          } else {
-            adjustments++; // Selected inactive contact, potential increase in active count
+      for (final contactId in blocState.selectedContacts) {
+          final contact = originalContactsMap[contactId];
+          if (contact != null) {
+            if (contact.isActive) { // If it's currently active and selected
+              potentialActiveCount--; // It will be toggled to inactive
+            } else { // If it's currently inactive and selected
+              potentialActiveCount++; // It will be toggled to active
+            }
           }
-        } else {
-          // This case should ideally not happen if selectedContacts are derived from displayedContacts
-          logger.w('Selected contact ID $contactId not found in displayedContactsMap during AppBar title calculation.');
-        }
       }
       
-      final potentialTotalActive = currentActiveInDisplayed + adjustments;
-      const totalContacts = 18; // Use the fixed number 18
-      titleTextToShow = '$potentialTotalActive / $totalContacts';
+      titleTextToShow = '$potentialActiveCount / $maxActiveContacts active';
+      if (potentialActiveCount > maxActiveContacts) {
+        titleColor = Colors.red;
+      }
     } else {
-      // This block should ideally not be reached if _selectionMode is true,
-      // as _selectionMode is set based on LoadedContactListState.
-      // Fallback to showing the count of selected items using the local _selectedContactIds.
-      titleTextToShow = '${_selectedContactIds.length} selected';
-      logger.w('_buildSelectionAppBar called when BLoC state is not LoadedContactListState. This is unexpected.');
+      // Default for other states (Loading, Empty, Initial)
+      // Assuming 0 active contacts if not loaded.
+      titleTextToShow = '0 / $maxActiveContacts active';
+      // No color change needed here as 0 <= 18
     }
 
     return AppBar(
-      backgroundColor: Colors.blueGrey.shade800,
-      elevation: 0,
-      scrolledUnderElevation: 0,
-      title: Text(
-        titleTextToShow, // Use the new calculated title
-        style: const TextStyle(color: Colors.white), 
-      ),
       leading: IconButton(
-        icon: const Icon(Icons.close, color: Colors.white),
-        onPressed: _toggleSelectionMode, // Dispatches ToggleSelectionModeEvent
+        icon: const Icon(Icons.close),
+        onPressed: _toggleSelectionMode, // Use the existing method to exit selection mode
       ),
-      actions: [
+      title: Text(titleTextToShow, style: TextStyle(color: titleColor)), // Apply dynamic color
+      backgroundColor: Colors.blueGrey[700], // Example color, adjust as needed
+      actions: <Widget>[
         if (_selectedContactIds.isNotEmpty) ...[
           IconButton(
             icon: const Icon(Icons.check, color: Colors.white),

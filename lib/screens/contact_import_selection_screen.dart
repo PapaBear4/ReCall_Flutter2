@@ -240,10 +240,10 @@ class _ContactImportSelectionScreenState
     if (!mounted) return;
     setState(() => _isSaving = true); // Show saving indicator
 
-    final List<ContactSelectionInfo> contactsToImport =
+    final List<ContactSelectionInfo> contactsToImportInfo =
         _selectableContacts.where((item) => item.isSelected).toList();
 
-    if (contactsToImport.isEmpty) {
+    if (contactsToImportInfo.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No contacts selected.')),
       );
@@ -255,8 +255,7 @@ class _ContactImportSelectionScreenState
       // Get repositories and settings
       final contactRepo = context.read<ContactRepository>();
       final settingsRepo = context.read<UserSettingsRepository>();
-      final List<app_contact.Contact> existingContacts =
-          await contactRepo.getAll();
+      // _currentActiveAppContactCount is already loaded and up-to-date
       final settings = await settingsRepo.getAll();
       final String defaultFrequency = settings.isNotEmpty
           ? settings.first.defaultFrequency
@@ -266,65 +265,90 @@ class _ContactImportSelectionScreenState
       List<String> skippedContactsLog = [];
 
       logger.i(
-          "Starting import validation and mapping for ${contactsToImport.length} selected contacts.");
+          "Starting import validation and mapping for ${contactsToImportInfo.length} selected contacts.");
 
-      for (final item in contactsToImport) {
+      // First, filter out duplicates and contacts without identifiers BEFORE checking the limit
+      // This loop determines who *could* be added.
+      List<ContactSelectionInfo> validContactsToConsiderForImport = [];
+      final List<app_contact.Contact> existingContacts = await contactRepo.getAll(); // Fetch fresh list for duplicate check
+
+      for (final item in contactsToImportInfo) {
         final fcContact = item.contact;
         bool isDuplicate = false;
 
-        // --- 4.1 Duplicate Checking (Refined Logic) ---
-        // Use the selected phone and emails from ContactSelectionInfo
         final String? selectedPhoneNumber = item.selectedPhone?.number.trim();
         final List<String> selectedEmailAddresses =
             item.selectedEmails.map((e) => e.address.trim()).toList();
 
-        // Check selected phone first
         if (selectedPhoneNumber != null && selectedPhoneNumber.isNotEmpty) {
           if (existingContacts
               .any((c) => c.phoneNumber == selectedPhoneNumber)) {
             isDuplicate = true;
           }
         }
-        // Check selected emails only if not already found duplicate by phone
         if (!isDuplicate && selectedEmailAddresses.isNotEmpty) {
           if (existingContacts.any((c) {
-            // Check if any of the selected emails exist in the contact's email list
             return selectedEmailAddresses.any(
                 (selectedEmail) => c.emails?.contains(selectedEmail) ?? false);
           })) {
             isDuplicate = true;
           }
         }
+
         if (isDuplicate) {
           logger.i(
-              "Skipping duplicate: ${fcContact.displayName} (Selected Phone: $selectedPhoneNumber, Selected Emails: ${selectedEmailAddresses.join(', ')})");
-          skippedContactsLog.add(fcContact.displayName);
+              "Skipping duplicate (pre-check): ${fcContact.displayName}");
+          skippedContactsLog.add("${fcContact.displayName} (Duplicate)");
           continue;
         }
 
-        // --- 4.2 Data Mapping (Refined Logic) ---
-        // Use selected phone/emails from ContactSelectionInfo
         final String? mappedPhone = item.selectedPhone?.number;
         final List<String> mappedEmails =
             item.selectedEmails.map((e) => e.address).toList();
 
-        // Ensure we have at least one identifier (the selected one) to save
         if ((mappedPhone == null || mappedPhone.isEmpty) &&
             mappedEmails.isEmpty) {
           logger.w(
-              "Skipping ${fcContact.displayName}: No phone number or email address was selected for import.");
+              "Skipping ${fcContact.displayName} (pre-check): No phone number or email address was selected.");
           skippedContactsLog
               .add("${fcContact.displayName} (No phone/email selected)");
           continue;
         }
+        validContactsToConsiderForImport.add(item);
+      }
 
-        // Map Birthday/Anniversary
+      // Now check the limit with the count of contacts that are actually new and valid
+      if (_currentActiveAppContactCount + validContactsToConsiderForImport.length > 18) {
+        final int canImportCount = 18 - _currentActiveAppContactCount;
+        await showDialog(
+          context: context,
+          builder: (BuildContext dialogContext) => AlertDialog(
+            title: const Text('Active Contact Limit Exceeded'),
+            content: Text(
+                'Importing ${validContactsToConsiderForImport.length} contact(s) would exceed the limit of 18 active contacts. You currently have $_currentActiveAppContactCount active contacts. You can import ${canImportCount > 0 ? canImportCount : 0} more active contact(s). Please deselect some contacts or archive existing active contacts first.'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+        setState(() => _isSaving = false);
+        return;
+      }
+
+      // Proceed to build the contactsToAdd list only from validContactsToConsiderForImport
+      for (final item in validContactsToConsiderForImport) {
+        final fcContact = item.contact;
+        // Duplicate and phone/email checks already done above for validContactsToConsiderForImport
+        // So, we just map them here.
+
         DateTime? birthday;
         DateTime? anniversary;
         for (final event in fcContact.events) {
           try {
-            final date = DateTime(event.year ?? 1900, event.month,
-                event.day); // Use default year if missing
+            final date = DateTime(event.year ?? 1900, event.month, event.day);
             if (event.label == fc.EventLabel.birthday) {
               birthday = date;
             } else if (event.label == fc.EventLabel.anniversary) {
@@ -336,42 +360,29 @@ class _ContactImportSelectionScreenState
           }
         }
 
-        // Create the app's Contact object
         final DateTime now = DateTime.now();
         final app_contact.Contact tempContactForNextDateCalculation = app_contact.Contact(
           lastContactDate: now,
           frequency: defaultFrequency,
-          // Other fields are not strictly necessary for calculateNextContactDate
-          // but providing them if easily available won't hurt.
-          firstName: fcContact.name.first, // Example, can be omitted if not needed by calc
-          lastName: fcContact.name.last,  // Example, can be omitted if not needed by calc
+          firstName: fcContact.name.first,
+          lastName: fcContact.name.last,
         );
 
         final appContact = app_contact.Contact(
-          // id will be assigned by repository
           firstName: fcContact.name.first,
           lastName: fcContact.name.last,
-          nickname:
-              null, // TODO: Map nickname? Not directly available in fc.Contact.name
-          phoneNumber: mappedPhone,
-          emails: mappedEmails,
+          phoneNumber: item.selectedPhone?.number,
+          emails: item.selectedEmails.map((e) => e.address).toList(),
           birthday: birthday,
           anniversary: anniversary,
-          frequency: defaultFrequency, // Assign default from settings
-          lastContactDate: now, // Set lastContactDate to today
-          nextContactDate: calculateNextContactDate(tempContactForNextDateCalculation), // Calculate nextContactDate
-          notes: fcContact.notes.isNotEmpty
-              ? fcContact.notes.first.note
-              : null, // Use first note if exists
-          // Map other fields if needed (youtube, instagram, facebook, snapchat)
-          // youtubeUrl: fcContact.websites.firstWhereOrNull((w) => w.url.contains('youtube.com'))?.url,
-          // instagramHandle: fcContact.socialMedias.firstWhereOrNull((s) => s.label == fc.SocialMediaLabel.instagram)?.userName,
-          // facebookUrl: fcContact.websites.firstWhereOrNull((w) => w.url.contains('facebook.com'))?.url,
-          // snapchatHandle: fcContact.socialMedias.firstWhereOrNull((s) => s.label == fc.SocialMediaLabel.snapchat)?.userName,
+          frequency: defaultFrequency,
+          lastContactDate: now,
+          nextContactDate: calculateNextContactDate(tempContactForNextDateCalculation),
+          notes: fcContact.notes.isNotEmpty ? fcContact.notes.first.note : null,
+          isActive: true, // Imported contacts are active by default
         );
-
         contactsToAdd.add(appContact);
-      } // End loop
+      } // End loop for building contactsToAdd
 
       // --- 4.3 Save Contacts ---
       int savedCount = 0;
@@ -424,17 +435,25 @@ class _ContactImportSelectionScreenState
     final bool anyContactsSelected =
         _selectableContacts.any((item) => item.isSelected);
 
-    // Calculate title text
+    // Calculate title text and color
     final int selectedForImportCount = _selectableContacts.where((item) => item.isSelected).length;
     // Newly imported contacts are assumed active
     final int potentialTotalActiveAfterImport = _currentActiveAppContactCount + selectedForImportCount;
     const int importTargetOrCapacity = 18; // Fixed number as per requirement
-    // Updated title to specify "Active Contacts"
     final String appBarTitleText = '$potentialTotalActiveAfterImport / $importTargetOrCapacity Active Contacts';
+    
+    // Determine title color based on theme and potential count
+    final ThemeData theme = Theme.of(context);
+    final Color defaultTitleColor = theme.appBarTheme.titleTextStyle?.color ?? 
+                                  (theme.brightness == Brightness.dark ? Colors.white : Colors.black);
+    
+    final Color appBarTitleColor = potentialTotalActiveAfterImport > importTargetOrCapacity 
+        ? Colors.red 
+        : defaultTitleColor;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(appBarTitleText), // Updated title
+        title: Text(appBarTitleText, style: TextStyle(color: appBarTitleColor)), // Apply dynamic color
         actions: [
           // Select All Checkbox
           Padding(

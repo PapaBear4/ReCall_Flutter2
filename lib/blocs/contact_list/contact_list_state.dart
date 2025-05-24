@@ -26,6 +26,7 @@ class LoadedContactListState extends ContactListState {
   final Set<ContactListFilterType> activeFilters; // Changed to Set of filters
   final bool isSelectionMode; // Added for selection mode
   final Set<int> selectedContacts; // Added for selected contacts
+  final String? errorMessage; // Added for error messages
   
   const LoadedContactListState({
     required this.originalContacts,
@@ -36,6 +37,7 @@ class LoadedContactListState extends ContactListState {
     this.activeFilters = const {},
     this.isSelectionMode = false, // Default to false
     this.selectedContacts = const {}, // Default to empty set
+    this.errorMessage, // Initialize errorMessage
   });
   
   LoadedContactListState copyWith({
@@ -47,6 +49,8 @@ class LoadedContactListState extends ContactListState {
     Set<ContactListFilterType>? activeFilters,
     bool? isSelectionMode,
     Set<int>? selectedContacts,
+    String? errorMessage,
+    bool clearErrorMessage = false, // Added to explicitly clear the error message
   }) {
     return LoadedContactListState(
       originalContacts: originalContacts ?? this.originalContacts,
@@ -57,6 +61,7 @@ class LoadedContactListState extends ContactListState {
       activeFilters: activeFilters ?? this.activeFilters,
       isSelectionMode: isSelectionMode ?? this.isSelectionMode,
       selectedContacts: selectedContacts ?? this.selectedContacts,
+      errorMessage: clearErrorMessage ? null : errorMessage ?? this.errorMessage,
     );
   }
 }
