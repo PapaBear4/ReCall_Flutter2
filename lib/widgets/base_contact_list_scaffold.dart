@@ -76,12 +76,12 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
   final Set<int> _selectedContactIds = {};
 
   // Store current filter and sort state to pass to details screen
-  Set<ContactListFilterType> _currentFilters = {
-    ContactListFilterType.active
-  }; // Default
-  ContactListSortField _currentSortField =
-      ContactListSortField.lastName; // Default
-  bool _currentAscending = true; // Default
+  // Set<ContactListFilterType> _currentFilters = {
+  //   ContactListFilterType.active
+  // }; // Default
+  // ContactListSortField _currentSortField =
+  //     ContactListSortField.lastName; // Default
+  // bool _currentAscending = true; // Default
 
   // MARK: Lifecycle
   @override
@@ -96,12 +96,12 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
       eventToLoad = widget.onRefreshEvent;
     }
 
-    if (eventToLoad is LoadContactListEvent) {
-      // Directly assign as analyzer indicates these are non-null for LoadContactListEvent
-      _currentFilters = eventToLoad.filters;
-      _currentSortField = eventToLoad.sortField;
-      _currentAscending = eventToLoad.ascending;
-    }
+    // if (eventToLoad is LoadContactListEvent) {
+    //   // Directly assign as analyzer indicates these are non-null for LoadContactListEvent
+    //   _currentFilters = eventToLoad.filters;
+    //   _currentSortField = eventToLoad.sortField;
+    //   _currentAscending = eventToLoad.ascending;
+    // }
     // Ensure an event is always added
     context.read<ContactListBloc>().add(eventToLoad);
   }
@@ -128,30 +128,23 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
 
   // MARK: SELECTION
   void _toggleSelectionMode() {
-    setState(() {
-      _selectionMode = !_selectionMode;
-      if (!_selectionMode) _selectedContactIds.clear();
-    });
+    context.read<ContactListBloc>().add(const ToggleSelectionModeEvent());
   }
 
   void _toggleContactSelection(int contactId) {
-    setState(() {
-      if (_selectedContactIds.contains(contactId)) {
-        _selectedContactIds.remove(contactId);
-        if (_selectedContactIds.isEmpty) _selectionMode = false;
-      } else {
-        _selectedContactIds.add(contactId);
-      }
-    });
+    context.read<ContactListBloc>().add(ToggleContactSelectionEvent(contactId: contactId));
   }
 
   void _deleteSelectedContacts() async {
+    final state = context.read<ContactListBloc>().state;
+    if (state is! LoadedContactListState || state.selectedContacts.isEmpty) return;
+
     final bool confirmDelete = await showDialog(
           context: context,
           builder: (BuildContext dialogContext) => AlertDialog(
             title: const Text('Delete Contacts'),
             content:
-                Text('Delete ${_selectedContactIds.length} selected contacts?'),
+                Text('Delete ${state.selectedContacts.length} selected contacts?'),
             actions: <Widget>[
               TextButton(
                   onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -166,15 +159,12 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
         false;
     logger.i('Delete confirmation: $confirmDelete');
     if (confirmDelete && mounted) {
-      logger.i('Deleting contacts: $_selectedContactIds');
-      final int deletedContactsCount = _selectedContactIds.length;
+      logger.i('Deleting contacts: ${state.selectedContacts}');
+      final int deletedContactsCount = state.selectedContacts.length;
       context
           .read<ContactListBloc>()
-          .add(DeleteContactsEvent(contactIds: _selectedContactIds.toList()));
-      setState(() {
-        _selectionMode = false;
-        _selectedContactIds.clear();
-      });
+          .add(DeleteContactsEvent(contactIds: state.selectedContacts.toList()));
+      // No need to manage local state for selection mode or selected IDs, BLoC will handle it.
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('$deletedContactsCount contacts deleted')),
       );
@@ -182,14 +172,12 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
   }
 
   void _toggleSelectedContactsActiveStatus() {
-    if (_selectedContactIds.isEmpty) return;
+    final state = context.read<ContactListBloc>().state;
+    if (state is! LoadedContactListState || state.selectedContacts.isEmpty) return;
+
     context.read<ContactListBloc>().add(ToggleContactsActiveStatusEvent(
-        contactIds: _selectedContactIds.toList()));
-    // Exit selection mode after action
-    setState(() {
-      _selectionMode = false;
-      _selectedContactIds.clear();
-    });
+        contactIds: state.selectedContacts.toList()));
+    // No need to manage local state for selection mode or selected IDs, BLoC will handle it.
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
           content: Text('Toggled active status for selected contacts.')),
@@ -198,14 +186,8 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
 
   void _onContactLongPress(Contact contact) {
     if (contact.id == null) return;
-    if (!_selectionMode) {
-      setState(() {
-        _selectionMode = true;
-        _selectedContactIds.add(contact.id!);
-      });
-    } else {
-      _toggleContactSelection(contact.id!);
-    }
+    // Always dispatch toggle selection, BLoC will handle entering selection mode
+    context.read<ContactListBloc>().add(ToggleContactSelectionEvent(contactId: contact.id!));
   }
 
   // MARK: REFRESH
@@ -229,11 +211,33 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
       listener: (context, state) {
         if (state is LoadedContactListState) {
           // Update current filter/sort state when the list reloads
-          _currentFilters = state.activeFilters;
-          _currentSortField = state.sortField;
-          _currentAscending = state.ascending;
+          // _currentFilters = state.activeFilters;
+          // _currentSortField = state.sortField;
+          // _currentAscending = state.ascending;
+          // Update local _selectionMode and _selectedContactIds based on BLoC state
+          // This is to keep the AppBar and other UI elements in sync
+          // However, actions should dispatch events to the BLoC
+          if (_selectionMode != state.isSelectionMode) {
+            setState(() {
+              _selectionMode = state.isSelectionMode;
+            });
+          }
+          if (!setEquals(_selectedContactIds, state.selectedContacts)) {
+             setState(() {
+              _selectedContactIds.clear();
+              _selectedContactIds.addAll(state.selectedContacts);
+            });
+          }
           logger.i(
-              'BaseContactListScaffold: Updated _currentFilters: $_currentFilters, _currentSortField: $_currentSortField, _currentAscending: $_currentAscending from LoadedContactListState');
+              'BaseContactListScaffold: Listener updated _selectionMode: $_selectionMode, _selectedContactIds: $_selectedContactIds from LoadedContactListState');
+        } else if (state is EmptyContactListState || state is InitialContactListState || state is LoadingContactListState) {
+          // If the state is not Loaded, ensure selection mode is off.
+          if (_selectionMode) {
+            setState(() {
+              _selectionMode = false;
+              _selectedContactIds.clear();
+            });
+          }
         }
       },
       child: Scaffold(
@@ -381,14 +385,59 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
 
   // MARK: SEL AppBar
   PreferredSizeWidget _buildSelectionAppBar(BuildContext context) {
+    final blocState = context.read<ContactListBloc>().state;
+
+    String titleTextToShow;
+
+    if (blocState is LoadedContactListState) {
+      // Calculate the number of currently active contacts in the displayed list
+      int currentActiveInDisplayed = blocState.displayedContacts.where((c) => c.isActive).length;
+      
+      int adjustments = 0;
+
+      // Create a map of displayed contacts for efficient lookup by ID
+      // Assuming contacts in displayedContacts have non-null IDs as they are selectable
+      final displayedContactsMap = {
+        for (var c in blocState.displayedContacts)
+          if (c.id != null) c.id!: c
+      };
+
+      for (var contactId in blocState.selectedContacts) {
+        final contact = displayedContactsMap[contactId];
+        if (contact != null) {
+          if (contact.isActive) {
+            adjustments--; // Selected active contact, potential decrease in active count
+          } else {
+            adjustments++; // Selected inactive contact, potential increase in active count
+          }
+        } else {
+          // This case should ideally not happen if selectedContacts are derived from displayedContacts
+          logger.w('Selected contact ID $contactId not found in displayedContactsMap during AppBar title calculation.');
+        }
+      }
+      
+      final potentialTotalActive = currentActiveInDisplayed + adjustments;
+      const totalContacts = 18; // Use the fixed number 18
+      titleTextToShow = '$potentialTotalActive / $totalContacts';
+    } else {
+      // This block should ideally not be reached if _selectionMode is true,
+      // as _selectionMode is set based on LoadedContactListState.
+      // Fallback to showing the count of selected items using the local _selectedContactIds.
+      titleTextToShow = '${_selectedContactIds.length} selected';
+      logger.w('_buildSelectionAppBar called when BLoC state is not LoadedContactListState. This is unexpected.');
+    }
+
     return AppBar(
       backgroundColor: Colors.blueGrey.shade800,
       elevation: 0,
       scrolledUnderElevation: 0,
-      title: Text('${_selectedContactIds.length} selected'),
+      title: Text(
+        titleTextToShow, // Use the new calculated title
+        style: const TextStyle(color: Colors.white), 
+      ),
       leading: IconButton(
         icon: const Icon(Icons.close, color: Colors.white),
-        onPressed: _toggleSelectionMode,
+        onPressed: _toggleSelectionMode, // Dispatches ToggleSelectionModeEvent
       ),
       actions: [
         if (_selectedContactIds.isNotEmpty) ...[
@@ -397,47 +446,7 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
             onPressed: () {
               context.read<ContactListBloc>().add(MarkContactsAsContactedEvent(
                   contactIds: _selectedContactIds.toList()));
-              setState(() {
-                _selectedContactIds.clear();
-                _selectionMode = false; // Exit selection mode
-              });
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: () {
-              // Show confirmation dialog before deleting
-              showDialog(
-                context: context,
-                builder: (BuildContext dialogContext) {
-                  return AlertDialog(
-                    title: const Text('Confirm Delete'),
-                    content: Text(
-                        'Are you sure you want to delete ${_selectedContactIds.length} contact(s)?'),
-                    actions: <Widget>[
-                      TextButton(
-                        child: const Text('Cancel'),
-                        onPressed: () {
-                          Navigator.of(dialogContext).pop(); // Close the dialog
-                        },
-                      ),
-                      TextButton(
-                        child: const Text('Delete'),
-                        onPressed: () {
-                          Navigator.of(dialogContext).pop(); // Close the dialog
-                          context.read<ContactListBloc>().add(
-                              DeleteContactsEvent(
-                                  contactIds: _selectedContactIds.toList()));
-                          setState(() {
-                            _selectedContactIds.clear();
-                            _selectionMode = false; // Exit selection mode
-                          });
-                        },
-                      ),
-                    ],
-                  );
-                },
-              );
+              // BLoC will manage exiting selection mode if needed after this action.
             },
           ),
         ],
@@ -447,26 +456,19 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
           tooltip: 'Toggle Active Status',
           onPressed: _selectedContactIds.isEmpty
               ? null
-              : _toggleSelectedContactsActiveStatus,
+              : _toggleSelectedContactsActiveStatus, // Dispatches ToggleContactsActiveStatusEvent
         ),
         IconButton(
-          icon: const Icon(Icons.delete, color: Colors.white),
+          icon: const Icon(Icons.delete, color: Colors.white), // This is the second delete button
           tooltip: 'Delete Selected',
           onPressed:
-              _selectedContactIds.isEmpty ? null : _deleteSelectedContacts,
+              _selectedContactIds.isEmpty ? null : _deleteSelectedContacts, // Dispatches DeleteContactsEvent
         ),
         IconButton(
           icon: const Icon(Icons.select_all, color: Colors.white),
           tooltip: 'Select All',
           onPressed: () {
-            final state = context.read<ContactListBloc>().state;
-            if (state is LoadedContactListState) {
-              setState(() {
-                _selectedContactIds.addAll(state.displayedContacts
-                    .where((c) => c.id != null)
-                    .map((contact) => contact.id!));
-              });
-            }
+            context.read<ContactListBloc>().add(const SelectAllContactsEvent());
           },
         ),
       ],

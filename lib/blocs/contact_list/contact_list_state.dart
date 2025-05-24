@@ -24,6 +24,8 @@ class LoadedContactListState extends ContactListState {
   final bool ascending;
   final String searchTerm; // Current search term
   final Set<ContactListFilterType> activeFilters; // Changed to Set of filters
+  final bool isSelectionMode; // Added for selection mode
+  final Set<int> selectedContacts; // Added for selected contacts
   
   const LoadedContactListState({
     required this.originalContacts,
@@ -31,7 +33,9 @@ class LoadedContactListState extends ContactListState {
     this.sortField = ContactListSortField.nextContactDate,
     this.ascending = true,
     this.searchTerm = '',
-    this.activeFilters = const {}, // Default to empty set
+    this.activeFilters = const {},
+    this.isSelectionMode = false, // Default to false
+    this.selectedContacts = const {}, // Default to empty set
   });
   
   LoadedContactListState copyWith({
@@ -41,6 +45,8 @@ class LoadedContactListState extends ContactListState {
     bool? ascending,
     String? searchTerm,
     Set<ContactListFilterType>? activeFilters,
+    bool? isSelectionMode,
+    Set<int>? selectedContacts,
   }) {
     return LoadedContactListState(
       originalContacts: originalContacts ?? this.originalContacts,
@@ -49,6 +55,8 @@ class LoadedContactListState extends ContactListState {
       ascending: ascending ?? this.ascending,
       searchTerm: searchTerm ?? this.searchTerm,
       activeFilters: activeFilters ?? this.activeFilters,
+      isSelectionMode: isSelectionMode ?? this.isSelectionMode,
+      selectedContacts: selectedContacts ?? this.selectedContacts,
     );
   }
 }

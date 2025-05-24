@@ -55,6 +55,7 @@ class _ContactImportSelectionScreenState
   String _searchQuery = '';
 
   SortOption _currentSortOption = SortOption.lastNameAsc; // Changed default sort
+  int _currentActiveAppContactCount = 0; // Renamed and will store active count
 
   @override
   void initState() {
@@ -62,6 +63,7 @@ class _ContactImportSelectionScreenState
     WidgetsBinding.instance.addObserver(this);
     _fetchContacts();
     _searchController.addListener(_onSearchChanged);
+    _loadCurrentAppContactCount(); // Name of method to be changed below
   }
 
   @override
@@ -78,6 +80,7 @@ class _ContactImportSelectionScreenState
     if (state == AppLifecycleState.resumed) {
       logger.i("App resumed, refreshing contacts list.");
       _fetchContacts();
+      _loadCurrentAppContactCount(); // Name of method to be changed below
     }
   }
 
@@ -117,6 +120,27 @@ class _ContactImportSelectionScreenState
       }
     }
     return mobilePhone ?? homePhone ?? workPhone ?? otherPhone ?? contact.phones.first;
+  }
+
+  // Renamed method to reflect it loads active count
+  Future<void> _loadCurrentAppContactCount() async {
+    if (!mounted) return;
+    try {
+      final contactRepo = context.read<ContactRepository>();
+      final List<app_contact.Contact> existingContacts = await contactRepo.getAll();
+      if (mounted) {
+        setState(() {
+          // Filter for active contacts before counting
+          _currentActiveAppContactCount = existingContacts.where((c) => c.isActive).length;
+        });
+      }
+    } catch (e) {
+      logger.e("Error loading current active app contact count: $e");
+      if (mounted) {
+        // Consider setting a default or error state if needed
+        // For now, _currentActiveAppContactCount will retain its last value or 0.
+      }
+    }
   }
 
   Future<void> _fetchContacts() async {
@@ -400,9 +424,17 @@ class _ContactImportSelectionScreenState
     final bool anyContactsSelected =
         _selectableContacts.any((item) => item.isSelected);
 
+    // Calculate title text
+    final int selectedForImportCount = _selectableContacts.where((item) => item.isSelected).length;
+    // Newly imported contacts are assumed active
+    final int potentialTotalActiveAfterImport = _currentActiveAppContactCount + selectedForImportCount;
+    const int importTargetOrCapacity = 18; // Fixed number as per requirement
+    // Updated title to specify "Active Contacts"
+    final String appBarTitleText = '$potentialTotalActiveAfterImport / $importTargetOrCapacity Active Contacts';
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Select Contacts to Import'),
+        title: Text(appBarTitleText), // Updated title
         actions: [
           // Select All Checkbox
           Padding(

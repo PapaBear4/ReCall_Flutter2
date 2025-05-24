@@ -131,34 +131,75 @@ class _ContactListScreenState extends State<ContactListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BaseContactListScaffold(
-      screenTitle: 'All Contacts',
-      emptyListText: 'No contacts found. Add some!',
-    onRefreshEvent: LoadContactListEvent(
-      searchTerm: _searchController.text, // Use the current search term
-      filters: _includeArchived
-          ? {} // No filters if archived contacts are included
-          : {ContactListFilterType.active}, // Apply active filter otherwise
-      sortField: ContactListSortField.lastName, // Use the current sort field
-      ascending: true, // Use the current sort order
-    ),
-      sortMenuItems: _buildSortMenuItems,
-      filterMenuItems: _buildFilterMenuItems,
-      handleListAction: _handleAllContactsListAction,
-      fabHeroTagPrefix: 'all_contacts',
-      initialScreenLoadEvent:
-          const LoadContactListEvent(filters: {ContactListFilterType.active}),
-      displayActiveStatusInList: true, // Show indicator on this screen
-      appBarActions: [
-        IconButton(
-          icon: Icon(
-            _includeArchived ? Icons.visibility_off : Icons.visibility,
-            color: const Color.fromARGB(255, 1, 255, 98),
+    return BlocBuilder<ContactListBloc, ContactListState>(
+      builder: (context, state) {
+        String screenTitleText = 'Active'; // Default title
+
+        if (state is LoadingContactListState || state is InitialContactListState) {
+          screenTitleText = 'Active (...)';
+        } else if (state is LoadedContactListState) {
+          final activeContactCount = state.originalContacts.where((contact) => contact.isActive).length;
+          const totalContacts = 18; // Use the fixed number 18
+
+          if (state.isSelectionMode && state.selectedContacts.isNotEmpty) {
+            int potentialActiveContactCount = activeContactCount;
+            
+            // Create a Set of selected contact IDs for efficient lookup
+            final Set<dynamic> selectedContactIds = state.selectedContacts.toSet();
+
+            // Iterate over originalContacts to correctly assess potential changes based on selections
+            for (final contact in state.originalContacts) {
+              if (selectedContactIds.contains(contact.id)) { // If this contact is selected
+                if (contact.isActive) {
+                  // Active and selected: will be toggled to inactive
+                  potentialActiveContactCount--;
+                } else {
+                  // Inactive and selected: will be toggled to active
+                  potentialActiveContactCount++;
+                }
+              }
+            }
+            screenTitleText = 'Active ($potentialActiveContactCount / $totalContacts)';
+          } else {
+            // Not in selection mode or no contacts selected, show current active count out of total
+            screenTitleText = 'Active ($activeContactCount / $totalContacts)';
+          }
+        } else if (state is EmptyContactListState) {
+          const totalContacts = 18; // Use the fixed number 18
+          screenTitleText = 'Active (0 / $totalContacts)';
+        }
+        // For ErrorContactListState, it will use the default 'Active'
+
+        return BaseContactListScaffold(
+          screenTitle: screenTitleText,
+          emptyListText: 'No contacts found. Add some!',
+          onRefreshEvent: LoadContactListEvent(
+            searchTerm: _searchController.text, // Use the current search term
+            filters: _includeArchived
+                ? {} // No filters if archived contacts are included
+                : {ContactListFilterType.active}, // Apply active filter otherwise
+            sortField: ContactListSortField.lastName, // Use the current sort field
+            ascending: true, // Use the current sort order
           ),
-          tooltip: _includeArchived ? 'Hide Archived' : 'Show Archived',
-          onPressed: _includeArchivedContacts,
-        ),
-      ],
+          sortMenuItems: _buildSortMenuItems,
+          filterMenuItems: _buildFilterMenuItems,
+          handleListAction: _handleAllContactsListAction,
+          fabHeroTagPrefix: 'all_contacts',
+          initialScreenLoadEvent:
+              const LoadContactListEvent(filters: {ContactListFilterType.active}),
+          displayActiveStatusInList: true, // Show indicator on this screen
+          appBarActions: [
+            IconButton(
+              icon: Icon(
+                _includeArchived ? Icons.visibility_off : Icons.visibility,
+                color: const Color.fromARGB(255, 1, 255, 98),
+              ),
+              tooltip: _includeArchived ? 'Hide Archived' : 'Show Archived',
+              onPressed: _includeArchivedContacts,
+            ),
+          ],
+        );
+      },
     );
   }
 }

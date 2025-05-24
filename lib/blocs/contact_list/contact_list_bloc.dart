@@ -50,6 +50,8 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
             ascending: event.ascending,
             searchTerm: event.searchTerm,
             activeFilters: event.filters,
+            isSelectionMode: false, // Reset selection mode on load
+            selectedContacts: {}, // Reset selected contacts on load
           );
 
           _emitFilteredAndSortedState(
@@ -206,6 +208,10 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           } else {
             logger.i("All contacts removed, list is now empty.");
           }
+          // After deleting, clear selection and exit selection mode
+          if (currentState is LoadedContactListState) {
+            emit(currentState.copyWith(selectedContacts: {}, isSelectionMode: false));
+          }
         } catch (err) {
           emit(ErrorContactListState(err.toString()));
           logger.e("Error deleting contacts ${event.contactIds}: $err");
@@ -257,7 +263,7 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
           
           _emitFilteredAndSortedState(
             newOriginalContacts: newBaseContacts,
-            currentState: currentState,
+            currentState: currentState.copyWith(isSelectionMode: false, selectedContacts: {}),
             emit: emit,
           );
 
@@ -340,6 +346,8 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
             ascending: defaultAscending,
             searchTerm: defaultSearchTerm,
             activeFilters: defaultActiveFilters,
+            isSelectionMode: false, // Default selection mode
+            selectedContacts: {}, // Default selected contacts
           );
 
           _emitFilteredAndSortedState(
@@ -347,6 +355,56 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
             currentState: baseStateForUpdate,
             emit: emit,
           );
+        }
+      }
+      // MARK: SELECTION MODE
+      else if (event is ToggleSelectionModeEvent) {
+        final currentState = state;
+        if (currentState is LoadedContactListState) {
+          final newSelectionMode = !currentState.isSelectionMode;
+          emit(currentState.copyWith(
+            isSelectionMode: newSelectionMode,
+            // Clear selection if exiting selection mode
+            selectedContacts: newSelectionMode ? currentState.selectedContacts : {},
+          ));
+        }
+      } 
+      // MARK: TOGGLE CONTACT SELECTION
+      else if (event is ToggleContactSelectionEvent) {
+        final currentState = state;
+        if (currentState is LoadedContactListState) {
+          final Set<int> newSelectedContacts = Set.from(currentState.selectedContacts);
+          if (newSelectedContacts.contains(event.contactId)) {
+            newSelectedContacts.remove(event.contactId);
+          } else {
+            newSelectedContacts.add(event.contactId);
+          }
+          emit(currentState.copyWith(
+            selectedContacts: newSelectedContacts,
+            // Enter selection mode if it wasn't already, and there's a selection
+            isSelectionMode: newSelectedContacts.isNotEmpty ? true : false,
+          ));
+        }
+      } 
+      // MARK: CLEAR SELECTION
+      else if (event is ClearSelectionEvent) {
+        final currentState = state;
+        if (currentState is LoadedContactListState) {
+          emit(currentState.copyWith(selectedContacts: {}, isSelectionMode: false));
+        }
+      } 
+      // MARK: SELECT ALL CONTACTS
+      else if (event is SelectAllContactsEvent) {
+        final currentState = state;
+        if (currentState is LoadedContactListState) {
+          final Set<int> allDisplayedIds = currentState.displayedContacts
+              .where((c) => c.id != null)
+              .map((c) => c.id!)
+              .toSet();
+          emit(currentState.copyWith(
+            selectedContacts: allDisplayedIds,
+            isSelectionMode: allDisplayedIds.isNotEmpty ? true : false,
+          ));
         }
       }
     });
@@ -508,6 +566,9 @@ class ContactListBloc extends Bloc<ContactListEvent, ContactListState> {
       emit(currentState.copyWith(
         originalContacts: newOriginalContacts,
         displayedContacts: newlySortedContacts,
+        // Preserve selection state from the currentState being copied from
+        isSelectionMode: currentState.isSelectionMode,
+        selectedContacts: currentState.selectedContacts,
       ));
       // logger.i can be called by the specific event handler if needed, e.g. "Loaded X contacts"
     }

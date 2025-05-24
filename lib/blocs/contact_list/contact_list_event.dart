@@ -96,6 +96,26 @@ class ToggleContactsActiveStatusEvent extends ContactListEvent {
   const ToggleContactsActiveStatusEvent({required this.contactIds});
 }
 
+// SELECTION MODE EVENTS
+// MARK: SELECTION
+class ToggleSelectionModeEvent extends ContactListEvent {
+  const ToggleSelectionModeEvent();
+}
+
+class ToggleContactSelectionEvent extends ContactListEvent {
+  final int contactId;
+
+  const ToggleContactSelectionEvent({required this.contactId});
+}
+
+class ClearSelectionEvent extends ContactListEvent {
+  const ClearSelectionEvent();
+}
+
+class SelectAllContactsEvent extends ContactListEvent {
+  const SelectAllContactsEvent();
+}
+
 // Changed from enum ContactListFilter to enum ContactListFilterType
 enum ContactListFilterType { overdue, dueSoon, active, archived, homescreen }
 
