@@ -45,6 +45,8 @@ class BaseContactListScaffold extends StatefulWidget {
   final bool displayActiveStatusInList; // New parameter
   final ContactListEvent? debugRefreshEvent; // Add debugRefreshEvent parameter
   final List<Widget>? appBarActions; // New parameter for custom AppBar actions
+  final int activeContactCount; // Add activeContactCount parameter
+  final int maxActiveContacts; // Add maxActiveContacts parameter
 
   const BaseContactListScaffold({
     super.key,
@@ -64,6 +66,8 @@ class BaseContactListScaffold extends StatefulWidget {
     this.displayActiveStatusInList = false, // Default to false
     this.debugRefreshEvent, // Initialize debugRefreshEvent
     this.appBarActions, // Initialize appBarActions
+    required this.activeContactCount, // Initialize activeContactCount
+    required this.maxActiveContacts, // Initialize maxActiveContacts
   });
 
   @override
@@ -278,6 +282,8 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
         ),
         floatingActionButton: AddContactSpeedDial(
           onRefreshListEvent: widget.onRefreshEvent,
+          activeContactCount: widget.activeContactCount,
+          maxActiveContacts: widget.maxActiveContacts,
         ),
         bottomNavigationBar: BottomAppBar(
           child: Container(
@@ -390,7 +396,7 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
     final blocState = context.read<ContactListBloc>().state;
     String titleTextToShow;
     Color titleColor = Colors.white; // Default color
-    const int maxActiveContacts = 18;
+    // const int maxActiveContacts = 18; // Use widget.maxActiveContacts instead
 
     if (blocState is LoadedContactListState) {
       // Calculate potential active count based on ALL contacts, not just displayed ones
@@ -416,15 +422,36 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
           }
       }
       
-      titleTextToShow = '$potentialActiveCount / $maxActiveContacts active';
-      if (potentialActiveCount > maxActiveContacts) {
+      titleTextToShow = '$potentialActiveCount / ${widget.maxActiveContacts} active';
+      if (potentialActiveCount > widget.maxActiveContacts) {
         titleColor = Colors.red;
       }
     } else {
       // Default for other states (Loading, Empty, Initial)
       // Assuming 0 active contacts if not loaded.
-      titleTextToShow = '0 / $maxActiveContacts active';
+      titleTextToShow = '0 / ${widget.maxActiveContacts} active';
       // No color change needed here as 0 <= 18
+    }
+
+    Color toggleIconColor = Colors.white; // Default color for toggle icon
+    if (blocState is LoadedContactListState && blocState.isSelectionMode) {
+        int currentTotalActive = blocState.originalContacts.where((c) => c.isActive).length;
+        int potentialActiveCountAfterToggle = currentTotalActive;
+        final originalContactsMap = { for (var c in blocState.originalContacts) if (c.id != null) c.id!: c };
+
+        for (final contactId in blocState.selectedContacts) {
+            final contact = originalContactsMap[contactId];
+            if (contact != null) {
+                if (contact.isActive) { // If it's currently active and selected, it would be toggled to inactive
+                    potentialActiveCountAfterToggle--;
+                } else { // If it's currently inactive and selected, it would be toggled to active
+                    potentialActiveCountAfterToggle++;
+                }
+            }
+        }
+        if (potentialActiveCountAfterToggle > widget.maxActiveContacts) {
+            toggleIconColor = Colors.red;
+        }
     }
 
     return AppBar(
@@ -446,12 +473,31 @@ class _BaseContactListScaffoldState extends State<BaseContactListScaffold> {
           ),
         ],
         IconButton(
-          icon: const Icon(Icons.sync_alt,
-              color: Colors.white), // Icon for toggling
+          icon: Icon(Icons.sync_alt, color: toggleIconColor), // Use dynamic color
           tooltip: 'Toggle Active Status',
-          onPressed: _selectedContactIds.isEmpty
-              ? null
-              : _toggleSelectedContactsActiveStatus, // Dispatches ToggleContactsActiveStatusEvent
+          onPressed: () {
+            if (toggleIconColor == Colors.red) { // Check if the icon is red (limit exceeded)
+              showDialog(
+                context: context,
+                builder: (BuildContext dialogContext) {
+                  return AlertDialog(
+                    title: const Text('Active Contact Limit Reached'),
+                    content: const Text('Toggling these contacts would exceed the 18 active contact limit.'),
+                    actions: <Widget>[
+                      TextButton(
+                        child: const Text('OK'),
+                        onPressed: () {
+                          Navigator.of(dialogContext).pop();
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+            } else {
+              _toggleSelectedContactsActiveStatus(); // Original action
+            }
+          },
         ),
         IconButton(
           icon: const Icon(Icons.delete, color: Colors.white), // This is the second delete button

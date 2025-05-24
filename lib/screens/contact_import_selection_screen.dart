@@ -11,6 +11,7 @@ import 'package:recall/models/contact.dart'
     as app_contact; // Alias for your app's Contact model
 import 'package:go_router/go_router.dart';
 import 'package:recall/utils/contact_utils.dart'; // Added for calculateNextContactDate
+import 'package:recall/config/app_router.dart'; // Corrected import path
 
 class ContactImportSelectionScreen extends StatefulWidget {
   const ContactImportSelectionScreen({super.key});
@@ -238,6 +239,72 @@ class _ContactImportSelectionScreenState
   // --- PHASE 4: Import Action ---
   Future<void> _triggerImport() async {
     if (!mounted) return;
+
+    // Calculate potential total active contacts if these selected contacts are imported
+    final int selectedForImportCount =
+        _selectableContacts.where((item) => item.isSelected).length;
+    final int potentialTotalActiveAfterImport =
+        _currentActiveAppContactCount + selectedForImportCount;
+    const int importLimit = 18;
+
+    if (potentialTotalActiveAfterImport > importLimit) {
+      setState(() => _isSaving = false); // Ensure loading indicator is off
+      await showDialog(
+        context: context,
+        barrierDismissible: false, // User must explicitly choose an action
+        builder: (BuildContext dialogContext) {
+          return AlertDialog(
+            title: const Text('Active Contact Limit Reached'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                const Text(
+                    "You may only have 18 Active contacts. Please unselect contacts to import or deactivate some contacts."),
+                const SizedBox(height: 24),
+                Align(
+                  alignment: Alignment.center,
+                  child: Text(
+                    'Why only 18 contacts?',
+                    style: TextStyle(fontSize: 12, color: Colors.blueGrey[700]),
+                  ),
+                ),
+              ],
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Unselect'),
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                },
+              ),
+              TextButton(
+                child: const Text('Deactivate'),
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                  // Navigate to the All Contacts screen.
+                  // Replace '/contact-list' with your actual route name or path.
+                  // e.g., context.goNamed(AppRouter.contactListRouteName) if using named routes.
+                  try {
+                    context.goNamed(AppRouter.contactListRouteName);
+                  } catch (e) {
+                    logger.e("Failed to navigate: $e. Ensure GoRouter is set up and the route \'${AppRouter.contactListRouteName}\' exists.");
+                    // Optionally show a snackbar if navigation fails
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Error: Could not navigate to contacts screen.')),
+                      );
+                    }
+                  }
+                },
+              ),
+            ],
+          );
+        },
+      );
+      return; // Stop the import process
+    }
+
     setState(() => _isSaving = true); // Show saving indicator
 
     final List<ContactSelectionInfo> contactsToImportInfo =
@@ -451,6 +518,9 @@ class _ContactImportSelectionScreenState
         ? Colors.red 
         : defaultTitleColor;
 
+    final bool limitExceededForFab = potentialTotalActiveAfterImport > importTargetOrCapacity;
+    final bool isFabEffectivelyEnabled = !(_isLoading || _isSaving || !anyContactsSelected);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(appBarTitleText, style: TextStyle(color: appBarTitleColor)), // Apply dynamic color
@@ -632,10 +702,13 @@ class _ContactImportSelectionScreenState
                       ),
                     ]),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: (_isLoading || _isSaving || !anyContactsSelected)
-            ? null // Disable if loading, saving, or nothing selected
-            : _triggerImport,
-        label: const Text('Import Selected'),
+        onPressed: isFabEffectivelyEnabled ? _triggerImport : null,
+        label: Text(
+          'Import Selected',
+          style: TextStyle(
+            color: (limitExceededForFab && isFabEffectivelyEnabled) ? Colors.red : null,
+          ),
+        ),
         icon: _isSaving
             ? Container(
                 // Show spinner when saving
@@ -643,15 +716,17 @@ class _ContactImportSelectionScreenState
                 height: 24,
                 padding: const EdgeInsets.all(2.0),
                 child: const CircularProgressIndicator(
-                  color: Colors.white,
+                  color: Colors.white, // Spinner color
                   strokeWidth: 3,
                 ),
               )
-            : const Icon(Icons.download_done), // Import icon
-        // Disable button visually when needed
-        backgroundColor: (_isLoading || _isSaving || !anyContactsSelected)
-            ? Colors.grey
-            : null,
+            : Icon(
+                Icons.download_done,
+                color: (limitExceededForFab && isFabEffectivelyEnabled) ? Colors.red : null,
+              ), 
+        backgroundColor: !isFabEffectivelyEnabled
+            ? Colors.grey // Disabled color
+            : (limitExceededForFab ? theme.floatingActionButtonTheme.backgroundColor : null), // Keep normal FAB color even if text is red, or make FAB red too: Colors.redAccent,
       ),
     );
   }

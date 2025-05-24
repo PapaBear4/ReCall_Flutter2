@@ -55,6 +55,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     return BaseContactListScaffold(
       screenTitle: 'reCall Home',
       emptyListText: 'No upcoming or overdue reminders.',
+      activeContactCount: 0, // Provide a default or fetch if needed for this screen
+      maxActiveContacts: 18, // Provide the max limit
       // Always load active contacts that are overdue, due today, or due tomorrow
       onRefreshEvent: const LoadContactListEvent(
         filters: {ContactListFilterType.homescreen},
